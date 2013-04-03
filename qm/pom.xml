@@ -5,8 +5,7 @@
     <artifactId>qm</artifactId>
     <packaging>war</packaging>
     <version>0.0.1-SNAPSHOT</version>
-    <name>qm Maven Webapp</name>
-    <url>http://maven.apache.org</url>
+    <url>http://65.255.35.141:8081</url>
     <repositories>
         <repository>
             <releases>
@@ -91,4 +90,5 @@
     <build>
         <finalName>qm</finalName>
     </build>
+    <name>XAQueryMaster</name>
 </project>
