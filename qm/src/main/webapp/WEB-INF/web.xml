@@ -20,7 +20,6 @@
         <servlet-name>QueryBossServlet</servlet-name>
         <servlet-class>com.xingcloud.qm.web.servlet.QueryBossServlet</servlet-class>
     </servlet>
-
     <servlet-mapping>
         <servlet-name>QueryBossServlet</servlet-name>
         <url-pattern>/q</url-pattern>
