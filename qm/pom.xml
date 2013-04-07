@@ -2,9 +2,9 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.xingcloud</groupId>
-    <artifactId>qm</artifactId>
+    <artifactId>QueryMaster</artifactId>
     <packaging>war</packaging>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.1</version>
     <url>http://65.255.35.141:8081</url>
     <repositories>
         <repository>
@@ -19,6 +19,41 @@
             <layout>default</layout>
         </repository>
     </repositories>
+
+    <name>XAQueryMaster</name>
+    <!-- Building config -->
+    <build>
+        <defaultGoal>package</defaultGoal>
+        <finalName>${project.artifactId}-${project.version}</finalName>
+        <!-- Resources of app -->
+        <resources>
+            <resource>
+                <directory>${basedir}/src/main/resources</directory>
+                <includes>
+                    <include>*.xml</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>${basedir}/src/main/resources/${purpose}/</directory>
+            </resource>
+        </resources>
+
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.tomcat.maven</groupId>
+                    <artifactId>tomcat6-maven-plugin</artifactId>
+                    <version>2.1</version>
+                    <configuration>
+                        <url>http://localhost:8080/manager</url>
+                        <server>tomcat</server>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <!-- Dependencies -->
     <dependencies>
         <dependency>
             <groupId>junit</groupId>
@@ -88,21 +123,4 @@
             <version>1.0</version>
         </dependency>
     </dependencies>
-    <build>
-        <finalName>qm</finalName>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.tomcat.maven</groupId>
-                    <artifactId>tomcat6-maven-plugin</artifactId>
-                    <version>2.1</version>
-                    <configuration>
-                        <url>http://localhost:8080/manager</url>
-                        <server>tomcat</server>
-                    </configuration>
-                </plugin>
-            </plugins>
-        </pluginManagement>
-    </build>
-    <name>XAQueryMaster</name>
 </project>
