@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<root>
-    <executor-services>
-        <executor-service id="QUERY-NODE">
-            <name>QueryNode</name>
-            <count>600</count>
-        </executor-service>
-    </executor-services>
-</root>

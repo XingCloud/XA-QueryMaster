@@ -14,4 +14,11 @@
       <timeout>300000</timeout>
     </common>
   </redis_sharded>
+  <!-- Redis db usage -->
+  <redis-db-usage>
+    <!-- UI-CHECK -->
+    <UI>2</UI>
+    <QUERY-RESULT>10</QUERY-RESULT>
+    <!-- QUERY-RESULT -->
+  </redis-db-usage>
 </Root>

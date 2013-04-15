@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<root>
-    <put-cache>false</put-cache>
-    <broker count="100" />
-    <cache-putter count="50" />
-</root>

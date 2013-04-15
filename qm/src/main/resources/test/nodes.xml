@@ -1,14 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <root>
-    <nodes id="QUERY-NODES">
-        <node id="QN-01" host="localhost" port="9527" />
-        <!--
-            <node id="QN-02" host="localhost" port="8080" />
-            <node id="QN-03" host="localhost" port="8080" />
-            <node id="QN-04" host="localhost" port="8080" />
-            <node id="QN-05" host="localhost" port="8080" />
-            <node id="QN-06" host="localhost" port="8080" />
-        -->
-    </nodes>
+  <nodes id="QUERY-NODES">
+    <node id="QN-01" host="localhost" port="9527"/>
+    <node id="QN-02" host="localhost" port="9527"/>
+    <node id="QN-03" host="localhost" port="9527"/>
+    <node id="QN-04" host="localhost" port="9527"/>
+  </nodes>
 </root>

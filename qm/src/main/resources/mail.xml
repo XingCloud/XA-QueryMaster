@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+  <mail enabled="true" sender="10" ssl="true" auth="true" thread-prefix="XMailThread">
+    <host>smtp.exmail.qq.com</host>
+    <common-port>25</common-port>
+    <ssl-port>465</ssl-port>
+    <user>xamonitor@xingcloud.com</user>
+    <password>22C1NziwxZI5F</password>
+    <from>xamonitor@xingcloud.com</from>
+    <to>wuzijing@xingcloud.com</to>
+  </mail>
+</root>
