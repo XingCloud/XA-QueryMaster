@@ -65,8 +65,8 @@
           <artifactId>tomcat7-maven-plugin</artifactId>
           <version>2.1</version>
           <configuration>
-            <url>http://localhost:8082/manager/html</url>
-            <server>tomcat</server>
+            <url>http://localhost:8082/manager/text</url>
+            <server>tomcat-qm</server>
           </configuration>
         </plugin>
       </plugins>
