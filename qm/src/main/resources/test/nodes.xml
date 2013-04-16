@@ -2,9 +2,6 @@
 
 <root>
   <nodes id="QUERY-NODES">
-    <node id="QN-01" host="localhost" port="9527"/>
-    <node id="QN-02" host="localhost" port="9527"/>
-    <node id="QN-03" host="localhost" port="9527"/>
-    <node id="QN-04" host="localhost" port="9527"/>
+    <node id="QN-01" host="10.18.4.21" port="9999"/>
   </nodes>
 </root>
