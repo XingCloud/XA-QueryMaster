@@ -17,7 +17,7 @@ public class CachePutter implements Runnable {
   public void run() {
     XCacheOperator2 operator = RedisXCacheOperator2.getInstance();
     CachePutQueue queue = CachePutQueue.getInstance();
-    MappedXCache cache = null;
+    MappedXCache cache;
     try {
       while (true) {
         cache = queue.take();

@@ -74,18 +74,6 @@ public class QueryNode {
     this.id = id;
     this.host = host;
     this.port = port;
-
-    if (USING_LOCAL_FAKE_SERVER) {
-      this.proxy = new LocalFakeServer();
-    } else {
-      InetSocketAddress addr = new InetSocketAddress(host, port);
-      try {
-        this.proxy = (QuerySlaveProtocol) RPC.getProxy(QuerySlaveProtocol.class, 1, addr, new Configuration());
-        LOGGER.info("[QUERY-NODE] - " + this + " inited.");
-      } catch (IOException e) {
-        LOGGER.error(e);
-      }
-    }
   }
 
   public String getGroupId() {
@@ -104,8 +92,17 @@ public class QueryNode {
     this.id = id;
   }
 
-  public QuerySlaveProtocol getProxy() {
-    return proxy;
+  public QuerySlaveProtocol getProxy() throws IOException {
+    if (this.proxy != null) {
+      return this.proxy;
+    }
+    if (USING_LOCAL_FAKE_SERVER) {
+      this.proxy = new LocalFakeServer();
+    } else {
+      InetSocketAddress address = new InetSocketAddress(this.host, this.port);
+      this.proxy = (QuerySlaveProtocol) RPC.getProxy(QuerySlaveProtocol.class, 1, address, new Configuration());
+    }
+    return this.proxy;
   }
 
   public String getHost() {

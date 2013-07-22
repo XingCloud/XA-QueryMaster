@@ -18,7 +18,7 @@
       </releases>
       <id>xamavenrepo</id>
       <name>xamavenrepo</name>
-      <url>http://xamavenrepo:8081/archiva/repository/internal</url>
+      <url>http://xamavenrepo:8044/archiva/repository/internal</url>
       <layout>default</layout>
     </repository>
   </repositories>
@@ -96,16 +96,6 @@
       <version>1.2.17</version>
     </dependency>
     <dependency>
-      <groupId>hadoop-core</groupId>
-      <artifactId>hadoop-core</artifactId>
-      <version>0.20</version>
-    </dependency>
-    <dependency>
-      <groupId>guava-r09-jarjar</groupId>
-      <artifactId>guava-r09-jarjar</artifactId>
-      <version>1.0</version>
-    </dependency>
-    <dependency>
       <groupId>com.xingcloud</groupId>
       <artifactId>basis</artifactId>
       <version>0.0.5</version>
@@ -113,7 +103,7 @@
     <dependency>
       <groupId>com.xingcloud</groupId>
       <artifactId>cache</artifactId>
-      <version>0.0.4</version>
+      <version>0.0.5</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>

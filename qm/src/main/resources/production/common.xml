@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <root>
-  <local-server enabled="false"/>
-  <broker count="100"/>
-  <put-cache enabled="true" putters="50"/>
+  <local-server enabled="false" />
+  <put-cache enabled="true" />
 </root>

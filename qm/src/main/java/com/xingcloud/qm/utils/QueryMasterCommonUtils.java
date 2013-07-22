@@ -18,14 +18,12 @@ import static com.xingcloud.qm.utils.QueryMasterConstant.USER_NUM;
 
 import com.xingcloud.cache.MappedXCache;
 import org.apache.hadoop.io.ArrayWritable;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.thirdparty.guava.common.base.Strings;
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -125,21 +123,5 @@ public class QueryMasterCommonUtils {
     }
 
     return result;
-  }
-
-  public static void printRelations(MapWritable... data) {
-    LongWritable lw = null;
-    ArrayWritable aw = null;
-    for (MapWritable mw : data) {
-      lw = (LongWritable) mw.get(SIZE_KEY);
-      if (lw == null) {
-        continue;
-
-      }
-      for (long i = 0; i < lw.get(); i++) {
-        aw = (ArrayWritable) mw.get(new LongWritable(i));
-        LOGGER.info("[ROW] - " + Arrays.toString(aw.toStrings()));
-      }
-    }
   }
 }

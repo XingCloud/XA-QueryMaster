@@ -11,10 +11,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * User: Z J Wu
- * Date: 13-4-11
- * Time: 下午6:08
- * Package: com.xingcloud.qm.thread
+ * User: Z J Wu Date: 13-4-11 Time: 下午6:08 Package: com.xingcloud.qm.thread
  */
 public class CachePutESProvider extends ESProvider {
   private static final Logger LOGGER = Logger.getLogger(CachePutESProvider.class);

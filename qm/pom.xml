@@ -19,7 +19,7 @@
       </releases>
       <id>xamavenrepo</id>
       <name>xamavenrepo</name>
-      <url>http://xamavenrepo:8081/archiva/repository/internal</url>
+      <url>http://xamavenrepo:8044/archiva/repository/internal</url>
       <layout>default</layout>
     </repository>
   </repositories>

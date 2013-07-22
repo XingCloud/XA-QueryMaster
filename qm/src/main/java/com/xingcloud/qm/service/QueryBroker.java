@@ -47,10 +47,14 @@ public class QueryBroker implements Runnable {
     List<MapWritable> rpList = null;
 
     long t1 = System.currentTimeMillis();
+
+    int position = 0;
+    boolean stopOthers = false;
     try {
-      for (Future<MapWritable> f : workList) {
+      for (int i = 0; i < workList.size(); i++) {
+        undoneWork = workList.get(i);
         before = System.currentTimeMillis();
-        mw = f.get(remain, MILLISECONDS);
+        mw = undoneWork.get(remain, MILLISECONDS);
         after = System.currentTimeMillis();
 
         elapsed += after - before;
@@ -59,12 +63,29 @@ public class QueryBroker implements Runnable {
         if (rpList == null) {
           rpList = new ArrayList<MapWritable>();
         }
+        if (mw == null || mw.isEmpty()) {
+          continue;
+        }
         rpList.add(mw);
+        ++position;
       }
     } catch (Exception e) {
+      stopOthers = true;
       sendNewExceptionMail(e);
       throw new XRemoteQueryException(e);
+    } finally {
+      if (stopOthers) {
+        for (int i = position; i < workList.size(); i++) {
+          undoneWork = workList.get(i);
+          if (undoneWork == null || undoneWork.isDone() || undoneWork.isCancelled()) {
+            continue;
+          }
+          LOGGER.info("[BROKER] - Cancel future(" + undoneWork + ") - " + sql);
+          undoneWork.cancel(true);
+        }
+      }
     }
+
     long t2 = System.currentTimeMillis();
     MapWritable union = union(rpList, hasGroupBy, metaInfoArray);
     LOGGER.info("[BROKER] - Sql job done in " + (t2 - t1) + " milliseconds - " + sql);

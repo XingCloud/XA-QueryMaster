@@ -48,7 +48,7 @@ public class QueueContainer {
           }
         } catch (InterruptedException e) {
           LOGGER.info("[JOB-QUEUE] - Transfer thread will be shutdown(" +
-                          Thread.currentThread().getName() + ").");
+                        Thread.currentThread().getName() + ").");
           Thread.currentThread().interrupt();
         }
       }
@@ -56,7 +56,7 @@ public class QueueContainer {
     Thread transferThread = new Thread(r, "QueryTransferThread");
     transferThread.start();
     LOGGER.info("[JOB-QUEUE] - Transfer thread started(" + transferThread
-        .getName() + "), capacity of working queue is " + capacityOfQueue + ".");
+      .getName() + "), capacity of working queue is " + capacityOfQueue + ".");
   }
 
   public boolean submit(QueryJob queryJob) throws InterruptedException {
