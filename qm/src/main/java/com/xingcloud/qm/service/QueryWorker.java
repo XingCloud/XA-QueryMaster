@@ -3,6 +3,7 @@ package com.xingcloud.qm.service;
 import com.xingcloud.basic.remote.QuerySlaveProtocol;
 import com.xingcloud.qm.exceptions.XRemoteQueryException;
 import com.xingcloud.qm.remote.QueryNode;
+import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.log4j.Logger;
 
@@ -13,11 +14,18 @@ public class QueryWorker implements Callable<MapWritable> {
 
   private String sql;
 
+  private LogicalPlan logicalPlan;
+
   private QueryNode node;
 
   public QueryWorker(String sql, QueryNode node) {
     super();
     this.sql = sql;
+    this.node = node;
+  }
+
+  public QueryWorker(LogicalPlan logicalPlan, QueryNode node) {
+    this.logicalPlan = logicalPlan;
     this.node = node;
   }
 

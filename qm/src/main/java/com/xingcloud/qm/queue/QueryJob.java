@@ -3,7 +3,11 @@ package com.xingcloud.qm.queue;
 import static com.xingcloud.basic.Constants.DATE_FORMAT_FULL_LONG;
 import static org.apache.commons.lang3.time.DateFormatUtils.format;
 
+import org.apache.drill.common.logical.LogicalPlan;
+
 public class QueryJob {
+
+  private LogicalPlan logicalPlan;
 
   private String cacheKey;
 
@@ -22,6 +26,12 @@ public class QueryJob {
     this.cacheKey = cacheKey;
     this.sql = sql;
     this.timestamp = timestamp;
+  }
+
+  public QueryJob(LogicalPlan logicalPlan, long timestamp, String cacheKey) {
+    this.logicalPlan = logicalPlan;
+    this.timestamp = timestamp;
+    this.cacheKey = cacheKey;
   }
 
   @Override
@@ -69,6 +79,10 @@ public class QueryJob {
 
   public void setCacheKey(String cacheKey) {
     this.cacheKey = cacheKey;
+  }
+
+  public LogicalPlan getLogicalPlan() {
+    return logicalPlan;
   }
 
   @Override

@@ -59,7 +59,7 @@ public class QueueContainer {
       .getName() + "), capacity of working queue is " + capacityOfQueue + ".");
   }
 
-  public boolean submit(QueryJob queryJob) throws InterruptedException {
+  public synchronized boolean submit(QueryJob queryJob) throws InterruptedException {
     if (submitQueue.contains(queryJob)) {
       return false;
     }

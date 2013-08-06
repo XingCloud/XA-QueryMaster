@@ -31,15 +31,12 @@ public class QueryNode {
     }
     List<Dom> nodesDomList = root.elements("nodes");
 
-    String gid = null;
-    String id = null;
-    String host = null;
-    String portString = null;
-    int port = 0;
-    List<Dom> nodes = null;
-    QueryNode qn = null;
+    String id, gid, host, portString;
+    int port;
+    List<Dom> nodes;
+    QueryNode qn;
 
-    List<QueryNode> qns = null;
+    List<QueryNode> qns;
     for (Dom nodesDom : nodesDomList) {
       gid = nodesDom.getAttributeValue("id");
       nodes = nodesDom.elements("node");

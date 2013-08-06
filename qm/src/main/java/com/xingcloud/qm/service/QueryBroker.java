@@ -14,6 +14,7 @@ import com.xingcloud.qm.queue.QueryJob;
 import com.xingcloud.qm.queue.QueueContainer;
 import com.xingcloud.qm.redis.CachePutQueue;
 import com.xingcloud.qm.thread.WorkerESProvider;
+import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.log4j.Logger;
 
@@ -102,6 +103,7 @@ public class QueryBroker implements Runnable {
     String cacheKey = null;
     String sql = null;
     boolean hasGroupBy = false;
+    LogicalPlan singlePlan;
     try {
       while (true) {
         job = qc.fetchOne();
@@ -109,6 +111,10 @@ public class QueryBroker implements Runnable {
           continue;
         }
         cacheKey = job.getCacheKey();
+
+        singlePlan=job.getLogicalPlan();
+
+        // These codes are dead now @ 2013-08-06 10:52:24
         sql = job.getSql();
         hasGroupBy = hasGroupByKeyWord(sql);
         metaInfoArray = parseSqlMeta(sql, hasGroupBy);
