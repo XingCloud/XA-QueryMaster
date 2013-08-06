@@ -3,6 +3,7 @@ package com.xingcloud.qm.web.servlet;
 import com.caucho.hessian.server.HessianServlet;
 import com.xingcloud.qm.queue.QueryJob;
 import com.xingcloud.qm.queue.QueueContainer;
+import com.xingcloud.qm.service.QueryMaster;
 import com.xingcloud.qm.service.Submit;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.log4j.Logger;
@@ -32,19 +33,8 @@ public class QueryBossServlet extends HessianServlet implements Submit {
 
   @Override
   public boolean submitLogicalPlan(LogicalPlan plan, String id) {
-    long timestamp = System.currentTimeMillis();
-    QueueContainer qc = QueueContainer.getInstance();
-    try {
-      if (qc.submit(new QueryJob(plan, timestamp, id))) {
-        LOGGER.info("[BOSS] - Logical plan received and submitted - " + id);
-      } else {
-        LOGGER.info("[BOSS] - Logical plan received but not submit, in queue already - " + id);
-      }
-      return true;
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-      return false;
-    }
+    QueryMaster.getInstance().submitLogicalPlan(plan, id);
+    return true;
   }
 
 }
