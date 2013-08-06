@@ -51,7 +51,6 @@ public class QueryMaster implements Submit, QueryListener {
   
   private Scheduler scheduler = new Scheduler();
   
-  BufferAllocator allocator = new DirectBufferAllocator();
   
   public static QueryMaster getInstance() {
     return instance;
@@ -129,7 +128,6 @@ public class QueryMaster implements Submit, QueryListener {
 
   public void shutDown(){
     this.scheduler.setStop(true);
-    //TODO close all resources
   }
   
   class Scheduler extends Thread implements QueryListener{
@@ -222,9 +220,8 @@ public class QueryMaster implements Submit, QueryListener {
         executing.decrementAndGet();
         getProjectCounter(planSubmission.projectID).decrementAndGet();
         
-        // 读取数据
-        List<QueryResultBatch> results = planSubmission.getRawResult();
-        Map<String, Map<String, Number[]>> materializedRecords = RecordParser.materializeRecords(results, allocator);
+        // 分发数据
+        Map<String, Map<String, Number[]>> materializedRecords = planSubmission.getValues();
         for (Map.Entry<String, Map<String, Number[]>> entry : materializedRecords.entrySet()) {
           String basicQueryID = entry.getKey();
           Map<String, Number[]> value = entry.getValue();

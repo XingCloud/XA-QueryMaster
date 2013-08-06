@@ -4,13 +4,15 @@ import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.exec.rpc.user.QueryResultBatch;
 
 import java.util.List;
+import java.util.Map;
 
 public class PlanSubmission extends QuerySubmission {
   
   String projectID;
   
-  List<QueryResultBatch> rawResult;
   
+  public Map<String, Map<String, Number[]>> values;
+
   public PlanSubmission(LogicalPlan plan, String id, String projectID) {
     super(plan, id);
     this.projectID = projectID;
@@ -18,17 +20,9 @@ public class PlanSubmission extends QuerySubmission {
 
   public void release(){
     this.plan = null;
-    if(rawResult != null){
-      for (QueryResultBatch batch : rawResult) {
-        if (batch.hasData()) {
-          batch.getData().release();
-        }
-      }
-      rawResult.clear();
-    }
   }
 
-  public List<QueryResultBatch> getRawResult() {
-    return rawResult;
+  public Map<String, Map<String, Number[]>> getValues() {
+    return values;
   }
 }

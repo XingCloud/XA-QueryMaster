@@ -33,7 +33,6 @@ public class RecordParser {
     long count, sum, user_num = 0;
     String currentQueryID = null;
     Map<String, Number[]> currentValue = new HashMap<>();
-    //TODO parse vector into cache results
     for (QueryResultBatch batch : records) {
       if (!batch.hasData()) continue;
       boolean schemaChanged = false;
@@ -42,8 +41,6 @@ public class RecordParser {
       } catch (SchemaChangeException e) {
         e.printStackTrace();  //e:
       }
-      
-
 
       for (int i = 0; i < batchLoader.getRecordCount(); i++) {
         recordCount++;
