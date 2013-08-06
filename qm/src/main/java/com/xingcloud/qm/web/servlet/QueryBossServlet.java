@@ -14,7 +14,7 @@ public class QueryBossServlet extends HessianServlet implements Submit {
   private static final long serialVersionUID = 5320413547601487799L;
 
   @Override
-  public boolean submit(String sql, String cacheKey) {
+  public boolean submitPlainSql(String sql, String cacheKey) {
     long timestamp = System.currentTimeMillis();
     QueueContainer qc = QueueContainer.getInstance();
     try {
@@ -31,7 +31,7 @@ public class QueryBossServlet extends HessianServlet implements Submit {
   }
 
   @Override
-  public boolean submit(LogicalPlan plan, String id) {
+  public boolean submitLogicalPlan(LogicalPlan plan, String id) {
     long timestamp = System.currentTimeMillis();
     QueueContainer qc = QueueContainer.getInstance();
     try {
