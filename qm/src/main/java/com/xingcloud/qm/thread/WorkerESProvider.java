@@ -1,11 +1,11 @@
 package com.xingcloud.qm.thread;
 
-import static com.xingcloud.qm.remote.QueryNode.NODE_CONF_MAP;
 import static com.xingcloud.qm.utils.QueryMasterVariables.ESI_MAP;
 
 import com.xingcloud.basic.concurrent.ESProvider;
 import com.xingcloud.basic.concurrent.ExecutorServiceInfo;
 import com.xingcloud.basic.concurrent.XThreadFactory;
+import com.xingcloud.qm.remote.QueryNode;
 import org.apache.log4j.Logger;
 
 import java.util.concurrent.ExecutorService;
@@ -30,7 +30,7 @@ public class WorkerESProvider extends ESProvider {
   private WorkerESProvider() {
     ExecutorServiceInfo brokerEsi = ESI_MAP.get("QUERY-BROKER");
     int brokerCount = brokerEsi.getThreadCount();
-    int nodeCount = NODE_CONF_MAP.get("QUERY-NODES").size();
+    int nodeCount = QueryNode.NODES.size();
     this.workerCount = brokerCount * nodeCount;
     this.esi = ESI_MAP.get("QUERY-WORKER");
     service = Executors.newFixedThreadPool(this.workerCount, new XThreadFactory(esi.getName()));
