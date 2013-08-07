@@ -49,19 +49,19 @@ public class PlanExecutor {
     @Override
     public void run() {
       DrillClient[] clients = DrillClusterInfo.getInstance().getDrillbits();
-      List<Future<List<QueryResultBatch>>> futures = new ArrayList<>(clients.length);
+      List<Future<List<QueryResultBatch>>> futures = new ArrayList<Future<List<QueryResultBatch>>>(clients.length);
       for (int i = 0; i < clients.length; i++) {
         DrillClient client = clients[i];
         futures.add(drillBitExecutor.submit(new DrillbitCallable(submission.plan, client)));
       }
-      List<Map<String, Map<String, Number[]>>> materializedResults = new ArrayList<>();
+      List<Map<String, Map<String, Number[]>>> materializedResults = new ArrayList<Map<String, Map<String,Number[]>>>();
       for (int i = 0; i < futures.size(); i++) {
         Future<List<QueryResultBatch>> future = futures.get(i);
         try {
           List<QueryResultBatch> batches = future.get();
           Map<String, Map<String, Number[]>> ret = RecordParser.materializeRecords(batches, DrillClusterInfo.getInstance().getAllocator());
           materializedResults.add(ret);
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (Exception e) {
           logger.warn("plan executing error", e);
           e.printStackTrace();  //e:
           return;
@@ -73,7 +73,7 @@ public class PlanExecutor {
     }
 
     private Map<String, Map<String, Number[]>> mergeResults(List<Map<String, Map<String, Number[]>>> materializedResults) {
-      Map<String, Map<String, Number[]>> merged = new HashMap<>();
+      Map<String, Map<String, Number[]>> merged = new HashMap<String, Map<String, Number[]>>();
       for (int i = 0; i < materializedResults.size(); i++) {
         Map<String, Map<String, Number[]>> result = materializedResults.get(i);
         for (Map.Entry<String, Map<String, Number[]>> entry : result.entrySet()) {
@@ -81,7 +81,7 @@ public class PlanExecutor {
           Map<String, Number[]> value = entry.getValue();
           Map<String, Number[]> mergedValue = merged.get(queryID);
           if(mergedValue == null){
-            mergedValue = new HashMap<>();
+            mergedValue = new HashMap<String, Number[]>();
             merged.put(queryID, mergedValue);
           }
           for (Map.Entry<String, Number[]> entry2 : value.entrySet()) {
@@ -110,7 +110,6 @@ public class PlanExecutor {
     public DrillbitCallable(LogicalPlan plan, DrillClient client) {
       this.plan = plan;
       this.client = client;
-      
     }
 
     @Override

@@ -14,6 +14,7 @@ public class DrillClusterInfo {
   BufferAllocator allocator = new DirectBufferAllocator();
   
   private DrillClusterInfo(){
+    DrillClient client = new DrillClient();
     //TODO 配置文件支持
   }
   

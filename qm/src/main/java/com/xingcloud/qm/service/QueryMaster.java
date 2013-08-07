@@ -39,14 +39,14 @@ public class QueryMaster implements Submit, QueryListener {
    * 所有已经提交的任务。
    * 由QueryMaster写入和删除。
    */
-  public Map<String, QuerySubmission> submitted = new ConcurrentHashMap<>();
+  public Map<String, QuerySubmission> submitted = new ConcurrentHashMap<String, QuerySubmission>();
 
 
   /**
    * 每个project所提交的任务队列。
    * 由QueryMaster写入，由Scheduler取出。
    */
-  public Map<String, Deque<LogicalPlan>> perProjectSubmitted = new ConcurrentHashMap<>();
+  public Map<String, Deque<LogicalPlan>> perProjectSubmitted = new ConcurrentHashMap<String, Deque<LogicalPlan>>();
   
   
   private Scheduler scheduler = new Scheduler();
@@ -65,14 +65,10 @@ public class QueryMaster implements Submit, QueryListener {
   }
 
   public boolean submitPlainSql(String sql, String cacheKey) {
-    return false;  //TODO method implementation
+    return false;  //do not support
   }
 
   public boolean submitLogicalPlan(LogicalPlan plan, String id) {
-    Object previous = null;
-    if(cached(previous)){
-      return true;
-    }
     if(submitted.containsKey(id)){
       return true;
     }
@@ -94,15 +90,10 @@ public class QueryMaster implements Submit, QueryListener {
   private Deque<LogicalPlan> getProjectQueue(String projectID) {
     Deque<LogicalPlan> projectPlans = perProjectSubmitted.get(projectID);
     if(projectPlans == null){
-      projectPlans = new ArrayDeque<>();
+      projectPlans = new ArrayDeque<LogicalPlan>();
       perProjectSubmitted.put(projectID, projectPlans);
     }
     return projectPlans;
-  }
-  
-
-  private boolean cached(Object previous) {
-    return false;  //TODO method implementation
   }
   
   @Override
@@ -116,7 +107,6 @@ public class QueryMaster implements Submit, QueryListener {
       submitted.remove(queryID);
       String key = queryID;
       Map<String, Number[]> value;
-      //TODO put to cache
       try {
         NoSelectRedisXCacheOperator.getInstance().putCache(new XCache(key, basicQuery.value, System.currentTimeMillis(), XCacheInfo.CACHE_INFO_0));
       } catch (XCacheException e) {
@@ -139,7 +129,7 @@ public class QueryMaster implements Submit, QueryListener {
     /**
      * 对每个项目，正在执行的查询的计数。
      */
-    Map<String, AtomicInteger> perProjectExecuting = new ConcurrentHashMap<>();
+    Map<String, AtomicInteger> perProjectExecuting = new ConcurrentHashMap<String, AtomicInteger>();
     
     private boolean stop = false;
     @Override
@@ -165,7 +155,7 @@ public class QueryMaster implements Submit, QueryListener {
             continue;
           }
           //找任务，合并。不超过MAX_BATCHMERGE
-          List<LogicalPlan> pickedPlans = new ArrayList<>();
+          List<LogicalPlan> pickedPlans = new ArrayList<LogicalPlan>();
           for (int i = 0; projectSubmissions.size()>0 && i<MAX_BATCHMERGE; i++) {
             LogicalPlan submittion = projectSubmissions.pollFirst();
             pickedPlans.add(submittion);

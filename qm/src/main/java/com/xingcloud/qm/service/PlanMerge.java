@@ -30,8 +30,8 @@ public class PlanMerge {
   }
 
   private void sortAndMerge() {
-    merged = new HashMap<>();
-    sortedByProjectID = new HashMap<>();
+    merged = new HashMap<LogicalPlan, LogicalPlan>();
+    sortedByProjectID = new HashMap<String, List<LogicalPlan>>();
     /**
      * sort into sortedByProjectID, by projectID
      */
@@ -39,7 +39,7 @@ public class PlanMerge {
       String projectID = getProjectID(plan);
       List<LogicalPlan> projectPlans = sortedByProjectID.get(projectID);
       if(projectPlans == null){
-        projectPlans = new ArrayList<>();
+        projectPlans = new ArrayList<LogicalPlan>();
         sortedByProjectID.put(projectID, projectPlans);
       }
       projectPlans.add(plan);
@@ -65,13 +65,13 @@ public class PlanMerge {
             ScanWithPlan swp = new ScanWithPlan(scan, plan, tableName);
             Set<ScanWithPlan> swps = ctx.tableName2Plans.get(tableName);
             if(swps == null){
-              swps = new HashSet<>();
+              swps = new HashSet<ScanWithPlan>();
               ctx.tableName2Plans.put(tableName, swps);
             }
             swps.add(swp);
             Set<String> tableNames = ctx.plan2TableNames.get(plan);
             if(tableNames == null){
-              tableNames = new HashSet<>();
+              tableNames = new HashSet<String>();
               ctx.plan2TableNames.put(plan, tableNames);
             }
             tableNames.add(tableName);
@@ -131,7 +131,7 @@ public class PlanMerge {
       }
       AdjacencyList<LogicalOperator> child2Parents = plan.getGraph().getAdjList().getReversedList();
       Collection<AdjacencyList<LogicalOperator>.Node> leaves = child2Parents.getInternalRootNodes();
-      Set<AdjacencyList<LogicalOperator>.Node> nextStepSet = new HashSet<>();
+      Set<AdjacencyList<LogicalOperator>.Node> nextStepSet = new HashSet<AdjacencyList<LogicalOperator>.Node>();
       //merge leaves first; then merge their parents
       for (AdjacencyList<LogicalOperator>.Node leaf : leaves) {
         LogicalOperator op = leaf.getNodeValue();
@@ -165,7 +165,7 @@ public class PlanMerge {
       //merge parents from leave, starting from nextStepSet
       for(;nextStepSet.size()>0;){
         Set<AdjacencyList<LogicalOperator>.Node> currentStepSet = nextStepSet;
-        nextStepSet = new HashSet<>();
+        nextStepSet = new HashSet<AdjacencyList<LogicalOperator>.Node>();
         //purge first, do merge for operators whose children have all already been merged
         for(Iterator<AdjacencyList<LogicalOperator>.Node> iterator = currentStepSet.iterator();iterator.hasNext();){
           AdjacencyList<LogicalOperator>.Node op = iterator.next();
@@ -209,7 +209,7 @@ public class PlanMerge {
     }//for plans
     
     //add union/store to all roots
-    List<LogicalOperator> roots = new ArrayList<>();
+    List<LogicalOperator> roots = new ArrayList<LogicalOperator>();
     Set<LogicalOperator> vs = planCtx.mergedGraph.vertexSet();
     for(LogicalOperator op:vs){
       if(planCtx.mergedGraph.inDegreeOf(op)==0){
@@ -305,17 +305,10 @@ public class PlanMerge {
   }
 
   private Mergeability<LogicalOperator> equals(LogicalOperator op1, LogicalOperator op2){
-    if(op1.equals(op2)){
-      return new Mergeability<>(MergeType.same, op1, op2);
-    }
-    if(!op1.getClass().equals(op2.getClass())){
-      return null;
-    }
-    if(op1.equals(op2)){
-      return new Mergeability<>(MergeType.same, op1, op2);
+    if(LOPComparator.equals(op1, op2)){
+      return new Mergeability<LogicalOperator>(MergeType.same, op1, op2);      
     }
     return null;
-    
   }
 
   private boolean childrenSame(LogicalOperator op1, LogicalOperator op2) {
@@ -342,29 +335,29 @@ public class PlanMerge {
    * @return
    */
   private Mergeability<Scan> mergeable(Scan scan1, Scan scan2) {
-    return equals(scan1, scan2);
+    return LOPComparator.equals(scan1, scan2)? new Mergeability<Scan>(MergeType.same, scan1, scan2): null;
   }
 
   private Mergeability<Scan> equals(Scan scan1, Scan scan2) {
     if(getTableName(scan1).equals(getTableName(scan2))
       && scan1.getSelection().equals(scan2.getSelection())){
-      return new Mergeability<>(MergeType.same, scan1, scan2);
+      return new Mergeability<Scan>(MergeType.same, scan1, scan2);
     }
     return null;
   }
 
   static class PlanMergeContext{
         //merge output
-    List<LogicalOperator> mergeResult = new ArrayList<>();
+    List<LogicalOperator> mergeResult = new ArrayList<LogicalOperator>();
     //all operators merged
-    Map<LogicalOperator, LogicalOperator> mergedFrom2To = new HashMap<>();
-    DirectedGraph<LogicalOperator, DefaultEdge> mergedGraph = new SimpleDirectedGraph<LogicalOperator, DefaultEdge>(DefaultEdge.class);
+    Map<LogicalOperator, LogicalOperator> mergedFrom2To = new HashMap<LogicalOperator, LogicalOperator>();//==
+    DirectedGraph<LogicalOperator, DefaultEdge> mergedGraph = new SimpleDirectedGraph<LogicalOperator, DefaultEdge>(DefaultEdge.class);//==
     
   }
   
   static class ProjectMergeContext{
-    Map<String, Set<ScanWithPlan>> tableName2Plans = new HashMap<>();//equals
-    Map<LogicalPlan, Set<String>> plan2TableNames = new HashMap<>();//equals
+    Map<String, Set<ScanWithPlan>> tableName2Plans = new HashMap<String, Set<ScanWithPlan>>();//equals
+    Map<LogicalPlan, Set<String>> plan2TableNames = new HashMap<LogicalPlan, Set<String>>();//equals
     UndirectedGraph<LogicalPlan, DefaultEdge> mergePlanSets = new SimpleGraph<LogicalPlan, DefaultEdge>(DefaultEdge.class);//==
     UndirectedGraph<Scan, DefaultEdge> mergedScanSets = new SimpleGraph<Scan, DefaultEdge>(DefaultEdge.class);//==
     ConnectivityInspector<Scan, DefaultEdge> scanInspector = null;
@@ -372,22 +365,15 @@ public class PlanMerge {
     
     List<Set<Scan>> devidedScanSets = null;
     
-//    Map<LogicalPlan, Integer> plan2MergeID = new HashMap<>();
-//    Map<Integer, Set<LogicalPlan>> mergeID2plans = new HashMap<>(); 
-    
     
     public void close() {
-      DirectedGraph<Scan, DefaultEdge> g = new SimpleDirectedGraph<>(DefaultEdge.class);
+      DirectedGraph<Scan, DefaultEdge> g = new SimpleDirectedGraph<Scan, DefaultEdge>(DefaultEdge.class);
       
       tableName2Plans.clear();
       tableName2Plans = null;
       plan2TableNames.clear();
       plan2TableNames = null;
       
-//      plan2MergeID.clear();
-//      plan2MergeID = null;
-//      mergeID2plans.clear();
-//      mergeID2plans = null;
     }
   }
   

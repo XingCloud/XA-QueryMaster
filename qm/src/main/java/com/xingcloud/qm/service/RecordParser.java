@@ -25,14 +25,14 @@ public class RecordParser {
    * @return Map: queryID -> value. value的类型是：Map<String, Number[]> 包含count, sum, user_num
    */
   public static Map<String, Map<String, Number[]>> materializeRecords(List<QueryResultBatch> records, BufferAllocator allocator) {
-    Map<String, Map<String, Number[]>> out = new HashMap<>();
+    Map<String, Map<String, Number[]>> out = new HashMap<String, Map<String, Number[]>>();
     // Look at records
     RecordBatchLoader batchLoader = new RecordBatchLoader(allocator);
     int recordCount = 0;
     String dimensionKey = null;
     long count, sum, user_num = 0;
     String currentQueryID = null;
-    Map<String, Number[]> currentValue = new HashMap<>();
+    Map<String, Number[]> currentValue = new HashMap<String, Number[]>();
     for (QueryResultBatch batch : records) {
       if (!batch.hasData()) continue;
       boolean schemaChanged = false;
@@ -56,7 +56,7 @@ public class RecordParser {
                 //output previous queryID
                 out.put(currentQueryID, currentValue);
                 currentQueryID = nextQueryID;
-                currentValue = new HashMap<>();
+                currentValue = new HashMap<String, Number[]>();
               }
             }
           }else if(COL_DIMENSION.equals(colName)){
