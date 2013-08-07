@@ -1,26 +1,23 @@
 package com.xingcloud.qm.remote;
 
-import static com.xingcloud.qm.utils.QueryMasterVariables.USING_LOCAL_FAKE_SERVER;
-
 import com.xingcloud.basic.conf.ConfigReader;
 import com.xingcloud.basic.conf.Dom;
-import com.xingcloud.basic.remote.QuerySlaveProtocol;
-import com.xingcloud.qm.localserver.LocalFakeServer;
 import com.xingcloud.qm.service.QueryWorker;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.ipc.RPC;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.drill.common.config.DrillConfig;
+import org.apache.drill.exec.client.DrillClient;
+import org.apache.drill.exec.memory.BufferAllocator;
+import org.apache.drill.exec.memory.DirectBufferAllocator;
 import org.apache.log4j.Logger;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class QueryNode {
   private static final Logger LOGGER = Logger.getLogger(QueryWorker.class);
-  public static final Map<String, List<QueryNode>> NODE_CONF_MAP = new HashMap<String, List<QueryNode>>();
+  public static final List<QueryNode> NODES = new ArrayList<>(16);
+  public static final DrillConfig LOCAL_DEFAULT_DRILL_CONFIG=DrillConfig.create();
+  public static final BufferAllocator DEFAULT_BUFFER_ALLOCATOR = new DirectBufferAllocator();
 
   static {
     Dom root = null;
@@ -31,54 +28,46 @@ public class QueryNode {
     }
     List<Dom> nodesDomList = root.elements("nodes");
 
-    String id, gid, host, portString;
-    int port;
+    String id, conf;
     List<Dom> nodes;
-    QueryNode qn;
-
-    List<QueryNode> qns;
     for (Dom nodesDom : nodesDomList) {
-      gid = nodesDom.getAttributeValue("id");
       nodes = nodesDom.elements("node");
-      qns = new ArrayList<QueryNode>(nodes.size());
-
       for (Dom nodeDom : nodes) {
         id = nodeDom.getAttributeValue("id");
-        host = nodeDom.getAttributeValue("host");
-        portString = nodeDom.getAttributeValue("port");
-        port = Integer.valueOf(portString);
-
-        qn = new QueryNode(gid, id, host, port);
-        qns.add(qn);
+        conf = nodeDom.getAttributeValue("conf");
+        NODES.add(new QueryNode(id, conf));
       }
-      NODE_CONF_MAP.put(gid, qns);
     }
   }
 
-  private String groupId;
-
   private String id;
 
-  private String host;
+  private DrillClient drillClient;
 
-  private int port;
+  public DrillClient getDrillClient() {
+    return drillClient;
+  }
 
-  private QuerySlaveProtocol proxy;
+  public static DrillClient[] toClients() {
+    if (CollectionUtils.isEmpty(NODES)) {
+      return null;
+    }
+    DrillClient[] clients = new DrillClient[NODES.size()];
+    for (int i = 0; i < NODES.size(); i++) {
+      clients[i] = NODES.get(i).getDrillClient();
+    }
+    return clients;
+  }
 
-  public QueryNode(String groupId, String id, String host, int port) {
+  public QueryNode(String id, String conf) {
     super();
-    this.groupId = groupId;
     this.id = id;
-    this.host = host;
-    this.port = port;
-  }
-
-  public String getGroupId() {
-    return groupId;
-  }
-
-  public void setGroupId(String groupId) {
-    this.groupId = groupId;
+    this.drillClient = new DrillClient(DrillConfig.create(conf));
+    try {
+      this.drillClient.connect();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   public String getId() {
@@ -89,69 +78,36 @@ public class QueryNode {
     this.id = id;
   }
 
-  public QuerySlaveProtocol getProxy() throws IOException {
-    if (this.proxy != null) {
-      return this.proxy;
-    }
-    if (USING_LOCAL_FAKE_SERVER) {
-      this.proxy = new LocalFakeServer();
-    } else {
-      InetSocketAddress address = new InetSocketAddress(this.host, this.port);
-      this.proxy = (QuerySlaveProtocol) RPC.getProxy(QuerySlaveProtocol.class, 1, address, new Configuration());
-    }
-    return this.proxy;
-  }
-
-  public String getHost() {
-    return host;
-  }
-
-  public void setHost(String host) {
-    this.host = host;
-  }
-
-  public int getPort() {
-    return port;
-  }
-
-  public void setPort(int port) {
-    this.port = port;
+  public static BufferAllocator getAllocator() {
+    return DEFAULT_BUFFER_ALLOCATOR;
   }
 
   @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + ((groupId == null) ? 0 : groupId.hashCode());
-    result = prime * result + ((id == null) ? 0 : id.hashCode());
-    return result;
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj)
+  public boolean equals(Object o) {
+    if (this == o) {
       return true;
-    if (obj == null)
+    }
+    if (!(o instanceof QueryNode)) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+
+    QueryNode queryNode = (QueryNode) o;
+
+    if (!id.equals(queryNode.id)) {
       return false;
-    QueryNode other = (QueryNode) obj;
-    if (groupId == null) {
-      if (other.groupId != null)
-        return false;
-    } else if (!groupId.equals(other.groupId))
-      return false;
-    if (id == null) {
-      if (other.id != null)
-        return false;
-    } else if (!id.equals(other.id))
-      return false;
+    }
+
     return true;
   }
 
   @Override
+  public int hashCode() {
+    return id.hashCode();
+  }
+
+  @Override
   public String toString() {
-    return "QueryClient." + groupId + "." + id + "@" + host + ":" + port;
+    return "QueryClient." + id;
   }
 
 }

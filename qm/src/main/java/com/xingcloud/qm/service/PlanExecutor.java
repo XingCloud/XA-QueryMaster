@@ -1,5 +1,6 @@
 package com.xingcloud.qm.service;
 
+import com.xingcloud.qm.remote.QueryNode;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.exec.client.DrillClient;
 import org.apache.drill.exec.proto.UserProtos;
@@ -48,7 +49,7 @@ public class PlanExecutor {
 
     @Override
     public void run() {
-      DrillClient[] clients = DrillClusterInfo.getInstance().getDrillbits();
+      DrillClient[] clients = QueryNode.toClients();
       List<Future<List<QueryResultBatch>>> futures = new ArrayList<>(clients.length);
       for (int i = 0; i < clients.length; i++) {
         DrillClient client = clients[i];
@@ -59,7 +60,7 @@ public class PlanExecutor {
         Future<List<QueryResultBatch>> future = futures.get(i);
         try {
           List<QueryResultBatch> batches = future.get();
-          Map<String, Map<String, Number[]>> ret = RecordParser.materializeRecords(batches, DrillClusterInfo.getInstance().getAllocator());
+          Map<String, Map<String, Number[]>> ret = RecordParser.materializeRecords(batches, QueryNode.getAllocator());
           materializedResults.add(ret);
         } catch (InterruptedException | ExecutionException e) {
           logger.warn("plan executing error", e);
@@ -115,7 +116,7 @@ public class PlanExecutor {
 
     @Override
     public List<QueryResultBatch> call() throws Exception {
-      return client.runQuery(UserProtos.QueryType.LOGICAL, plan.toJsonString(DrillClusterInfo.getInstance().getLocalConfig()));
+      return client.runQuery(UserProtos.QueryType.LOGICAL, plan.toJsonString(QueryNode.LOCAL_DEFAULT_DRILL_CONFIG));
     }
   }
 }
