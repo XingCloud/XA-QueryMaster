@@ -16,7 +16,7 @@ import java.util.List;
 public class QueryNode {
   private static final Logger LOGGER = Logger.getLogger(QueryWorker.class);
   public static final List<QueryNode> NODES = new ArrayList<>(16);
-  public static final DrillConfig LOCAL_DEFAULT_DRILL_CONFIG=DrillConfig.create();
+  public static final DrillConfig LOCAL_DEFAULT_DRILL_CONFIG = DrillConfig.create();
   public static final BufferAllocator DEFAULT_BUFFER_ALLOCATOR = new DirectBufferAllocator();
 
   static {
@@ -48,7 +48,7 @@ public class QueryNode {
     return drillClient;
   }
 
-  public static DrillClient[] toClients() {
+  public static DrillClient[] getClients() {
     if (CollectionUtils.isEmpty(NODES)) {
       return null;
     }
@@ -68,6 +68,7 @@ public class QueryNode {
     } catch (Exception e) {
       e.printStackTrace();
     }
+    LOGGER.info("[DRILL-CLIENT]: " + id + " connected to server.");
   }
 
   public String getId() {

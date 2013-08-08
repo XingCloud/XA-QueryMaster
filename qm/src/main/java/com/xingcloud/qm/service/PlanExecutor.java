@@ -12,35 +12,38 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class PlanExecutor {
-  
+
   private static final Logger logger = LoggerFactory.getLogger(PlanExecutor.class);
   private static PlanExecutor instance;
 
   //for PlanRunner. 
-  private static ExecutorService planExecutor = new ThreadPoolExecutor(
-    24,24,30, TimeUnit.MINUTES, new ArrayBlockingQueue<Runnable>(256)
-  );
+  private static ExecutorService planExecutor = new ThreadPoolExecutor(24, 24, 30, TimeUnit.MINUTES,
+                                                                       new ArrayBlockingQueue<Runnable>(256));
 
   //for drillbitRunner.
-  private static ExecutorService drillBitExecutor = new ThreadPoolExecutor(
-    24,24,30, TimeUnit.MINUTES, new ArrayBlockingQueue<Runnable>(256)
-  );
-  
+  private static ExecutorService drillBitExecutor = new ThreadPoolExecutor(24, 24, 30, TimeUnit.MINUTES,
+                                                                           new ArrayBlockingQueue<Runnable>(256));
+
   public static PlanExecutor getInstance() {
     return instance;
   }
 
   public void executePlan(String projectID, LogicalPlan plan, QueryListener listener) {
-    planExecutor.execute(new PlanRunner(new PlanSubmission(plan, projectID+"."+System.currentTimeMillis(), projectID), listener));
+    planExecutor.execute(
+      new PlanRunner(new PlanSubmission(plan, projectID + "." + System.currentTimeMillis(), projectID), listener));
   }
 
   private class PlanRunner implements Runnable {
     private final QueryListener listner;
     private final PlanSubmission submission;
-
 
     public PlanRunner(PlanSubmission planSubmission, QueryListener listener) {
       this.submission = planSubmission;
@@ -49,13 +52,13 @@ public class PlanExecutor {
 
     @Override
     public void run() {
-      DrillClient[] clients = QueryNode.toClients();
+      DrillClient[] clients = QueryNode.getClients();
       List<Future<List<QueryResultBatch>>> futures = new ArrayList<>(clients.length);
       for (int i = 0; i < clients.length; i++) {
         DrillClient client = clients[i];
         futures.add(drillBitExecutor.submit(new DrillbitCallable(submission.plan, client)));
       }
-      List<Map<String, Map<String, Number[]>>> materializedResults = new ArrayList<Map<String, Map<String,Number[]>>>();
+      List<Map<String, Map<String, Number[]>>> materializedResults = new ArrayList<Map<String, Map<String, Number[]>>>();
       for (int i = 0; i < futures.size(); i++) {
         Future<List<QueryResultBatch>> future = futures.get(i);
         try {
@@ -73,7 +76,8 @@ public class PlanExecutor {
       listner.onQueryResultRecieved(submission.id, submission);
     }
 
-    private Map<String, Map<String, Number[]>> mergeResults(List<Map<String, Map<String, Number[]>>> materializedResults) {
+    private Map<String, Map<String, Number[]>> mergeResults(
+      List<Map<String, Map<String, Number[]>>> materializedResults) {
       Map<String, Map<String, Number[]>> merged = new HashMap<String, Map<String, Number[]>>();
       for (int i = 0; i < materializedResults.size(); i++) {
         Map<String, Map<String, Number[]>> result = materializedResults.get(i);
@@ -81,7 +85,7 @@ public class PlanExecutor {
           String queryID = entry.getKey();
           Map<String, Number[]> value = entry.getValue();
           Map<String, Number[]> mergedValue = merged.get(queryID);
-          if(mergedValue == null){
+          if (mergedValue == null) {
             mergedValue = new HashMap<String, Number[]>();
             merged.put(queryID, mergedValue);
           }
@@ -89,12 +93,12 @@ public class PlanExecutor {
             String dimensionKey = entry2.getKey();
             Number[] entryValue = entry2.getValue();
             Number[] mergedEntryValue = mergedValue.get(dimensionKey);
-            if(mergedEntryValue == null){
+            if (mergedEntryValue == null) {
               mergedEntryValue = entryValue;
               mergedValue.put(dimensionKey, mergedEntryValue);
-            }else{
+            } else {
               for (int j = 0; j < mergedEntryValue.length; j++) {
-                mergedEntryValue[j] = (Long)mergedEntryValue[j] + (Long)entryValue[j];
+                mergedEntryValue[j] = (Long) mergedEntryValue[j] + (Long) entryValue[j];
               }
             }
           }
@@ -104,7 +108,7 @@ public class PlanExecutor {
     }
   }
 
-  private class DrillbitCallable implements Callable<List<QueryResultBatch>>{
+  private class DrillbitCallable implements Callable<List<QueryResultBatch>> {
     private final LogicalPlan plan;
     private final DrillClient client;
 
