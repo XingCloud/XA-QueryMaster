@@ -4,10 +4,10 @@ import com.xingcloud.cache.XCache;
 import com.xingcloud.cache.XCacheInfo;
 import com.xingcloud.cache.exception.XCacheException;
 import com.xingcloud.cache.redis.NoSelectRedisXCacheOperator;
+import com.xingcloud.qm.result.ResultTable;
 import org.apache.drill.common.logical.LogicalPlan;
-import org.apache.drill.exec.memory.BufferAllocator;
-import org.apache.drill.exec.memory.DirectBufferAllocator;
-import org.apache.drill.exec.rpc.user.QueryResultBatch;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,6 +23,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class QueryMaster implements Submit, QueryListener {
 
+  static Logger logger = LoggerFactory.getLogger(QueryMaster.class);
+  
   //同时最多允许多少个plan执行
   public static final int MAX_PLAN_EXECUTING = 16;
 
@@ -31,6 +33,9 @@ public class QueryMaster implements Submit, QueryListener {
   
   //最多允许多少个plan一起合并
   public static final int MAX_BATCHMERGE = Integer.MAX_VALUE;  
+  
+  //最多允许的合并后的plan的cost。目前，单个原始查询的cost为1。
+  public static final int MAX_BATCHCOST = 256;  
   
   
   private static QueryMaster instance = new QueryMaster();
@@ -46,7 +51,7 @@ public class QueryMaster implements Submit, QueryListener {
    * 每个project所提交的任务队列。
    * 由QueryMaster写入，由Scheduler取出。
    */
-  public Map<String, Deque<LogicalPlan>> perProjectSubmitted = new ConcurrentHashMap<String, Deque<LogicalPlan>>();
+  public Map<String, Deque<QuerySubmission>> perProjectSubmitted = new ConcurrentHashMap<>();
   
   
   private Scheduler scheduler = new Scheduler();
@@ -84,13 +89,13 @@ public class QueryMaster implements Submit, QueryListener {
   }
 
   private void putProjectQueue(QuerySubmission submittion, String projectID, String id) {
-   getProjectQueue(projectID).add(submittion.plan);
+   getProjectQueue(projectID).add(submittion);
   }
   
-  private Deque<LogicalPlan> getProjectQueue(String projectID) {
-    Deque<LogicalPlan> projectPlans = perProjectSubmitted.get(projectID);
+  private Deque<QuerySubmission> getProjectQueue(String projectID) {
+    Deque<QuerySubmission> projectPlans = perProjectSubmitted.get(projectID);
     if(projectPlans == null){
-      projectPlans = new ArrayDeque<LogicalPlan>();
+      projectPlans = new ArrayDeque<>();
       perProjectSubmitted.put(projectID, projectPlans);
     }
     return projectPlans;
@@ -106,11 +111,15 @@ public class QueryMaster implements Submit, QueryListener {
       }
       submitted.remove(queryID);
       String key = queryID;
-      Map<String, Number[]> value;
-      try {
-        NoSelectRedisXCacheOperator.getInstance().putCache(new XCache(key, basicQuery.value, System.currentTimeMillis(), XCacheInfo.CACHE_INFO_0));
-      } catch (XCacheException e) {
-        e.printStackTrace();  //e:
+      if(basicQuery.e!=null){
+        logger.warn("execution failed!", basicQuery.e);
+        
+      }else{
+        try {
+          NoSelectRedisXCacheOperator.getInstance().putCache(new XCache(key, basicQuery.value.toCacheValue(), System.currentTimeMillis(), XCacheInfo.CACHE_INFO_0));
+        } catch (XCacheException e) {
+          e.printStackTrace();  //e:
+        }
       }
     }
     
@@ -144,48 +153,78 @@ public class QueryMaster implements Submit, QueryListener {
           || submitted.size()==0){ //无任务可以提交
           continue;
         }
-        for (Map.Entry<String, Deque<LogicalPlan>> entry : perProjectSubmitted.entrySet()) {
+        for (Map.Entry<String, Deque<QuerySubmission>> entry : perProjectSubmitted.entrySet()) {
           if(executing.intValue()>=MAX_PLAN_EXECUTING){ //到达最大执行上限
             break;
           }
           String projectID = entry.getKey();
-          Deque<LogicalPlan> projectSubmissions = entry.getValue();
+          Deque<QuerySubmission> projectSubmissions = entry.getValue();
           if(projectSubmissions.size()==0             //这个project无任务可提交          
             || perProjectExecuting.get(projectID).intValue() >= MAX_PLAN_PER_PROJECT){//这个任务已经有太多plan在执行
             continue;
           }
-          //找任务，合并。不超过MAX_BATCHMERGE
-          List<LogicalPlan> pickedPlans = new ArrayList<LogicalPlan>();
-          for (int i = 0; projectSubmissions.size()>0 && i<MAX_BATCHMERGE; i++) {
-            LogicalPlan submittion = projectSubmissions.pollFirst();
-            pickedPlans.add(submittion);
+          //找任务，合并。不超过MAX_BATCHMERGE，MAX_BATCHCOST
+          List<QuerySubmission> pickedSubmissions = new ArrayList<>();
+          int totalCost = 0;
+          for (int i = 0; projectSubmissions.size()>0 && i<MAX_BATCHMERGE && totalCost < MAX_BATCHCOST; i++) {
+            QuerySubmission submission = projectSubmissions.pollFirst();
+            totalCost += submission.cost;
+            pickedSubmissions.add(submission);
           }
-          
+          List<LogicalPlan> pickedPlans = new ArrayList<>();
+          for (int i = 0; i < pickedSubmissions.size(); i++) {
+            QuerySubmission querySubmission = pickedSubmissions.get(i);
+            pickedPlans.add(querySubmission.plan);
+          }
           Map<LogicalPlan, LogicalPlan> origin2Merged = PlanMerge.sortAndMerge(pickedPlans);
           int executed = 0;
-          Iterator<LogicalPlan> merged = origin2Merged.values().iterator();
+          
+          //建立合并后的plan和原始用户提交的BasicQuerySubmission之间的对应关系
+          Map<LogicalPlan, PlanSubmission> mergedPlan2Submissions = new HashMap<>();
+          for (int i = 0; i < pickedSubmissions.size(); i++) {
+            QuerySubmission submission =  pickedSubmissions.get(i);
+            LogicalPlan to = origin2Merged.get(submission.plan);
+            if(to == submission.plan){
+              if(submission instanceof PlanSubmission){
+                mergedPlan2Submissions.put(to, (PlanSubmission) submission);
+              }else{
+                mergedPlan2Submissions.put(to, new PlanSubmission(submission, projectID));
+              }
+            }else{//newly merged plan
+              PlanSubmission mergedSubmission = mergedPlan2Submissions.get(to);
+              if(mergedSubmission != null){
+                //mark submission merge
+                (mergedSubmission).absorbIDCost(submission);
+              }else{
+                mergedSubmission = new PlanSubmission(to, projectID);
+                mergedPlan2Submissions.put(to, mergedSubmission);
+              }
+            }
+          }
+          
+          Iterator<PlanSubmission> mergedSubmissions = mergedPlan2Submissions.values().iterator();
           for(int i = getProjectCounter(projectID).intValue();i<MAX_PLAN_PER_PROJECT;i++){
-            if(!merged.hasNext()){
+            if(!mergedSubmissions.hasNext()){
               break;
             }
-            LogicalPlan plan = merged.next();
-            doSubmitExecution(projectID, plan);
+            PlanSubmission plan = mergedSubmissions.next();
+            doSubmitExecution(plan);
           }
           //如果有未提交的任务，一并放回perProject的任务队列
-          for(;merged.hasNext();){
-            LogicalPlan unExecuted = merged.next();
+          for(;mergedSubmissions.hasNext();){
+            QuerySubmission unExecuted = mergedSubmissions.next();
             projectSubmissions.addFirst(unExecuted);
           }
         }
       }
     }
 
-    private void doSubmitExecution(String projectID, LogicalPlan plan) {
+    private void doSubmitExecution(PlanSubmission plan) {
       //更新各种counter
       this.executing.incrementAndGet();
-      getProjectCounter(projectID).incrementAndGet();
+      getProjectCounter(plan.projectID).incrementAndGet();
       
-      PlanExecutor.getInstance().executePlan(projectID, plan, Scheduler.this);
+      PlanExecutor.getInstance().executePlan(plan, Scheduler.this);
     }
 
     private AtomicInteger getProjectCounter(String projectID) {
@@ -211,13 +250,22 @@ public class QueryMaster implements Submit, QueryListener {
         getProjectCounter(planSubmission.projectID).decrementAndGet();
         
         // 分发数据
-        Map<String, Map<String, Number[]>> materializedRecords = planSubmission.getValues();
-        for (Map.Entry<String, Map<String, Number[]>> entry : materializedRecords.entrySet()) {
-          String basicQueryID = entry.getKey();
-          Map<String, Number[]> value = entry.getValue();
-          BasicQuerySubmission basicSubmission = (BasicQuerySubmission) submitted.get(basicQueryID);
-          basicSubmission.value = value;
-          QueryMaster.this.onQueryResultRecieved(basicQueryID, basicSubmission);
+        if(planSubmission.e != null){
+          //出错处理
+          for(String basicQueryID:planSubmission.originalSubmissions){
+            BasicQuerySubmission basicSubmission = (BasicQuerySubmission) submitted.get(basicQueryID);
+            basicSubmission.e = planSubmission.e;
+            QueryMaster.this.onQueryResultRecieved(basicQueryID, basicSubmission);
+          }
+        }else{
+          Map<String,ResultTable> materializedRecords = planSubmission.getValues();
+          for (Map.Entry<String, ResultTable> entry : materializedRecords.entrySet()) {
+            String basicQueryID = entry.getKey();
+            ResultTable value = entry.getValue();
+            BasicQuerySubmission basicSubmission = (BasicQuerySubmission) submitted.get(basicQueryID);
+            basicSubmission.value = value;
+            QueryMaster.this.onQueryResultRecieved(basicQueryID, basicSubmission);
+          }
         }
       }
     }

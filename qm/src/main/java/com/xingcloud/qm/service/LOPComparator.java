@@ -101,7 +101,7 @@ public abstract class LOPComparator<T extends LogicalOperator> implements Compar
   private static class LimitComparator extends LOPComparator<Limit> {
     @Override
     public int compare(Limit o1, Limit o2) {
-      return 0;  //TODO method implementation
+      return -1;
     }
   }
 

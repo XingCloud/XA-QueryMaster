@@ -1,5 +1,7 @@
 package com.xingcloud.qm.service;
 
+import com.xingcloud.qm.result.ResultRow;
+import com.xingcloud.qm.result.ResultTable;
 import org.apache.drill.exec.exception.SchemaChangeException;
 import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.record.RecordBatchLoader;
@@ -22,17 +24,17 @@ public class RecordParser {
    * 按照XCache约定格式，解析返回的RecordBatch
    * @param records 
    * @param allocator
-   * @return Map: queryID -> value. value的类型是：Map<String, Number[]> 包含count, sum, user_num
+   * @return Map: queryID -> value. value的类型是：Map<String, Number[]> 包含count, sum, user_num, 以及一个采样率。
    */
-  public static Map<String, Map<String, Number[]>> materializeRecords(List<QueryResultBatch> records, BufferAllocator allocator) {
-    Map<String, Map<String, Number[]>> out = new HashMap<String, Map<String, Number[]>>();
+  public static Map<String, ResultTable> materializeRecords(List<QueryResultBatch> records, BufferAllocator allocator) {
+    Map<String, ResultTable> out = new HashMap<>();
     // Look at records
     RecordBatchLoader batchLoader = new RecordBatchLoader(allocator);
     int recordCount = 0;
     String dimensionKey = null;
     long count, sum, user_num = 0;
     String currentQueryID = null;
-    Map<String, Number[]> currentValue = new HashMap<String, Number[]>();
+    ResultTable currentValue = new ResultTable();
     for (QueryResultBatch batch : records) {
       if (!batch.hasData()) continue;
       boolean schemaChanged = false;
@@ -56,7 +58,7 @@ public class RecordParser {
                 //output previous queryID
                 out.put(currentQueryID, currentValue);
                 currentQueryID = nextQueryID;
-                currentValue = new HashMap<String, Number[]>();
+                currentValue = new ResultTable();
               }
             }
           }else if(COL_DIMENSION.equals(colName)){
@@ -68,7 +70,7 @@ public class RecordParser {
           }else if(COL_USER_NUM.equals(colName)){
             user_num = (long) vv.getAccessor().getObject(i); 
           }
-          currentValue.put(dimensionKey, new Number[]{count, sum, user_num});
+          currentValue.put(dimensionKey,new ResultRow(count, sum, user_num));
         }
       }//batchLoader.getRecordCount()
       

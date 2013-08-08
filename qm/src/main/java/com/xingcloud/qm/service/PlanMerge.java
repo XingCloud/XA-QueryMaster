@@ -130,6 +130,10 @@ public class PlanMerge {
    * 如果两个scan完全一样，就合并。 如果两个scan，其中一个的scan被另一个包含，就给他加一个filter，然后合并。 非叶子节点：如果完全一样（子节点也一样），就合并。
    */
   private LogicalPlan doMergePlan(Set<LogicalPlan> plans, ProjectMergeContext projectCtx) {
+    if(plans.size()==1){
+      //no need to run merge; should not run merge
+      return plans.iterator().next();
+    }
     PlanProperties head = null;
     Map<String, StorageEngineConfig> se = null;
     PlanMergeContext planCtx = new PlanMergeContext();
@@ -448,6 +452,7 @@ public class PlanMerge {
   /**
    * @param plans 需要merge的LogicalPlan 列表
    * @return 原始的LogicalPlan和合并以后LogicalPlan之间的对应关系。 Map的key 是 原始的LogicalPlan，value是合并后的LogicalPlan。
+   *         如果输入的plans当中，有plan 没有和别的plan合并，则在返回的map中，key和value都是这个plan。
    */
   public static Map<LogicalPlan, LogicalPlan> sortAndMerge(List<LogicalPlan> plans) {
     return new PlanMerge(plans).getMerged();
