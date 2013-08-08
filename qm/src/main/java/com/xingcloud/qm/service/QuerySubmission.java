@@ -14,9 +14,10 @@ public abstract class QuerySubmission {
   String id;
   LogicalPlan plan;
   long startTime;
+
+  public Exception e;
   
   //简单模型，来估计plan的执行代价
-  //TODO 基于cost来控制Plan的执行数量
   float cost = 1;
 
   public QuerySubmission(LogicalPlan plan, String id) {

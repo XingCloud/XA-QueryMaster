@@ -1,6 +1,8 @@
 package com.xingcloud.qm.service;
 
 import com.xingcloud.qm.remote.QueryNode;
+import com.xingcloud.qm.result.ResultRow;
+import com.xingcloud.qm.result.ResultTable;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.exec.client.DrillClient;
 import org.apache.drill.exec.proto.UserProtos;
@@ -33,18 +35,18 @@ public class PlanExecutor {
     return instance;
   }
 
-  public void executePlan(String projectID, LogicalPlan plan, QueryListener listener) {
-    planExecutor.execute(new PlanRunner(new PlanSubmission(plan, projectID+"."+System.currentTimeMillis(), projectID), listener));
+  public void executePlan(PlanSubmission plan, QueryListener listener) {
+    planExecutor.execute(new PlanRunner(plan, listener));
   }
 
   private class PlanRunner implements Runnable {
-    private final QueryListener listner;
+    private final QueryListener listener;
     private final PlanSubmission submission;
 
 
     public PlanRunner(PlanSubmission planSubmission, QueryListener listener) {
       this.submission = planSubmission;
-      this.listner = listener;
+      this.listener = listener;
     }
 
     @Override
@@ -55,47 +57,74 @@ public class PlanExecutor {
         DrillClient client = clients[i];
         futures.add(drillBitExecutor.submit(new DrillbitCallable(submission.plan, client)));
       }
-      List<Map<String, Map<String, Number[]>>> materializedResults = new ArrayList<Map<String, Map<String,Number[]>>>();
+      List<Map<String, ResultTable>> materializedResults = new ArrayList<>();
+      //收集结果。理想情况下，应该收集所有的计算结果。
+      //在有drillbit计算失败的情况下，使用剩下的结果作为估计值
+      int succeeded = 0;
+      Exception failedCause = null;
       for (int i = 0; i < futures.size(); i++) {
         Future<List<QueryResultBatch>> future = futures.get(i);
         try {
           List<QueryResultBatch> batches = future.get();
-          Map<String, Map<String, Number[]>> ret = RecordParser.materializeRecords(batches, QueryNode.getAllocator());
+          Map<String, ResultTable> ret = RecordParser.materializeRecords(batches, QueryNode.getAllocator());
           materializedResults.add(ret);
+          succeeded++;
         } catch (Exception e) {
           logger.warn("plan executing error", e);
-          e.printStackTrace();  //e:
-          return;
+          failedCause = e;
         }
       }
-      Map<String, Map<String, Number[]>> merged = mergeResults(materializedResults);
-      submission.values = merged;
-      listner.onQueryResultRecieved(submission.id, submission);
+      if(succeeded==0){
+        submission.e = failedCause;
+        submission.queryID2Table = null;
+        listener.onQueryResultRecieved(submission.id, submission);
+      }
+      Map<String,ResultTable> merged = mergeResults(materializedResults);
+      //如果有结果没有收到，则根据采样率估计值
+      if(succeeded < futures.size()){
+        double sampleRate = 1.0*succeeded/futures.size();
+        for (Map.Entry<String, ResultTable> entry : merged.entrySet()) {
+          String queryID = entry.getKey();
+          ResultTable result = entry.getValue();
+          for (Map.Entry<String, ResultRow> entry2 : result.entrySet()) {
+            String dimensionKey = entry2.getKey();
+            ResultRow v = entry2.getValue();
+            v.count /= sampleRate;
+            v.sum /= sampleRate;
+            v.userNum /= sampleRate;
+            v.sampleRate = sampleRate;
+          }
+          
+        }
+      }
+      submission.queryID2Table = merged;
+      listener.onQueryResultRecieved(submission.id, submission);
     }
 
-    private Map<String, Map<String, Number[]>> mergeResults(List<Map<String, Map<String, Number[]>>> materializedResults) {
-      Map<String, Map<String, Number[]>> merged = new HashMap<String, Map<String, Number[]>>();
+    private Map<String, ResultTable> mergeResults(List<Map<String, ResultTable>> materializedResults) {
+      Map<String,ResultTable> merged = new HashMap<>();
       for (int i = 0; i < materializedResults.size(); i++) {
-        Map<String, Map<String, Number[]>> result = materializedResults.get(i);
-        for (Map.Entry<String, Map<String, Number[]>> entry : result.entrySet()) {
+        Map<String, ResultTable> result = materializedResults.get(i);
+        for (Map.Entry<String, ResultTable> entry : result.entrySet()) {
           String queryID = entry.getKey();
-          Map<String, Number[]> value = entry.getValue();
-          Map<String, Number[]> mergedValue = merged.get(queryID);
+          ResultTable value = entry.getValue();
+          ResultTable mergedValue = merged.get(queryID);
           if(mergedValue == null){
-            mergedValue = new HashMap<String, Number[]>();
+            mergedValue = new ResultTable();
             merged.put(queryID, mergedValue);
           }
-          for (Map.Entry<String, Number[]> entry2 : value.entrySet()) {
+          for (Map.Entry<String, ResultRow> entry2 : value.entrySet()) {
             String dimensionKey = entry2.getKey();
-            Number[] entryValue = entry2.getValue();
-            Number[] mergedEntryValue = mergedValue.get(dimensionKey);
+            ResultRow entryValue = entry2.getValue();
+            ResultRow mergedEntryValue = mergedValue.get(dimensionKey);
             if(mergedEntryValue == null){
               mergedEntryValue = entryValue;
               mergedValue.put(dimensionKey, mergedEntryValue);
             }else{
-              for (int j = 0; j < mergedEntryValue.length; j++) {
-                mergedEntryValue[j] = (Long)mergedEntryValue[j] + (Long)entryValue[j];
-              }
+              mergedEntryValue.count += entryValue.count;
+              mergedEntryValue.sum += entryValue.sum;
+              mergedEntryValue.userNum += entryValue.userNum;
+              mergedEntryValue.sampleRate = entryValue.sampleRate;//todo better merge sample rate
             }
           }
         }
