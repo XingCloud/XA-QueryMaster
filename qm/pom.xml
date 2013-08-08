@@ -27,7 +27,7 @@
   <!-- Building config -->
   <build>
     <defaultGoal>package</defaultGoal>
-    <finalName>${project.artifactId}.${project.version}</finalName>
+    <finalName>${project.artifactId}</finalName>
     <!-- Resources of app -->
     <resources>
       <resource>
@@ -37,7 +37,7 @@
         </includes>
       </resource>
       <resource>
-        <directory>${project.basedir}/src/main/resources/${purpose}/</directory>
+        <directory>${project.basedir}/src/main/resources/${xa_env}/</directory>
       </resource>
     </resources>
 
@@ -185,6 +185,21 @@
       <groupId>org.apache.drill.exec</groupId>
       <artifactId>java-exec</artifactId>
       <version>1.0-SNAPSHOT</version>
+      <exclusions>
+        <exclusion>
+          <artifactId>servlet-api</artifactId>
+          <groupId>javax.servlet</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>jsp-api</artifactId>
+          <groupId>javax.servlet.jsp</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>servlet-api</artifactId>
+          <groupId>org.mortbay.jetty</groupId>
+        </exclusion>
+      </exclusions>
     </dependency>
+
   </dependencies>
 </project>

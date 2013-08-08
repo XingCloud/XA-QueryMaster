@@ -59,6 +59,9 @@ public class QueryNode {
     return clients;
   }
 
+  public static void init() {
+  }
+
   public QueryNode(String id, String conf) {
     super();
     this.id = id;

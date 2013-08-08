@@ -1,7 +1,6 @@
 package com.xingcloud.qm.web.listener;
 
-import com.xingcloud.qm.thread.BrokerESProvider;
-import com.xingcloud.qm.thread.CachePutESProvider;
+import com.xingcloud.qm.remote.QueryNode;
 import org.apache.log4j.Logger;
 
 import javax.servlet.ServletContextEvent;
@@ -18,10 +17,8 @@ public class QMStartServiceListener implements ServletContextListener {
 
   @Override
   public void contextInitialized(ServletContextEvent arg0) {
-    BrokerESProvider.getInstance().init();
-    LOGGER.info("[STARTUP-LISTENER] - Brokers have been inited.");
-    CachePutESProvider.getInstance().init();
-    LOGGER.info("[STARTUP-LISTENER] - Cache putters have been inited.");
+    QueryNode.init();
+    LOGGER.info("[STARTUP-LISTENER] - Query nodes inited.");
   }
 
 }
