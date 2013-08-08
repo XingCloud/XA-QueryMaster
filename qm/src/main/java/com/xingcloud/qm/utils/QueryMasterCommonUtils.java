@@ -16,11 +16,11 @@ import static com.xingcloud.qm.utils.QueryMasterConstant.SIZE_KEY;
 import static com.xingcloud.qm.utils.QueryMasterConstant.SUM;
 import static com.xingcloud.qm.utils.QueryMasterConstant.USER_NUM;
 
+import com.google.common.base.Strings;
 import com.xingcloud.cache.MappedXCache;
 import org.apache.hadoop.io.ArrayWritable;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.thirdparty.guava.common.base.Strings;
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
