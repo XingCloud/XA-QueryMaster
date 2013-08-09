@@ -53,6 +53,10 @@ public class PlanExecutor {
 
     @Override
     public void run() {
+      logger.info("PlanSubmission {} executing...", submission.id);
+      if(logger.isDebugEnabled()){
+        logger.debug("PlanSubmission " + submission.id + " with "+ submission.plan.getGraph().getAdjList().getNodeSet().size()+" nodes...");
+      }
       DrillClient[] clients = QueryNode.getClients();
       List<Future<List<QueryResultBatch>>> futures = new ArrayList<>(clients.length);
       for (int i = 0; i < clients.length; i++) {
@@ -79,8 +83,9 @@ public class PlanExecutor {
       if(succeeded==0){
         submission.e = failedCause;
         submission.queryID2Table = null;
-        listener.onQueryResultRecieved(submission.id, submission);
+        listener.onQueryResultReceived(submission.id, submission);
       }
+      logger.debug("PlanSubmission {}: {} drillbits returned results.", submission.id, succeeded);
       Map<String,ResultTable> merged = mergeResults(materializedResults);
       //如果有结果没有收到，则根据采样率估计值
       if(succeeded < futures.size()){
@@ -100,7 +105,7 @@ public class PlanExecutor {
         }
       }
       submission.queryID2Table = merged;
-      listener.onQueryResultRecieved(submission.id, submission);
+      listener.onQueryResultReceived(submission.id, submission);
     }
 
     private Map<String, ResultTable> mergeResults(List<Map<String, ResultTable>> materializedResults) {

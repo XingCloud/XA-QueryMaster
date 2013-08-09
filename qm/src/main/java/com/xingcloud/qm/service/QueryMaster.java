@@ -76,6 +76,7 @@ public class QueryMaster implements QueryListener {
   }
 
   private void enQueue(LogicalPlan plan, String id) {
+    logger.info("BasicQuerySubmission {} submitted.", id);
     QuerySubmission submission = new BasicQuerySubmission(plan, id);
     submitted.put(id, submission);
     String projectID = PlanMerge.getProjectID(plan);
@@ -96,9 +97,10 @@ public class QueryMaster implements QueryListener {
   }
 
   @Override
-  public void onQueryResultRecieved(String queryID, QuerySubmission query) {
+  public void onQueryResultReceived(String queryID, QuerySubmission query) {
     if (query instanceof BasicQuerySubmission) {
       //修改submitted 记录
+      logger.info("BasicQuerySubmission {} completed.", queryID);      
       BasicQuerySubmission basicQuery = (BasicQuerySubmission) query;
       if (!submitted.containsKey(queryID)) {
         throw new IllegalArgumentException("queryID:" + queryID + " not in submitted pool!");
@@ -204,6 +206,9 @@ public class QueryMaster implements QueryListener {
               break;
             }
             PlanSubmission plan = mergedSubmissions.next();
+            if(logger.isDebugEnabled()){
+              logger.debug("PlanSubmission {} submitted: {}", plan.id, plan.originalSubmissions.toString());
+            }
             doSubmitExecution(plan);
           }
           //如果有未提交的任务，一并放回perProject的任务队列
@@ -238,8 +243,9 @@ public class QueryMaster implements QueryListener {
     }
 
     @Override
-    public void onQueryResultRecieved(String queryID, QuerySubmission query) {
+    public void onQueryResultReceived(String queryID, QuerySubmission query) {
       if (query instanceof PlanSubmission) {
+        logger.debug("PlanSubmission: {} completed.", queryID);
         PlanSubmission planSubmission = (PlanSubmission) query;
         //修改scheduler计数器
         executing.decrementAndGet();
@@ -251,7 +257,7 @@ public class QueryMaster implements QueryListener {
           for (String basicQueryID : planSubmission.originalSubmissions) {
             BasicQuerySubmission basicSubmission = (BasicQuerySubmission) submitted.get(basicQueryID);
             basicSubmission.e = planSubmission.e;
-            QueryMaster.this.onQueryResultRecieved(basicQueryID, basicSubmission);
+            QueryMaster.this.onQueryResultReceived(basicQueryID, basicSubmission);
           }
         } else {
           Map<String, ResultTable> materializedRecords = planSubmission.getValues();
@@ -260,7 +266,7 @@ public class QueryMaster implements QueryListener {
             ResultTable value = entry.getValue();
             BasicQuerySubmission basicSubmission = (BasicQuerySubmission) submitted.get(basicQueryID);
             basicSubmission.value = value;
-            QueryMaster.this.onQueryResultRecieved(basicQueryID, basicSubmission);
+            QueryMaster.this.onQueryResultReceived(basicQueryID, basicSubmission);
           }
         }
       }

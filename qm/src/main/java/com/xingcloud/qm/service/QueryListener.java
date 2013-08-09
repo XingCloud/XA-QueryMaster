@@ -1,5 +1,5 @@
 package com.xingcloud.qm.service;
 
 public interface QueryListener {
-  void onQueryResultRecieved(String queryID, QuerySubmission query);
+  void onQueryResultReceived(String queryID, QuerySubmission query);
 }
