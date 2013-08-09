@@ -1,0 +1,59 @@
+{
+  head : {
+    type : "APACHE_DRILL_LOGICAL",
+    version : 1,
+    generator : {
+      type : "AUTO",
+      info : "testtable_100w"
+    }
+  },
+  storage : { },
+  query : [ {
+    op : "scan",
+    @id : 1,
+    memo : "Scan(Table=testtable_100w_deu)",
+    storageengine : "hbase",
+    selection : [ {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      filters : null,
+      rowkey : {
+        end : "MjAxMzA3MDF2aXNpdA==",
+        start : "MjAxMzA3MDF2aXNpdA=="
+      },
+      table : "testtable_100w_deu"
+    } ],
+    ref : "testtable_100w_deu"
+  }, {
+    op : "collapsingaggregate",
+    @id : 2,
+    input : 1,
+    within : null,
+    target : null,
+    carryovers : null,
+    aggregations : [ {
+      ref : "event_count",
+      expr : "count('testtable_100w_deu.uid') "
+    }, {
+      ref : "user_number",
+      expr : "count_distinct('testtable_100w_deu.uid') "
+    }, {
+      ref : "event_sum",
+      expr : "sum('testtable_100w_deu.value') "
+    } ]
+  }, {
+    op : "store",
+    @id : 3,
+    input : 2,
+    target : {
+      file : "console:///stdout"
+    },
+    partition : null,
+    storageEngine : "console"
+  } ]
+}
