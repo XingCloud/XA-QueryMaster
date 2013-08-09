@@ -156,7 +156,7 @@ public class QueryMaster implements QueryListener {
           String projectID = entry.getKey();
           Deque<QuerySubmission> projectSubmissions = entry.getValue();
           if (projectSubmissions.size() == 0             //这个project无任务可提交
-            || perProjectExecuting.get(projectID).intValue() >= MAX_PLAN_PER_PROJECT) {//这个任务已经有太多plan在执行
+            || getProjectCounter(projectID).intValue() >= MAX_PLAN_PER_PROJECT) {//这个任务已经有太多plan在执行
             continue;
           }
           //找任务，合并。不超过MAX_BATCHMERGE，MAX_BATCHCOST
