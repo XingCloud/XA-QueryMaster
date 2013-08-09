@@ -94,7 +94,7 @@ public class PlanExecutor {
             v.count /= sampleRate;
             v.sum /= sampleRate;
             v.userNum /= sampleRate;
-            v.sampleRate = sampleRate;
+            v.sampleRate *= sampleRate;
           }
           
         }

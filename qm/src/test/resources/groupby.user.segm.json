@@ -1,0 +1,128 @@
+{
+  head : {
+    type : "APACHE_DRILL_LOGICAL",
+    version : 1,
+    generator : {
+      type : "AUTO",
+      info : "testtable_100w"
+    }
+  },
+  storage : { },
+  query : [ {
+    op : "scan",
+    @id : 1,
+    storageengine : "hbase",
+    selection : [ {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "nation",
+        expr : "nation"
+      } ],
+      filters : null,
+      rowkey : {
+        end : "AAYyMDEzMDgwNQ==",
+        start : "AAYyMDEzMDgwNQ=="
+      },
+      table : "property_testtable_100w_index"
+    } ],
+    ref : "property_testtable_100w_index"
+  }, {
+    op : "scan",
+    @id : 2,
+    memo : "Scan(Table=testtable_100w_deu)",
+    storageengine : "hbase",
+    selection : [ {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      filters : null,
+      rowkey : {
+        end : "MjAxMzA3MDF2aXNpdA==",
+        start : "MjAxMzA3MDF2aXNpdA=="
+      },
+      table : "testtable_100w_deu"
+    } ],
+    ref : "testtable_100w_deu"
+  }, {
+    op : "scan",
+    @id : 3,
+    memo : "Scan(Table=property_testtable_100w_index, Prop=register_time, Val=2013-07-12)",
+    storageengine : "hbase",
+    selection : [ {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      } ],
+      filters : null,
+      rowkey : {
+        end : "AA8yMDEzMDgwNQ==",
+        start : "AA8yMDEzMDgwNQ=="
+      },
+      table : "property_testtable_100w_index"
+    } ],
+    ref : "property_testtable_100w_index"
+  }, {
+    op : "join",
+    @id : 4,
+    left : 2,
+    right : 3,
+    conditions : [ {
+      relationship : "==",
+      left : "testtable_100w_deu.uid",
+      right : "property_testtable_100w_index.uid"
+    } ],
+    type : "INNER"
+  }, {
+    op : "join",
+    @id : 5,
+    left : 1,
+    right : 4,
+    conditions : [ {
+      relationship : "==",
+      left : "property_testtable_100w_index.uid",
+      right : "testtable_100w_deu.uid"
+    } ],
+    type : "RIGHT"
+  }, {
+    op : "segment",
+    @id : 6,
+    input : 5,
+    exprs : [ {
+      ref : "segment_property_testtable_100w_index.nation",
+      expr : "property_testtable_100w_index.nation"
+    } ],
+    name : "segment_property_testtable_100w_index.nation"
+  }, {
+    op : "collapsingaggregate",
+    @id : 7,
+    input : 6,
+    within : "segment_property_testtable_100w_index.nation",
+    target : null,
+    carryovers : [ "property_testtable_100w_index.nation" ],
+    aggregations : [ {
+      ref : "event_count",
+      expr : "count('testtable_100w_deu.uid') "
+    }, {
+      ref : "user_number",
+      expr : "count_distinct('testtable_100w_deu.uid') "
+    }, {
+      ref : "event_sum",
+      expr : "sum('testtable_100w_deu.value') "
+    } ]
+  }, {
+    op : "store",
+    @id : 8,
+    input : 7,
+    target : {
+      file : "console:///stdout"
+    },
+    partition : null,
+    storageEngine : "console"
+  } ]
+}
