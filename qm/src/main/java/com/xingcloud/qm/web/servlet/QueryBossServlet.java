@@ -24,7 +24,7 @@ public class QueryBossServlet extends HessianServlet implements Submit {
       case PLAN:
         try {
           LogicalPlan plan = DrillConfig.create().getMapper().readValue(content, LogicalPlan.class);
-          QueryMaster.getInstance().submitLogicalPlan(plan, cacheKey);
+          QueryMaster.getInstance().submit(cacheKey, plan);
         } catch (IOException e) {
           throw new XRemoteQueryException(e);
         }

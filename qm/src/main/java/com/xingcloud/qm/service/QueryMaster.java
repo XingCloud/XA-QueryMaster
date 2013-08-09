@@ -66,17 +66,6 @@ public class QueryMaster implements QueryListener {
     this.scheduler.start();
   }
 
-  public boolean submitPlainSql(String sql, String cacheKey) {
-    return false;  //do not support
-  }
-
-  public boolean submitLogicalPlan(LogicalPlan plan, String id) {
-    if (submitted.containsKey(id)) {
-      return true;
-    }
-    enQueue(plan, id);
-    return true;
-  }
 
   public boolean submit(String cacheKey, LogicalPlan logicalPlan) throws XRemoteQueryException {
     if (submitted.containsKey(cacheKey)) {
