@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 public class PlanExecutor {
 
   private static final Logger logger = LoggerFactory.getLogger(PlanExecutor.class);
-  private static PlanExecutor instance;
+  private static PlanExecutor instance = new PlanExecutor();
 
   //for PlanRunner. 
   private static ExecutorService planExecutor = new ThreadPoolExecutor(24, 24, 30, TimeUnit.MINUTES,
