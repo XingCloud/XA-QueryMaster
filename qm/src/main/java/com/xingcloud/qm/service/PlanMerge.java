@@ -160,7 +160,7 @@ public class PlanMerge {
         //look for a already merged scan to which this scan can be merged
         Set<Scan> connectedScans = projectCtx.scanInspector.connectedSetOf(scan);
         Scan targetScan = null;
-        if (connectedScans != null) {
+        if (connectedScans != null && connectedScans.size()>1) {
           for (Scan connectedScan : connectedScans) {
             if (connectedScan == scan) {
               continue;
@@ -231,7 +231,21 @@ public class PlanMerge {
       }
     }
     if (roots.size() > 1) {
-      Union union = new Union(roots.toArray(new LogicalOperator[roots.size()]), false);
+      //todo 输入的plan需要store节点来指明哪里需要输出结果。
+      //这里需要把store摘除，然后连接上union
+      List<LogicalOperator> unionChildren = new ArrayList<>();
+      for (int i = 0; i < roots.size(); i++) {
+        LogicalOperator root = roots.get(i);
+        if(root instanceof Store){
+          unionChildren.add(((Store) root).getInput());
+          //detach from children
+          ((Store)root).setInput(null);
+          planCtx.mergeResult.remove(root);
+        }else{
+          unionChildren.add(root);
+        }
+      }
+      Union union = new Union(unionChildren.toArray(new LogicalOperator[unionChildren.size()]), false);
       doMergeOperator(union, null, planCtx);
       Store store = new Store("output", null, null);
       store.setInput(union);
@@ -246,17 +260,29 @@ public class PlanMerge {
 
   private void doMergeOperator(LogicalOperator source, LogicalOperator target, PlanMergeContext planCtx) {
     if (target == null) {
-      //no merge can be done
+      //no merge can be done; it's a new operator added to mergeResult
       planCtx.mergeResult.add(source);
       planCtx.mergedFrom2To.put(source, source);
       //new node added, change graph
       planCtx.mergedGraph.addVertex(source);
       for (LogicalOperator child : source) {
+        if(planCtx.mergedGraph.containsEdge(source, child)){
+          System.err.println("noooo!");
+        }
         planCtx.mergedGraph.addEdge(source, child);
       }
     } else {
       //merge scan with targetScan
       planCtx.mergedFrom2To.put(source, target);
+      //detach children from source
+      if(source instanceof SingleInputOperator){
+        ((SingleInputOperator)source).setInput(null);
+      }else if(source instanceof Join){
+        ((Join) source).setLeft(null);
+        ((Join) source).setRight(null);
+      }else if(source instanceof Union){
+        ((Union) source).setInputs(null);
+      }
     }
   }
 
@@ -270,10 +296,6 @@ public class PlanMerge {
       // substitute scan with targetScan
       AdjacencyList<LogicalOperator>.Node parentNode = parentEdge.getTo();
       LogicalOperator parent = parentNode.getNodeValue();
-      //do not merge Store
-      if (parent instanceof Store) {
-        continue;
-      }
       //add parent for candidate for next round check
       output.add(parentNode);
       if (substitutionInParents != null) {
