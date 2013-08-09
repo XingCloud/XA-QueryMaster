@@ -1,9 +1,13 @@
 package com.xingcloud.qm.service;
 
-import org.apache.drill.common.logical.LogicalPlan;
+import com.xingcloud.qm.exceptions.XRemoteQueryException;
+
+import java.io.Serializable;
 
 public interface Submit {
-  public boolean submitPlainSql(String sql, String cacheKey);
+  public static enum SubmitQueryType implements Serializable {
+    SQL, PLAN
+  }
 
-  public boolean submitLogicalPlan(LogicalPlan plan, String id);
+  public boolean submit(String cacheKey, String content, SubmitQueryType type) throws XRemoteQueryException;
 }
