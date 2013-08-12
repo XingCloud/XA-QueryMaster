@@ -20,15 +20,20 @@ public class QueryBossServlet extends HessianServlet implements Submit {
   public boolean submit(String cacheKey, String content, SubmitQueryType type) throws XRemoteQueryException {
     switch (type) {
       case SQL:
-        break;
+        LOGGER.info("[WS-SUBMIT] Current type(" + type + ") of operation is not supported.");
+        return false;
       case PLAN:
         try {
           LogicalPlan plan = DrillConfig.create().getMapper().readValue(content, LogicalPlan.class);
+          LOGGER.info("[WS-SUBMIT] Plan is deserialized - " + cacheKey);
           QueryMaster.getInstance().submit(cacheKey, plan);
+          LOGGER.info("[WS-SUBMIT] Logical plan is submitted - " + cacheKey);
+          return true;
         } catch (IOException e) {
           throw new XRemoteQueryException(e);
         }
+      default:
+        return false;
     }
-    return false;
   }
 }
