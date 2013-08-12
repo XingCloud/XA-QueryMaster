@@ -88,28 +88,28 @@ public class PlanExecutor {
       if(succeeded==0){
         submission.e = failedCause;
         submission.queryID2Table = null;
-        listener.onQueryResultReceived(submission.id, submission);
-      }
-      logger.debug("PlanSubmission {}: {} drillbits returned results.", submission.id, succeeded);
-      Map<String,ResultTable> merged = mergeResults(materializedResults);
-      //如果有结果没有收到，则根据采样率估计值
-      if(succeeded < futures.size()){
-        double sampleRate = 1.0*succeeded/futures.size();
-        for (Map.Entry<String, ResultTable> entry : merged.entrySet()) {
-          String queryID = entry.getKey();
-          ResultTable result = entry.getValue();
-          for (Map.Entry<String, ResultRow> entry2 : result.entrySet()) {
-            String dimensionKey = entry2.getKey();
-            ResultRow v = entry2.getValue();
-            v.count /= sampleRate;
-            v.sum /= sampleRate;
-            v.userNum /= sampleRate;
-            v.sampleRate *= sampleRate;
+      }else{
+        logger.debug("PlanSubmission {}: {} drillbits returned results.", submission.id, succeeded);
+        Map<String,ResultTable> merged = mergeResults(materializedResults);
+        //如果有结果没有收到，则根据采样率估计值
+        if(succeeded < futures.size()){
+          double sampleRate = 1.0*succeeded/futures.size();
+          for (Map.Entry<String, ResultTable> entry : merged.entrySet()) {
+            String queryID = entry.getKey();
+            ResultTable result = entry.getValue();
+            for (Map.Entry<String, ResultRow> entry2 : result.entrySet()) {
+              String dimensionKey = entry2.getKey();
+              ResultRow v = entry2.getValue();
+              v.count /= sampleRate;
+              v.sum /= sampleRate;
+              v.userNum /= sampleRate;
+              v.sampleRate *= sampleRate;
+            }
+            
           }
-          
         }
+        submission.queryID2Table = merged;
       }
-      submission.queryID2Table = merged;
       listener.onQueryResultReceived(submission.id, submission);
     }
 

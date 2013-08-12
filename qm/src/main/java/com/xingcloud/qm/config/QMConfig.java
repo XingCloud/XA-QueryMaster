@@ -6,7 +6,7 @@ import org.apache.commons.configuration.Configuration;
 public class QMConfig {
   private static QMConfig instance;
 
-  public static final String DEFAULT_CONF = "qm.properties";
+  public static final String DEFAULT_CONF = "/qm.properties";
   public static final String OVERRIDE_CONF = "/conf/qm.properties";
   public static final String PROP_CONF = "qm.conf";
   public static final String DRILL_EXEC_TIMEOUT = "drill.exec.timeout";

@@ -191,21 +191,22 @@ public class QueryMaster implements QueryListener {
           for (int i = 0; i < pickedSubmissions.size(); i++) {
             QuerySubmission submission = pickedSubmissions.get(i);
             LogicalPlan to = origin2Merged.get(submission.plan);
-            if (to == submission.plan) {
+            if (to == submission.plan) {//origin = merged, 即没和别的plan合并的plan
               if (submission instanceof PlanSubmission) {
+                //以前已经合并过的plan
                 mergedPlan2Submissions.put(to, (PlanSubmission) submission);
               } else {
+                //第一次被合并的plan，会变成PlanSubmission
                 mergedPlan2Submissions.put(to, new PlanSubmission(submission, projectID));
               }
             } else {//newly merged plan
               PlanSubmission mergedSubmission = mergedPlan2Submissions.get(to);
-              if (mergedSubmission != null) {
-                //mark submission merge
-                (mergedSubmission).absorbIDCost(submission);
-              } else {
+              if (mergedSubmission == null) {
                 mergedSubmission = new PlanSubmission(to, projectID);
                 mergedPlan2Submissions.put(to, mergedSubmission);
               }
+              //mark submission merge              
+              (mergedSubmission).absorbIDCost(submission);              
             }
           }
 
