@@ -1,5 +1,6 @@
 package com.xingcloud.qm.service;
 
+import com.xingcloud.qm.config.QMConfig;
 import com.xingcloud.qm.remote.QueryNode;
 import com.xingcloud.qm.result.ResultRow;
 import com.xingcloud.qm.result.ResultTable;
@@ -36,6 +37,10 @@ public class PlanExecutor {
 
   public static PlanExecutor getInstance() {
     return instance;
+  }
+
+  public PlanExecutor() {
+    
   }
 
   public void executePlan(PlanSubmission plan, QueryListener listener) {
@@ -151,7 +156,9 @@ public class PlanExecutor {
 
     @Override
     public List<QueryResultBatch> call() throws Exception {
-      return client.runQuery(UserProtos.QueryType.LOGICAL, plan.toJsonString(QueryNode.LOCAL_DEFAULT_DRILL_CONFIG));
+      return client.runQuery(UserProtos.QueryType.LOGICAL, 
+        plan.toJsonString(QueryNode.LOCAL_DEFAULT_DRILL_CONFIG),
+        QMConfig.conf().getLong(QMConfig.DRILL_EXEC_TIMEOUT));
     }
   }
 }
