@@ -15,30 +15,46 @@ public class PlanSubmission extends QuerySubmission {
   
   String projectID;
   
-  
+  //得到的结果。可能包含多个queryID对应的查询结果。
   public Map<String, ResultTable> queryID2Table;
   
   public Set<String> originalSubmissions = new HashSet<>();
-  
+
+  /**
+   * construct from LogicalPlan, submission id, project id.
+   * @param plan
+   * @param id
+   * @param projectID
+   */
   public PlanSubmission(LogicalPlan plan, String id, String projectID) {
     super(plan, id);
     this.projectID = projectID;
   }
-  
+
+  /**
+   * construct from LogicalPlan, project id. generate submission id automatically.
+   * @param plan
+   * @param projectID
+   */
   public PlanSubmission(LogicalPlan plan, String projectID){
-    super(plan, newIdFromProjectID(projectID));
+    this(plan, newIdFromProjectID(projectID), projectID);
   }
 
-  private static String newIdFromProjectID(String projectID) {
-    return projectID+"."+System.currentTimeMillis();
-  }
-
+  /**
+   * construct from another submission object.
+   * @param submission
+   * @param projectID
+   */
   public PlanSubmission(QuerySubmission submission, String projectID) {
     this(submission.plan, projectID);
     this.projectID = projectID;
     absorbIDCost(submission);
   }
   
+  private static String newIdFromProjectID(String projectID) {
+    return projectID+"."+System.currentTimeMillis();
+  }
+
   public void absorbIDCost(QuerySubmission submission){
     if(submission instanceof PlanSubmission){
       this.originalSubmissions.addAll(((PlanSubmission)submission).originalSubmissions);

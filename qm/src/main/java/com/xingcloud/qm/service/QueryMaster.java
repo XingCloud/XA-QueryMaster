@@ -21,8 +21,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * 接收前端提交的plan，由QueryMaster控制查询的队列。 * 不接受已经提交、且正在查询的的重复query。 * 控制集群正在进行的查询计算量。 * 控制单个项目正在进行的查询数。 * 提交的查询请求进行排序，合并。 *
- * 监控查询的完成状况，填到cache里面去。
+ * 接收前端提交的plan，由QueryMaster控制查询的队列。 
+ * - 不接受已经提交、且正在查询的的重复query。 
+ * - 控制集群正在进行的查询计算量。 
+ * - 控制单个项目正在进行的查询数。 
+ * - 提交的查询请求进行排序，合并。
+ * - 监控查询的完成状况，填到cache里面去。
  */
 public class QueryMaster implements QueryListener {
 
@@ -52,7 +56,7 @@ public class QueryMaster implements QueryListener {
    */
   public Map<String, Deque<QuerySubmission>> perProjectSubmitted = new ConcurrentHashMap<>();
 
-  private Scheduler scheduler = new Scheduler();
+  private Scheduler scheduler = new Scheduler("QueryMaster-Scheduler");
 
   public static QueryMaster getInstance() {
     return instance;
@@ -139,8 +143,13 @@ public class QueryMaster implements QueryListener {
 
     private boolean stop = false;
 
+    Scheduler(String name) {
+      super(name);
+    }
+
     @Override
     public void run() {
+      logger.info("QueryMaster scheduler starting...");
       while (!stop) {
         try {
           Thread.sleep(100);
@@ -218,6 +227,7 @@ public class QueryMaster implements QueryListener {
           }
         }
       }
+      logger.info("QueryMaster scheduler exiting...");      
     }
 
     private void doSubmitExecution(PlanSubmission plan) {

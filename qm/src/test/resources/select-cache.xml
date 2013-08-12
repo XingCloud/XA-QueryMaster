@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Root>
+  <!--Sharded cache -->
+  <redis_sharded>
+    <shard>
+      <host>65.255.35.153</host>
+      <port>16379</port>
+    </shard>
+    <common>
+      <max_active>128</max_active>
+      <max_idle>16</max_idle>
+      <max_wait>600000</max_wait>
+      <expire>300</expire>
+      <timeout>300000</timeout>
+    </common>
+  </redis_sharded>
+  <!-- Redis db usage -->
+  <redis-db-usage>
+    <!-- UI-CHECK -->
+    <UI>2</UI>
+    <QUERY-RESULT>10</QUERY-RESULT>
+    <!-- QUERY-RESULT -->
+  </redis-db-usage>
+</Root>
