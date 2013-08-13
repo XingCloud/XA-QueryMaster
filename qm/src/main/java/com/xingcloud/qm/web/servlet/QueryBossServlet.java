@@ -24,10 +24,6 @@ public class QueryBossServlet extends HessianServlet implements Submit {
         return false;
       case PLAN:
         try {
-          System.out.println("---------------------------------");
-          System.out.println(content);
-          System.out.println("---------------------------------");
-
           LogicalPlan plan = DrillConfig.create().getMapper().readValue(content, LogicalPlan.class);
           LOGGER.info("[WS-SUBMIT] Plan is deserialized - " + cacheKey);
           QueryMaster.getInstance().submit(cacheKey, plan);
