@@ -15,6 +15,6 @@ public class TestSubmit {
     LogicalPlan plan = Utils.readPlan("/plans/common.nosegm.json",c);
     QueryMaster.getInstance().submit("test1", plan);
     QueryMaster.getInstance().submit("test2", plan2);
-    Thread.sleep(2000);
+    Thread.sleep(200000);
   }
 }

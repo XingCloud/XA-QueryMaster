@@ -1,5 +1,6 @@
 package com.xingcloud.qm.service;
 
+import com.xingcloud.qm.config.QMConfig;
 import com.xingcloud.qm.remote.QueryNode;
 import com.xingcloud.qm.result.ResultRow;
 import com.xingcloud.qm.result.ResultTable;
@@ -36,6 +37,10 @@ public class PlanExecutor {
 
   public static PlanExecutor getInstance() {
     return instance;
+  }
+
+  public PlanExecutor() {
+    
   }
 
   public void executePlan(PlanSubmission plan, QueryListener listener) {
@@ -83,28 +88,28 @@ public class PlanExecutor {
       if(succeeded==0){
         submission.e = failedCause;
         submission.queryID2Table = null;
-        listener.onQueryResultReceived(submission.id, submission);
-      }
-      logger.debug("PlanSubmission {}: {} drillbits returned results.", submission.id, succeeded);
-      Map<String,ResultTable> merged = mergeResults(materializedResults);
-      //如果有结果没有收到，则根据采样率估计值
-      if(succeeded < futures.size()){
-        double sampleRate = 1.0*succeeded/futures.size();
-        for (Map.Entry<String, ResultTable> entry : merged.entrySet()) {
-          String queryID = entry.getKey();
-          ResultTable result = entry.getValue();
-          for (Map.Entry<String, ResultRow> entry2 : result.entrySet()) {
-            String dimensionKey = entry2.getKey();
-            ResultRow v = entry2.getValue();
-            v.count /= sampleRate;
-            v.sum /= sampleRate;
-            v.userNum /= sampleRate;
-            v.sampleRate *= sampleRate;
+      }else{
+        logger.debug("PlanSubmission {}: {} drillbits returned results.", submission.id, succeeded);
+        Map<String,ResultTable> merged = mergeResults(materializedResults);
+        //如果有结果没有收到，则根据采样率估计值
+        if(succeeded < futures.size()){
+          double sampleRate = 1.0*succeeded/futures.size();
+          for (Map.Entry<String, ResultTable> entry : merged.entrySet()) {
+            String queryID = entry.getKey();
+            ResultTable result = entry.getValue();
+            for (Map.Entry<String, ResultRow> entry2 : result.entrySet()) {
+              String dimensionKey = entry2.getKey();
+              ResultRow v = entry2.getValue();
+              v.count /= sampleRate;
+              v.sum /= sampleRate;
+              v.userNum /= sampleRate;
+              v.sampleRate *= sampleRate;
+            }
+            
           }
-          
         }
+        submission.queryID2Table = merged;
       }
-      submission.queryID2Table = merged;
       listener.onQueryResultReceived(submission.id, submission);
     }
 
@@ -151,7 +156,9 @@ public class PlanExecutor {
 
     @Override
     public List<QueryResultBatch> call() throws Exception {
-      return client.runQuery(UserProtos.QueryType.LOGICAL, plan.toJsonString(QueryNode.LOCAL_DEFAULT_DRILL_CONFIG));
+      return client.runQuery(UserProtos.QueryType.LOGICAL, 
+        plan.toJsonString(QueryNode.LOCAL_DEFAULT_DRILL_CONFIG),
+        QMConfig.conf().getLong(QMConfig.DRILL_EXEC_TIMEOUT));
     }
   }
 }

@@ -166,6 +166,11 @@
       <version>1.2.17</version>
     </dependency>
     <dependency>
+      <groupId>com.xingcloud.xa</groupId>
+      <artifactId>confutil</artifactId>
+      <version>1.0</version>          
+    </dependency>
+    <dependency>
       <groupId>com.xingcloud</groupId>
       <artifactId>basis</artifactId>
       <version>0.0.5</version>
