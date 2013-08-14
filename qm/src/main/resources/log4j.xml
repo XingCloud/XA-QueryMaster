@@ -10,10 +10,9 @@
     </layout>
   </appender>
 
-  <root>
-    <priority value="debug" />
+  <logger name="com.xingcloud.qm">
+    <level value="debug" />
     <appender-ref ref="CONSOLE" />
-  </root>
-
+  </logger>
 
 </log4j:configuration>
