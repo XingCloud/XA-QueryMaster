@@ -4,9 +4,13 @@ import com.xingcloud.qm.result.ResultRow;
 import com.xingcloud.qm.result.ResultTable;
 import org.apache.drill.exec.exception.SchemaChangeException;
 import org.apache.drill.exec.memory.BufferAllocator;
+import org.apache.drill.exec.proto.UserBitShared.DrillPBError;
+import org.apache.drill.exec.proto.UserProtos.QueryResult.QueryState;
 import org.apache.drill.exec.record.RecordBatchLoader;
 import org.apache.drill.exec.rpc.user.QueryResultBatch;
 import org.apache.drill.exec.vector.ValueVector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -14,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 
 public class RecordParser {
+
+  final static Logger logger = LoggerFactory.getLogger(RecordParser.class) ;
 
   public static final String COL_COUNT = "count";
   public static final String COL_SUM = "sum";
@@ -36,6 +42,15 @@ public class RecordParser {
     String currentQueryID = null;
     ResultTable currentValue = new ResultTable();
     for (QueryResultBatch batch : records) {
+      QueryState  queryState = batch.getHeader().getQueryState() ;
+      if(queryState == QueryState.FAILED){
+        String errMsg = "" ;
+        for(DrillPBError error : batch.getHeader().getErrorList() ){
+          errMsg += error.getMessage() + " " ;
+        }
+        logger.error("Query " + batch.getHeader().getQueryId() + "failed :" + errMsg);
+        // TODO error handle
+      }
       if (!batch.hasData()) continue;
       boolean schemaChanged = false;
       try {
