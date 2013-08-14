@@ -263,20 +263,26 @@ public class QueryMaster implements QueryListener {
         getProjectCounter(planSubmission.projectID).decrementAndGet();
 
         // 分发数据
-        if (planSubmission.e != null) {
+        if (planSubmission.e != null||planSubmission.getValues() == null || planSubmission.getValues().size()==0) {
           //出错处理
           for (String basicQueryID : planSubmission.originalSubmissions) {
             BasicQuerySubmission basicSubmission = (BasicQuerySubmission) submitted.get(basicQueryID);
             basicSubmission.e = planSubmission.e;
+            if(basicSubmission.e == null){
+              basicSubmission.e = new NullPointerException("haven't received any results for "+basicQueryID+"!");
+            }
             QueryMaster.this.onQueryResultReceived(basicQueryID, basicSubmission);
           }
         } else {
           Map<String, ResultTable> materializedRecords = planSubmission.getValues();
-          for (Map.Entry<String, ResultTable> entry : materializedRecords.entrySet()) {
-            String basicQueryID = entry.getKey();
-            ResultTable value = entry.getValue();
+          for (String basicQueryID : planSubmission.originalSubmissions) {
+            ResultTable value = materializedRecords.get(basicQueryID);
             BasicQuerySubmission basicSubmission = (BasicQuerySubmission) submitted.get(basicQueryID);
-            basicSubmission.value = value;
+            if(value == null){
+              basicSubmission.value = value;
+            }else{
+              basicSubmission.e = new NullPointerException("haven't received any results for "+basicQueryID+"!");
+            }
             QueryMaster.this.onQueryResultReceived(basicQueryID, basicSubmission);
           }
         }

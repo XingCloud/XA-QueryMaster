@@ -166,7 +166,7 @@ public class PlanMerge {
               continue;
             }
             if (planCtx.mergedFrom2To.containsKey(connectedScan)) {
-              targetScan = connectedScan;
+              targetScan = (Scan) planCtx.mergedFrom2To.get(connectedScan);
               break;
             }
           }
@@ -217,7 +217,7 @@ public class PlanMerge {
             }
           }
           doMergeOperator(op, mergeTo, planCtx);
-          lookForParentsAndSubstitute(opNode, child2Parents, nextStepSet, null);
+          lookForParentsAndSubstitute(opNode, child2Parents, nextStepSet, mergeTo);
         }
       }
     }//for plans
