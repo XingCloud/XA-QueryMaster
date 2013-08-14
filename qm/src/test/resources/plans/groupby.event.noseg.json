@@ -1,0 +1,100 @@
+{
+  head : {
+    type : "APACHE_DRILL_LOGICAL",
+    version : 1,
+    generator : {
+      type : "AUTO",
+      info : "age"
+    }
+  },
+  storage : { },
+  query : [ {
+    op : "scan",
+    @id : 1,
+    memo : "Scan(Table=age_deu)",
+    storageengine : "hbase",
+    selection : [ {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      filters : null,
+      rowkey : {
+        end : "20130101visit",
+        start : "20130101visit"
+      },
+      table : "age_deu"
+    }, {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      filters : null,
+      rowkey : {
+        end : "20130102visit",
+        start : "20130102visit"
+      },
+      table : "age_deu"
+    } ],
+    ref : "event"
+  }, {
+    op : "segment",
+    @id : 2,
+    input : 1,
+    exprs : [ {
+      ref : "event0",
+      expr : "event0"
+    } ],
+    name : "dimension"
+  }, {
+    op : "collapsingaggregate",
+    @id : 3,
+    input : 2,
+    within : "dimension",
+    target : null,
+    carryovers : [ "event0" ],
+    aggregations : [ {
+      ref : "count",
+      expr : "count(uid) "
+    }, {
+      ref : "user_num",
+      expr : "count_distinct(uid) "
+    }, {
+      ref : "sum",
+      expr : "sum(value) "
+    } ]
+  }, {
+    op : "project",
+    @id : 4,
+    input : 3,
+    projections : [ {
+      ref : "query_id",
+      expr : "\"GROUP,age,2013-01-01,2013-01-02,visit.*,TOTAL_USER,VF-ALL-0-0,EVENT,event0\""
+    }, {
+      ref : "dimension",
+      expr : "dimension"
+    }, {
+      ref : "count",
+      expr : "count"
+    }, {
+      ref : "user_num",
+      expr : "user_num"
+    }, {
+      ref : "sum",
+      expr : "sum"
+    } ]
+  }, {
+    op : "store",
+    @id : 5,
+    input : 4,
+    target : null,
+    partition : null,
+    storageEngine : "mock"
+  } ]
+}

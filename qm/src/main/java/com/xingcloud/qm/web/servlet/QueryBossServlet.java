@@ -26,8 +26,11 @@ public class QueryBossServlet extends HessianServlet implements Submit {
         try {
           LogicalPlan plan = DrillConfig.create().getMapper().readValue(content, LogicalPlan.class);
           LOGGER.info("[WS-SUBMIT] Plan is deserialized - " + cacheKey);
-          QueryMaster.getInstance().submit(cacheKey, plan);
-          LOGGER.info("[WS-SUBMIT] Logical plan is submitted - " + cacheKey);
+          if (QueryMaster.getInstance().submit(cacheKey, plan)) {
+            LOGGER.info("[WS-SUBMIT] Logical plan is submitted - " + cacheKey);
+          } else {
+            LOGGER.info("[WS-SUBMIT] Logical plan is rejected because it's already in queue - " + cacheKey);
+          }
           return true;
         } catch (IOException e) {
           throw new XRemoteQueryException(e);

@@ -1,0 +1,138 @@
+{
+  head : {
+    type : "APACHE_DRILL_LOGICAL",
+    version : 1,
+    generator : {
+      type : "AUTO",
+      info : "age"
+    }
+  },
+  storage : { },
+  query : [ {
+    op : "scan",
+    @id : 1,
+    memo : "Scan(Table=age_deu)",
+    storageengine : "hbase",
+    selection : [ {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      filters : null,
+      rowkey : {
+        end : "20130101visit",
+        start : "20130101visit"
+      },
+      table : "age_deu"
+    }, {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      filters : null,
+      rowkey : {
+        end : "20130102visit",
+        start : "20130102visit"
+      },
+      table : "age_deu"
+    } ],
+    ref : "event"
+  }, {
+    op : "scan",
+    @id : 2,
+    memo : "Scan(Table=age.ref, Prop=ref, Val={EQ=wpc})",
+    storageengine : "mysql",
+    selection : {
+      filter : "val='wpc'",
+      projection : [ {
+        ref : "uid",
+        expr : "uid"
+      } ],
+      table : "age.ref"
+    },
+    ref : "age.ref"
+  }, {
+    op : "scan",
+    @id : 3,
+    memo : "Scan(Table=age.register_time, Prop=register_time, Val={GTE=2013-01-01})",
+    storageengine : "mysql",
+    selection : {
+      filter : "val>='2013-01-01'",
+      projection : [ {
+        ref : "uid",
+        expr : "uid"
+      } ],
+      table : "age.register_time"
+    },
+    ref : "age.register_time"
+  }, {
+    op : "join",
+    @id : 4,
+    left : 2,
+    right : 3,
+    conditions : [ {
+      relationship : "==",
+      left : "uid",
+      right : "uid"
+    } ],
+    type : "INNER"
+  }, {
+    op : "join",
+    @id : 5,
+    left : 1,
+    right : 4,
+    conditions : [ {
+      relationship : "==",
+      left : "uid",
+      right : "uid"
+    } ],
+    type : "INNER"
+  }, {
+    op : "collapsingaggregate",
+    @id : 6,
+    input : 5,
+    within : null,
+    target : null,
+    carryovers : null,
+    aggregations : [ {
+      ref : "count",
+      expr : "count(uid) "
+    }, {
+      ref : "user_num",
+      expr : "count_distinct(uid) "
+    }, {
+      ref : "sum",
+      expr : "sum(value) "
+    } ]
+  }, {
+    op : "project",
+    @id : 7,
+    input : 6,
+    projections : [ {
+      ref : "query_id",
+      expr : "\"COMMON,age,2013-01-01,2013-01-02,visit.*,{\"ref\":\"wpc\",\"register_time\":{\"$gte\":\"2013-01-01\"}},VF-ALL-0-0,PERIOD\""
+    }, {
+      ref : "count",
+      expr : "count"
+    }, {
+      ref : "user_num",
+      expr : "user_num"
+    }, {
+      ref : "sum",
+      expr : "sum"
+    } ]
+  }, {
+    op : "store",
+    @id : 8,
+    input : 7,
+    target : null,
+    partition : null,
+    storageEngine : "mock"
+  } ]
+}

@@ -168,7 +168,7 @@
     <dependency>
       <groupId>com.xingcloud.xa</groupId>
       <artifactId>confutil</artifactId>
-      <version>1.0</version>          
+      <version>1.0</version>
     </dependency>
     <dependency>
       <groupId>com.xingcloud</groupId>
@@ -224,5 +224,62 @@
       </exclusions>
     </dependency>
 
+
+    <!-- HTTP-Component -->
+    <!-- HTTP-Generic -->
+    <dependency>
+      <groupId>commons-codec</groupId>
+      <artifactId>commons-codec</artifactId>
+      <version>1.8</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpmime</artifactId>
+      <version>4.2.4</version>
+    </dependency>
+
+    <!-- HTTP-Core -->
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpcore</artifactId>
+      <version>4.2.4</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpcore-ab</artifactId>
+      <version>4.2.4</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpcore-nio</artifactId>
+      <version>4.2.4</version>
+    </dependency>
+
+    <!-- HTTP-Client -->
+    <dependency>
+      <groupId>commons-httpclient</groupId>
+      <artifactId>commons-httpclient</artifactId>
+      <version>3.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+      <version>4.2.5</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient-cache</artifactId>
+      <version>4.2.5</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpasyncclient</artifactId>
+      <version>4.0-beta3</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>fluent-hc</artifactId>
+      <version>4.2.5</version>
+    </dependency>
   </dependencies>
 </project>
