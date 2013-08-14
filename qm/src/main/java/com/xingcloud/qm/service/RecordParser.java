@@ -1,5 +1,6 @@
 package com.xingcloud.qm.service;
 
+import com.xingcloud.qm.exceptions.XRemoteQueryException;
 import com.xingcloud.qm.result.ResultRow;
 import com.xingcloud.qm.result.ResultTable;
 import org.apache.drill.exec.exception.SchemaChangeException;
@@ -32,7 +33,7 @@ public class RecordParser {
    * @param allocator
    * @return Map: queryID -> value. value的类型是：Map<String, Number[]> 包含count, sum, user_num, 以及一个采样率。
    */
-  public static Map<String, ResultTable> materializeRecords(List<QueryResultBatch> records, BufferAllocator allocator) {
+  public static Map<String, ResultTable> materializeRecords(List<QueryResultBatch> records, BufferAllocator allocator) throws Exception{
     Map<String, ResultTable> out = new HashMap<>();
     // Look at records
     RecordBatchLoader batchLoader = new RecordBatchLoader(allocator);
@@ -49,7 +50,7 @@ public class RecordParser {
           errMsg += error.getMessage() + " " ;
         }
         logger.error("Query " + batch.getHeader().getQueryId() + "failed :" + errMsg);
-        // TODO error handle
+        throw new XRemoteQueryException(errMsg);
       }
       if (!batch.hasData()) continue;
       boolean schemaChanged = false;
@@ -66,7 +67,7 @@ public class RecordParser {
         for (ValueVector vv : batchLoader) {
           String colName = vv.getField().getName();
           if(COL_QUERYID.equals(colName)){
-            String nextQueryID = (String) vv.getAccessor().getObject(i);
+            String nextQueryID = new String((byte[])vv.getAccessor().getObject(i));
             if(!nextQueryID.equals(currentQueryID)){
               //new queryID
               if(currentQueryID != null){
@@ -77,7 +78,7 @@ public class RecordParser {
               }
             }
           }else if(COL_DIMENSION.equals(colName)){
-            dimensionKey = (String) vv.getAccessor().getObject(i);
+            dimensionKey = new String((byte[]) vv.getAccessor().getObject(i));
           }else if(COL_COUNT.equals(colName)){
             count = (long) vv.getAccessor().getObject(i);
           }else if(COL_SUM.equals(colName)){
