@@ -11,6 +11,22 @@
   query : [ {
     op : "scan",
     @id : 1,
+    memo : "Scan(Table=sof-dsk.ref)",
+    storageengine : "mysql",
+    selection : {
+      projection : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      table : "sof-dsk.ref"
+    },
+    ref : "user"
+  }, {
+    op : "scan",
+    @id : 2,
     memo : "Scan(Table=sof-dsk_deu)",
     storageengine : "hbase",
     selection : [ {
@@ -44,12 +60,32 @@
     } ],
     ref : "event"
   }, {
+    op : "join",
+    @id : 3,
+    left : 1,
+    right : 2,
+    conditions : [ {
+      relationship : "==",
+      left : "uid",
+      right : "uid"
+    } ],
+    type : "RIGHT"
+  }, {
+    op : "segment",
+    @id : 4,
+    input : 3,
+    exprs : [ {
+      ref : "dimension",
+      expr : "ref"
+    } ],
+    name : "sgmt"
+  }, {
     op : "collapsingaggregate",
-    @id : 2,
-    input : 1,
-    within : null,
+    @id : 5,
+    input : 4,
+    within : "sgmt",
     target : null,
-    carryovers : null,
+    carryovers : [ "dimension" ],
     aggregations : [ {
       ref : "count",
       expr : "count(uid) "
@@ -62,11 +98,14 @@
     } ]
   }, {
     op : "project",
-    @id : 3,
-    input : 2,
+    @id : 6,
+    input : 5,
     projections : [ {
       ref : "query_id",
-      expr : "'d401f883-72f5-4e00-853a-ac1c26d30ab3'"
+      expr : "'99d52ac0-9717-4acf-b228-4bc64ff5f494'"
+    }, {
+      ref : "dimension",
+      expr : "dimension"
     }, {
       ref : "count",
       expr : "count"
@@ -79,8 +118,8 @@
     } ]
   }, {
     op : "store",
-    @id : 4,
-    input : 3,
+    @id : 7,
+    input : 6,
     target : null,
     partition : null,
     storageEngine : "mock"
