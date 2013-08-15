@@ -133,11 +133,15 @@ public abstract class LOPComparator<T extends LogicalOperator> implements Compar
   private static class ScanComparator extends LOPComparator<Scan> {
     @Override
     public int compare(Scan o1, Scan o2) {
-      if(PlanMerge.getTableName(o1).equals(PlanMerge.getTableName(o2))
-            && o1.getSelection().equals(o2.getSelection())){
-        return 0;  
-      }
-      return -1;
+        try {
+            if(PlanMerge.getTableName(o1).equals(PlanMerge.getTableName(o2))
+                  && o1.getSelection().equals(o2.getSelection())){
+              return 0;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+        return -1;
     }
   }
 
