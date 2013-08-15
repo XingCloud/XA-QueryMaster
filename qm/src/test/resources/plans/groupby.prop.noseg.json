@@ -1,0 +1,127 @@
+{
+  head : {
+    type : "APACHE_DRILL_LOGICAL",
+    version : 1,
+    generator : {
+      type : "AUTO",
+      info : "sof-dsk"
+    }
+  },
+  storage : { },
+  query : [ {
+    op : "scan",
+    @id : 1,
+    memo : "Scan(Table=sof-dsk.ref)",
+    storageengine : "mysql",
+    selection : {
+      projection : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      table : "sof-dsk.ref"
+    },
+    ref : "user"
+  }, {
+    op : "scan",
+    @id : 2,
+    memo : "Scan(Table=sof-dsk_deu)",
+    storageengine : "hbase",
+    selection : [ {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      filters : null,
+      rowkey : {
+        end : "20130101visit",
+        start : "20130101visit"
+      },
+      table : "sof-dsk_deu"
+    }, {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      filters : null,
+      rowkey : {
+        end : "20130102visit",
+        start : "20130102visit"
+      },
+      table : "sof-dsk_deu"
+    } ],
+    ref : "event"
+  }, {
+    op : "join",
+    @id : 3,
+    left : 1,
+    right : 2,
+    conditions : [ {
+      relationship : "==",
+      left : "uid",
+      right : "uid"
+    } ],
+    type : "RIGHT"
+  }, {
+    op : "segment",
+    @id : 4,
+    input : 3,
+    exprs : [ {
+      ref : "dimension",
+      expr : "ref"
+    } ],
+    name : "sgmt"
+  }, {
+    op : "collapsingaggregate",
+    @id : 5,
+    input : 4,
+    within : "sgmt",
+    target : null,
+    carryovers : [ "dimension" ],
+    aggregations : [ {
+      ref : "count",
+      expr : "count(uid) "
+    }, {
+      ref : "user_num",
+      expr : "count_distinct(uid) "
+    }, {
+      ref : "sum",
+      expr : "sum(value) "
+    } ]
+  }, {
+    op : "project",
+    @id : 6,
+    input : 5,
+    projections : [ {
+      ref : "query_id",
+      expr : "'99d52ac0-9717-4acf-b228-4bc64ff5f494'"
+    }, {
+      ref : "dimension",
+      expr : "dimension"
+    }, {
+      ref : "count",
+      expr : "count"
+    }, {
+      ref : "user_num",
+      expr : "user_num"
+    }, {
+      ref : "sum",
+      expr : "sum"
+    } ]
+  }, {
+    op : "store",
+    @id : 7,
+    input : 6,
+    target : null,
+    partition : null,
+    storageEngine : "mock"
+  } ]
+}

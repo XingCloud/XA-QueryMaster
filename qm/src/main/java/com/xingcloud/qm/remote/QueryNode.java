@@ -2,7 +2,6 @@ package com.xingcloud.qm.remote;
 
 import com.xingcloud.basic.conf.ConfigReader;
 import com.xingcloud.basic.conf.Dom;
-import com.xingcloud.qm.service.QueryWorker;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.exec.client.DrillClient;
@@ -14,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class QueryNode {
-  private static final Logger LOGGER = Logger.getLogger(QueryWorker.class);
+  private static final Logger LOGGER = Logger.getLogger(QueryNode.class);
   public static final List<QueryNode> NODES = new ArrayList<>(16);
   public static final DrillConfig LOCAL_DEFAULT_DRILL_CONFIG = DrillConfig.create();
   public static final BufferAllocator DEFAULT_BUFFER_ALLOCATOR = new DirectBufferAllocator();
@@ -68,10 +67,10 @@ public class QueryNode {
     this.drillClient = new DrillClient(DrillConfig.create(conf));
     try {
       this.drillClient.connect();
+      LOGGER.info("[DRILL-CLIENT]: " + id + " connected to server.");
     } catch (Exception e) {
       e.printStackTrace();
     }
-    LOGGER.info("[DRILL-CLIENT]: " + id + " connected to server.");
   }
 
   public String getId() {
