@@ -2,9 +2,11 @@ package com.xingcloud.qm.service;
 
 import com.xingcloud.cache.XCache;
 import com.xingcloud.cache.XCacheInfo;
+import com.xingcloud.cache.XCacheOperator;
 import com.xingcloud.cache.exception.XCacheException;
 import com.xingcloud.cache.redis.NoSelectRedisXCacheOperator;
 import com.xingcloud.qm.exceptions.XRemoteQueryException;
+import com.xingcloud.qm.result.ResultRow;
 import com.xingcloud.qm.result.ResultTable;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.slf4j.Logger;
@@ -115,13 +117,23 @@ public class QueryMaster implements QueryListener {
         logger.warn("execution failed!", basicQuery.e);
 
       } else {
-          /*
+        logger.info("basicQuery Result");
+        for(Map.Entry<String,ResultRow> entry: ((BasicQuerySubmission) query).value.entrySet()){
+            //String queryId=entry.getKey();
+            ResultRow result=entry.getValue();
+            logger.info("count: "+result.count+", user_num: "+
+                    result.userNum+", sum: "+result.sum+",samplingRatio: "+result.sampleRate);
+        }
+        /*
         try {
-          NoSelectRedisXCacheOperator.getInstance().putCache(
-           new XCache(key, basicQuery.value.toCacheValue(), System.currentTimeMillis(), XCacheInfo.CACHE_INFO_0));
+          XCache cache=
+                  new XCache(key, basicQuery.value.toCacheValue(), System.currentTimeMillis(), XCacheInfo.CACHE_INFO_0);
+            XCacheOperator  cacheOperator=NoSelectRedisXCacheOperator.getInstance();
+            cacheOperator.putCache(cache);
         } catch (XCacheException e) {
           e.printStackTrace();  //e:
-        }*/
+        }
+        */
       }
     }
 
