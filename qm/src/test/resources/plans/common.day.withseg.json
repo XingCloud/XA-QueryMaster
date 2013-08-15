@@ -46,47 +46,22 @@
   }, {
     op : "scan",
     @id : 2,
-    memo : "Scan(Table=sof-dsk.ref, Prop=ref, Val={EQ=wpc})",
+    memo : "Scan(Table=sof-dsk.language, Prop=language, Val={EQ=en})",
     storageengine : "mysql",
     selection : {
-      projections : [ {
+      projectoins : [ {
         ref : "uid",
         expr : "uid"
       } ],
-      filter : "val='wpc'",
-      table : "sof-dsk.ref"
+      filter : "val='en'",
+      table : "sof-dsk.language"
     },
     ref : "user"
   }, {
-    op : "scan",
+    op : "join",
     @id : 3,
-    memo : "Scan(Table=sof-dsk.register_time, Prop=register_time, Val={GTE=2013-01-01})",
-    storageengine : "mysql",
-    selection : {
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      } ],
-      filter : "val>='2013-01-01'",
-      table : "sof-dsk.register_time"
-    },
-    ref : "user"
-  }, {
-    op : "join",
-    @id : 4,
-    left : 2,
-    right : 3,
-    conditions : [ {
-      relationship : "==",
-      left : "uid",
-      right : "uid"
-    } ],
-    type : "INNER"
-  }, {
-    op : "join",
-    @id : 5,
     left : 1,
-    right : 4,
+    right : 2,
     conditions : [ {
       relationship : "==",
       left : "uid",
@@ -95,8 +70,8 @@
     type : "INNER"
   }, {
     op : "collapsingaggregate",
-    @id : 6,
-    input : 5,
+    @id : 4,
+    input : 3,
     within : null,
     target : null,
     carryovers : null,
@@ -112,11 +87,11 @@
     } ]
   }, {
     op : "project",
-    @id : 7,
-    input : 6,
+    @id : 5,
+    input : 4,
     projections : [ {
       ref : "query_id",
-      expr : "'95b3b005-abe6-483d-b511-42c134d9fd12'"
+      expr : "'2ebaf357-b6ab-464b-aad9-f3e8e02d0a6b'"
     }, {
       ref : "count",
       expr : "count"
@@ -129,8 +104,8 @@
     } ]
   }, {
     op : "store",
-    @id : 8,
-    input : 7,
+    @id : 6,
+    input : 5,
     target : null,
     partition : null,
     storageEngine : "mock"

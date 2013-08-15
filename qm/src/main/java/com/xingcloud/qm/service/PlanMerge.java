@@ -1,5 +1,7 @@
 package com.xingcloud.qm.service;
 
+import static org.apache.drill.common.util.DrillConstants.SE_HBASE;
+
 import org.apache.drill.common.PlanProperties;
 import org.apache.drill.common.graph.AdjacencyList;
 import org.apache.drill.common.graph.Edge;
@@ -36,12 +38,12 @@ public class PlanMerge {
 
   private Map<String, List<LogicalPlan>> sortedByProjectID;
 
-  public PlanMerge(List<LogicalPlan> plans) {
+  public PlanMerge(List<LogicalPlan> plans) throws Exception {
     this.incoming = plans;
     sortAndMerge();
   }
 
-  private void sortAndMerge() {
+  private void sortAndMerge() throws Exception {
     merged = new HashMap<LogicalPlan, LogicalPlan>();
     sortedByProjectID = new HashMap<String, List<LogicalPlan>>();
     /**
@@ -130,7 +132,7 @@ public class PlanMerge {
    * 如果两个scan完全一样，就合并。 如果两个scan，其中一个的scan被另一个包含，就给他加一个filter，然后合并。 非叶子节点：如果完全一样（子节点也一样），就合并。
    */
   private LogicalPlan doMergePlan(Set<LogicalPlan> plans, ProjectMergeContext projectCtx) {
-    if(plans.size()==1){
+    if (plans.size() == 1) {
       //no need to run merge; should not run merge
       return plans.iterator().next();
     }
@@ -160,7 +162,7 @@ public class PlanMerge {
         //look for a already merged scan to which this scan can be merged
         Set<Scan> connectedScans = projectCtx.scanInspector.connectedSetOf(scan);
         Scan targetScan = null;
-        if (connectedScans != null && connectedScans.size()>1) {
+        if (connectedScans != null && connectedScans.size() > 1) {
           for (Scan connectedScan : connectedScans) {
             if (connectedScan == scan) {
               continue;
@@ -236,12 +238,12 @@ public class PlanMerge {
       List<LogicalOperator> unionChildren = new ArrayList<>();
       for (int i = 0; i < roots.size(); i++) {
         LogicalOperator root = roots.get(i);
-        if(root instanceof Store){
+        if (root instanceof Store) {
           unionChildren.add(((Store) root).getInput());
           //detach from children
-          ((Store)root).setInput(null);
+          ((Store) root).setInput(null);
           planCtx.mergeResult.remove(root);
-        }else{
+        } else {
           unionChildren.add(root);
         }
       }
@@ -266,7 +268,7 @@ public class PlanMerge {
       //new node added, change graph
       planCtx.mergedGraph.addVertex(source);
       for (LogicalOperator child : source) {
-        if(planCtx.mergedGraph.containsEdge(source, child)){
+        if (planCtx.mergedGraph.containsEdge(source, child)) {
           System.err.println("noooo!");
         }
         planCtx.mergedGraph.addEdge(source, child);
@@ -275,12 +277,12 @@ public class PlanMerge {
       //merge scan with targetScan
       planCtx.mergedFrom2To.put(source, target);
       //detach children from source
-      if(source instanceof SingleInputOperator){
-        ((SingleInputOperator)source).setInput(null);
-      }else if(source instanceof Join){
+      if (source instanceof SingleInputOperator) {
+        ((SingleInputOperator) source).setInput(null);
+      } else if (source instanceof Join) {
         ((Join) source).setLeft(null);
         ((Join) source).setRight(null);
-      }else if(source instanceof Union){
+      } else if (source instanceof Union) {
         ((Union) source).setInputs(null);
       }
     }
@@ -340,9 +342,9 @@ public class PlanMerge {
 
   }
 
-  private Mergeability<LogicalOperator> equals(LogicalOperator op1, LogicalOperator op2){
-    if(LOPComparator.equals(op1, op2)){
-      return new Mergeability<>(MergeType.same, op1, op2);      
+  private Mergeability<LogicalOperator> equals(LogicalOperator op1, LogicalOperator op2) {
+    if (LOPComparator.equals(op1, op2)) {
+      return new Mergeability<>(MergeType.same, op1, op2);
     }
     return null;
   }
@@ -369,10 +371,10 @@ public class PlanMerge {
    * @return
    */
   private Mergeability<Scan> mergeable(Scan scan1, Scan scan2) {
-    return LOPComparator.equals(scan1, scan2)? new Mergeability<Scan>(MergeType.same, scan1, scan2): null;
+    return LOPComparator.equals(scan1, scan2) ? new Mergeability<Scan>(MergeType.same, scan1, scan2) : null;
   }
 
-  private Mergeability<Scan> equals(Scan scan1, Scan scan2) {
+  private Mergeability<Scan> equals(Scan scan1, Scan scan2) throws Exception {
     if (getTableName(scan1).equals(getTableName(scan2)) && scan1.getSelection().equals(scan2.getSelection())) {
       return new Mergeability<>(MergeType.same, scan1, scan2);
     }
@@ -399,7 +401,7 @@ public class PlanMerge {
     ConnectivityInspector<LogicalPlan, DefaultEdge> planInspector = null;
 
     List<Set<Scan>> devidedScanSets = null;
-  
+
     public void close() {
       DirectedGraph<Scan, DefaultEdge> g = new SimpleDirectedGraph<>(DefaultEdge.class);
 
@@ -467,16 +469,25 @@ public class PlanMerge {
     plan.getProperties().generator.info = projectID;
   }
 
-  public static String getTableName(Scan scan) {
-    return scan.getSelection().getRoot().get(0).get("table").asText();
+  public static String getTableName(Scan scan) throws Exception {
+    try {
+      String storageEngine = scan.getStorageEngine();
+      if (SE_HBASE.equals(storageEngine)) {
+        return scan.getSelection().getRoot().get(0).get("table").asText();
+      } else {
+        return scan.getSelection().getRoot().get("table").asText();
+      }
+    } catch (Exception e) {
+      throw new Exception(e);
+    }
   }
 
   /**
    * @param plans 需要merge的LogicalPlan 列表
-   * @return 原始的LogicalPlan和合并以后LogicalPlan之间的对应关系。 Map的key 是 原始的LogicalPlan，value是合并后的LogicalPlan。
-   *         如果输入的plans当中，有plan 没有和别的plan合并，则在返回的map中，key和value都是这个plan。
+   * @return 原始的LogicalPlan和合并以后LogicalPlan之间的对应关系。 Map的key 是 原始的LogicalPlan，value是合并后的LogicalPlan。 如果输入的plans当中，有plan
+   *         没有和别的plan合并，则在返回的map中，key和value都是这个plan。
    */
-  public static Map<LogicalPlan, LogicalPlan> sortAndMerge(List<LogicalPlan> plans) {
+  public static Map<LogicalPlan, LogicalPlan> sortAndMerge(List<LogicalPlan> plans) throws Exception {
     return new PlanMerge(plans).getMerged();
   }
 
