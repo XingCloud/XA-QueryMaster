@@ -11,11 +11,10 @@ public class TestSubmit {
   
   @Test
   public void testSubmit0()throws Exception{
-    LogicalPlan plan2 = Utils.readPlan("/plans/common.segm.json", c);
-    LogicalPlan plan = Utils.readPlan("/plans/common.day.noseg.json",c);
+    LogicalPlan plan = Utils.readPlan("/plans/common.day.withseg.json",c);
     QueryMaster.getInstance().submit("d401f883-72f5-4e00-853a-ac1c26d30ab3", plan);
-      Thread.sleep(30000);
-    QueryMaster.getInstance().submit("d401f883-72f5-4e00-853a-ac1c26d30ab3", plan);
-    Thread.sleep(200000);
+//      Thread.sleep(30000);
+//    QueryMaster.getInstance().submit("d401f883-72f5-4e00-853a-ac1c26d30ab3", plan);
+//    Thread.sleep(200000);
   }
 }

@@ -1,10 +1,5 @@
 package com.xingcloud.qm.service;
 
-import com.xingcloud.cache.XCache;
-import com.xingcloud.cache.XCacheInfo;
-import com.xingcloud.cache.XCacheOperator;
-import com.xingcloud.cache.exception.XCacheException;
-import com.xingcloud.cache.redis.NoSelectRedisXCacheOperator;
 import com.xingcloud.qm.exceptions.XRemoteQueryException;
 import com.xingcloud.qm.result.ResultRow;
 import com.xingcloud.qm.result.ResultTable;
@@ -23,12 +18,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * 接收前端提交的plan，由QueryMaster控制查询的队列。 
- * - 不接受已经提交、且正在查询的的重复query。 
- * - 控制集群正在进行的查询计算量。 
- * - 控制单个项目正在进行的查询数。 
- * - 提交的查询请求进行排序，合并。
- * - 监控查询的完成状况，填到cache里面去。
+ * 接收前端提交的plan，由QueryMaster控制查询的队列。 - 不接受已经提交、且正在查询的的重复query。 - 控制集群正在进行的查询计算量。 - 控制单个项目正在进行的查询数。 - 提交的查询请求进行排序，合并。 -
+ * 监控查询的完成状况，填到cache里面去。
  */
 public class QueryMaster implements QueryListener {
 
@@ -72,7 +63,6 @@ public class QueryMaster implements QueryListener {
     this.scheduler.start();
   }
 
-
   public boolean submit(String cacheKey, LogicalPlan logicalPlan) throws XRemoteQueryException {
     if (submitted.containsKey(cacheKey)) {
       return false;
@@ -106,7 +96,7 @@ public class QueryMaster implements QueryListener {
   public void onQueryResultReceived(String queryID, QuerySubmission query) {
     if (query instanceof BasicQuerySubmission) {
       //修改submitted 记录
-      logger.info("BasicQuerySubmission {} completed.", queryID);      
+      logger.info("BasicQuerySubmission {} completed.", queryID);
       BasicQuerySubmission basicQuery = (BasicQuerySubmission) query;
       if (!submitted.containsKey(queryID)) {
         throw new IllegalArgumentException("queryID:" + queryID + " not in submitted pool!");
@@ -118,11 +108,11 @@ public class QueryMaster implements QueryListener {
 
       } else {
         logger.info("basicQuery Result");
-        for(Map.Entry<String,ResultRow> entry: ((BasicQuerySubmission) query).value.entrySet()){
-            //String queryId=entry.getKey();
-            ResultRow result=entry.getValue();
-            logger.info("count: "+result.count+", user_num: "+
-                    result.userNum+", sum: "+result.sum+",samplingRatio: "+result.sampleRate);
+        for (Map.Entry<String, ResultRow> entry : ((BasicQuerySubmission) query).value.entrySet()) {
+          //String queryId=entry.getKey();
+          ResultRow result = entry.getValue();
+          logger.info("count: " + result.count + ", user_num: " +
+                        result.userNum + ", sum: " + result.sum + ",samplingRatio: " + result.sampleRate);
         }
         /*
         try {
@@ -196,7 +186,12 @@ public class QueryMaster implements QueryListener {
             QuerySubmission querySubmission = pickedSubmissions.get(i);
             pickedPlans.add(querySubmission.plan);
           }
-          Map<LogicalPlan, LogicalPlan> origin2Merged = PlanMerge.sortAndMerge(pickedPlans);
+          Map<LogicalPlan, LogicalPlan> origin2Merged = null;
+          try {
+            origin2Merged = PlanMerge.sortAndMerge(pickedPlans);
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
           int executed = 0;
 
           //建立合并后的plan和原始用户提交的BasicQuerySubmission之间的对应关系
@@ -219,7 +214,7 @@ public class QueryMaster implements QueryListener {
                 mergedPlan2Submissions.put(to, mergedSubmission);
               }
               //mark submission merge              
-              (mergedSubmission).absorbIDCost(submission);              
+              (mergedSubmission).absorbIDCost(submission);
             }
           }
 
@@ -229,7 +224,7 @@ public class QueryMaster implements QueryListener {
               break;
             }
             PlanSubmission plan = mergedSubmissions.next();
-            if(logger.isDebugEnabled()){
+            if (logger.isDebugEnabled()) {
               logger.debug("PlanSubmission {} submitted: {}", plan.id, plan.originalSubmissions.toString());
             }
             doSubmitExecution(plan);
@@ -241,7 +236,7 @@ public class QueryMaster implements QueryListener {
           }
         }
       }
-      logger.info("QueryMaster scheduler exiting...");      
+      logger.info("QueryMaster scheduler exiting...");
     }
 
     private void doSubmitExecution(PlanSubmission plan) {
@@ -276,13 +271,13 @@ public class QueryMaster implements QueryListener {
         getProjectCounter(planSubmission.projectID).decrementAndGet();
 
         // 分发数据
-        if (planSubmission.e != null||planSubmission.getValues() == null || planSubmission.getValues().size()==0) {
+        if (planSubmission.e != null || planSubmission.getValues() == null || planSubmission.getValues().size() == 0) {
           //出错处理
           for (String basicQueryID : planSubmission.originalSubmissions) {
             BasicQuerySubmission basicSubmission = (BasicQuerySubmission) submitted.get(basicQueryID);
             basicSubmission.e = planSubmission.e;
-            if(basicSubmission.e == null){
-              basicSubmission.e = new NullPointerException("haven't received any results for "+basicQueryID+"!");
+            if (basicSubmission.e == null) {
+              basicSubmission.e = new NullPointerException("haven't received any results for " + basicQueryID + "!");
             }
             QueryMaster.this.onQueryResultReceived(basicQueryID, basicSubmission);
           }
@@ -292,8 +287,8 @@ public class QueryMaster implements QueryListener {
             ResultTable value = materializedRecords.get(basicQueryID);
             BasicQuerySubmission basicSubmission = (BasicQuerySubmission) submitted.get(basicQueryID);
             basicSubmission.value = value;
-            if(value == null){
-              basicSubmission.e = new NullPointerException("haven't received any results for "+basicQueryID+"!");
+            if (value == null) {
+              basicSubmission.e = new NullPointerException("haven't received any results for " + basicQueryID + "!");
             }
             QueryMaster.this.onQueryResultReceived(basicQueryID, basicSubmission);
           }
