@@ -111,8 +111,9 @@ public class QueryMaster implements QueryListener {
         for (Map.Entry<String, ResultRow> entry : ((BasicQuerySubmission) query).value.entrySet()) {
           //String queryId=entry.getKey();
           ResultRow result = entry.getValue();
-          logger.info("count: " + result.count + ", user_num: " +
-                        result.userNum + ", sum: " + result.sum + ",samplingRatio: " + result.sampleRate);
+
+          logger.info("Key - " + entry.getKey() + " - ResultTuple[" + result.count + "#" + result.sum + "#" +
+                        result.userNum + "@" + result.sampleRate + "]");
         }
         /*
         try {
