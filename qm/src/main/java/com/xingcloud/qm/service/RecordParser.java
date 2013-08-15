@@ -9,7 +9,9 @@ import org.apache.drill.exec.proto.UserBitShared.DrillPBError;
 import org.apache.drill.exec.proto.UserProtos.QueryResult.QueryState;
 import org.apache.drill.exec.record.RecordBatchLoader;
 import org.apache.drill.exec.rpc.user.QueryResultBatch;
+import org.apache.drill.exec.vector.BigIntVector;
 import org.apache.drill.exec.vector.ValueVector;
+import org.apache.drill.exec.vector.VarCharVector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,20 +22,22 @@ import java.util.Map;
 
 public class RecordParser {
 
-  final static Logger logger = LoggerFactory.getLogger(RecordParser.class) ;
+  final static Logger logger = LoggerFactory.getLogger(RecordParser.class);
 
   public static final String COL_COUNT = "count";
   public static final String COL_SUM = "sum";
   public static final String COL_USER_NUM = "user_num";
   public static final String COL_DIMENSION = "dimension";
   public static final String COL_QUERYID = "queryid";
+
   /**
    * 按照XCache约定格式，解析返回的RecordBatch
-   * @param records 
+   *
+   * @param records
    * @param allocator
    * @return Map: queryID -> value. value的类型是：Map<String, Number[]> 包含count, sum, user_num, 以及一个采样率。
    */
-  public static Map<String, ResultTable> materializeRecords(List<QueryResultBatch> records, BufferAllocator allocator) throws Exception{
+  public static Map<String, ResultTable> materializeRecords(List<QueryResultBatch> records, BufferAllocator allocator) throws Exception {
     Map<String, ResultTable> out = new HashMap<>();
     // Look at records
     RecordBatchLoader batchLoader = new RecordBatchLoader(allocator);
@@ -43,11 +47,11 @@ public class RecordParser {
     String currentQueryID = null;
     ResultTable currentValue = new ResultTable();
     for (QueryResultBatch batch : records) {
-      QueryState  queryState = batch.getHeader().getQueryState() ;
-      if(queryState == QueryState.FAILED){
-        String errMsg = "" ;
-        for(DrillPBError error : batch.getHeader().getErrorList() ){
-          errMsg += error.getMessage() + " " ;
+      QueryState queryState = batch.getHeader().getQueryState();
+      if (queryState == QueryState.FAILED) {
+        String errMsg = "";
+        for (DrillPBError error : batch.getHeader().getErrorList()) {
+          errMsg += error.getMessage() + " ";
         }
         logger.error("Query " + batch.getHeader().getQueryId() + "failed :" + errMsg);
         throw new XRemoteQueryException(errMsg);
@@ -60,38 +64,51 @@ public class RecordParser {
         e.printStackTrace();  //e:
       }
 
-      for (int i = 0; i < batchLoader.getRecordCount(); i++) {
-        recordCount++;
-        dimensionKey = "";
-        count = 0; sum=0; user_num=0;
-        for (ValueVector vv : batchLoader) {
-          String colName = vv.getField().getName();
-          if(COL_QUERYID.equals(colName)){
-            String nextQueryID = new String((byte[])vv.getAccessor().getObject(i));
-            if(!nextQueryID.equals(currentQueryID)){
-              //new queryID
-              if(currentQueryID != null){
-                //output previous queryID
-                out.put(currentQueryID, currentValue);
-                currentQueryID = nextQueryID;
-                currentValue = new ResultTable();
-              }
-            }
-          }else if(COL_DIMENSION.equals(colName)){
-            dimensionKey = new String((byte[]) vv.getAccessor().getObject(i));
-          }else if(COL_COUNT.equals(colName)){
-            count = (long) vv.getAccessor().getObject(i);
-          }else if(COL_SUM.equals(colName)){
-            sum = (long) vv.getAccessor().getObject(i);
-          }else if(COL_USER_NUM.equals(colName)){
-            user_num = (long) vv.getAccessor().getObject(i); 
-          }
-          currentValue.put(dimensionKey,new ResultRow(count, sum, user_num));
+      BigIntVector countVector = null, userNumVector = null, sumVector = null;
+      VarCharVector queryIdVector = null;
+      ValueVector demensionVector = null;
+      for (ValueVector vv : batchLoader) {
+        String columnName = vv.getField().getName();
+        if (COL_COUNT.equals(columnName)) {
+          countVector = (BigIntVector) vv;
+        } else if (COL_USER_NUM.equals(columnName)) {
+          userNumVector = (BigIntVector) vv;
+        } else if (COL_SUM.equals(columnName)) {
+          sumVector = (BigIntVector) vv;
+        } else if (COL_QUERYID.equals(columnName)) {
+          queryIdVector = (VarCharVector) vv;
+        } else if (COL_DIMENSION.equals(columnName)) {
+          demensionVector = vv;
         }
-      }//batchLoader.getRecordCount()
-      
+      }
+
+      for(int i = 0 ; i < batchLoader.getRecordCount() ;i ++){
+        recordCount ++ ;
+        String demesionKey = "" ;
+        if(demensionVector != null){
+          Object demension = demensionVector.getAccessor().getObject(i) ;
+          if(demension != null){
+            demesionKey = new String((byte[]) demension);
+          } else{
+            demesionKey = "XA-NA" ;
+          }
+        }
+        count = countVector.getAccessor().get(i) ;
+        sum = sumVector.getAccessor().get(i);
+        user_num = userNumVector.getAccessor().get(i);
+        String nextQueryID = new String((byte[]) queryIdVector.getAccessor().get(i)) ;
+        if(!nextQueryID.equals(currentQueryID)){
+           if(currentQueryID != null){
+             out.put(currentQueryID,currentValue);
+             currentQueryID = nextQueryID ;
+             currentValue = new ResultTable() ;
+           }
+        }
+        currentValue.put(demesionKey,new ResultRow(count,sum,user_num));
+      }
+
     }//for records
-    if(currentQueryID != null){
+    if (currentQueryID != null) {
       //output previous queryID
       out.put(currentQueryID, currentValue);
     }
