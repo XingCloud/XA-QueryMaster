@@ -28,7 +28,7 @@ public class RecordParser {
   public static final String COL_SUM = "sum";
   public static final String COL_USER_NUM = "user_num";
   public static final String COL_DIMENSION = "dimension";
-  public static final String COL_QUERYID = "queryid";
+  public static final String COL_QUERYID = "query_id";
 
   /**
    * 按照XCache约定格式，解析返回的RecordBatch

@@ -11,6 +11,22 @@
   query : [ {
     op : "scan",
     @id : 1,
+    memo : "Scan(Table=sof-dsk.register_time)",
+    storageengine : "mysql",
+    selection : {
+      projectoins : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      table : "sof-dsk.register_time"
+    },
+    ref : "user"
+  }, {
+    op : "scan",
+    @id : 2,
     memo : "Scan(Table=sof-dsk_deu)",
     storageengine : "hbase",
     selection : [ {
@@ -20,9 +36,6 @@
       }, {
         ref : "value",
         expr : "value"
-      }, {
-        ref : "ts",
-        expr : "ts"
       } ],
       filters : null,
       rowkey : {
@@ -37,9 +50,6 @@
       }, {
         ref : "value",
         expr : "value"
-      }, {
-        ref : "ts",
-        expr : "ts"
       } ],
       filters : null,
       rowkey : {
@@ -51,11 +61,11 @@
     ref : "event"
   }, {
     op : "scan",
-    @id : 2,
+    @id : 3,
     memo : "Scan(Table=sof-dsk.ref, Prop=ref, Val={EQ=wpc})",
     storageengine : "mysql",
     selection : {
-      projections : [ {
+      projectoins : [ {
         ref : "uid",
         expr : "uid"
       } ],
@@ -65,33 +75,22 @@
     ref : "user"
   }, {
     op : "scan",
-    @id : 3,
-    memo : "Scan(Table=sof-dsk.register_time, Prop=register_time, Val={EQ=2013-01-01})",
+    @id : 4,
+    memo : "Scan(Table=sof-dsk.register_time, Prop=register_time, Val={GTE=2010-01-01})",
     storageengine : "mysql",
     selection : {
-      projections : [ {
+      projectoins : [ {
         ref : "uid",
         expr : "uid"
       } ],
-      filter : "val='2013-01-01'",
+      filter : "val>='2010-01-01'",
       table : "sof-dsk.register_time"
     },
     ref : "user"
   }, {
     op : "join",
-    @id : 4,
-    left : 2,
-    right : 3,
-    conditions : [ {
-      relationship : "==",
-      left : "uid",
-      right : "uid"
-    } ],
-    type : "INNER"
-  }, {
-    op : "join",
     @id : 5,
-    left : 1,
+    left : 3,
     right : 4,
     conditions : [ {
       relationship : "==",
@@ -100,18 +99,40 @@
     } ],
     type : "INNER"
   }, {
-    op : "segment",
+    op : "join",
     @id : 6,
-    input : 5,
+    left : 2,
+    right : 5,
+    conditions : [ {
+      relationship : "==",
+      left : "uid",
+      right : "uid"
+    } ],
+    type : "INNER"
+  }, {
+    op : "join",
+    @id : 7,
+    left : 1,
+    right : 6,
+    conditions : [ {
+      relationship : "==",
+      left : "uid",
+      right : "uid"
+    } ],
+    type : "RIGHT"
+  }, {
+    op : "segment",
+    @id : 8,
+    input : 7,
     exprs : [ {
       ref : "dimension",
-      expr : "min5(ts)"
+      expr : "date(register_time)"
     } ],
     name : "sgmt"
   }, {
     op : "collapsingaggregate",
-    @id : 7,
-    input : 6,
+    @id : 9,
+    input : 8,
     within : "sgmt",
     target : null,
     carryovers : [ "dimension" ],
@@ -127,11 +148,11 @@
     } ]
   }, {
     op : "project",
-    @id : 8,
-    input : 7,
+    @id : 10,
+    input : 9,
     projections : [ {
       ref : "query_id",
-      expr : "'f918dc1c-8a24-4934-9075-0bd8c52ed171'"
+      expr : "'e1f86432-6173-4424-8066-f2d9d160f104'"
     }, {
       ref : "dimension",
       expr : "dimension"
@@ -147,8 +168,8 @@
     } ]
   }, {
     op : "store",
-    @id : 9,
-    input : 8,
+    @id : 11,
+    input : 10,
     target : null,
     partition : null,
     storageEngine : "mock"

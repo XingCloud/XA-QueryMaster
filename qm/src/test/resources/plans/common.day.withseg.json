@@ -4,14 +4,14 @@
     version : 1,
     generator : {
       type : "AUTO",
-      info : "age"
+      info : "sof-dsk"
     }
   },
   storage : { },
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "Scan(Table=age_deu)",
+    memo : "Scan(Table=sof-dsk_deu)",
     storageengine : "hbase",
     selection : [ {
       projections : [ {
@@ -26,7 +26,7 @@
         end : "20130101visit",
         start : "20130101visit"
       },
-      table : "age_deu"
+      table : "sof-dsk_deu"
     }, {
       projections : [ {
         ref : "uid",
@@ -40,37 +40,37 @@
         end : "20130102visit",
         start : "20130102visit"
       },
-      table : "age_deu"
+      table : "sof-dsk_deu"
     } ],
     ref : "event"
   }, {
     op : "scan",
     @id : 2,
-    memo : "Scan(Table=age.ref, Prop=ref, Val={EQ=wpc})",
+    memo : "Scan(Table=sof-dsk.ref, Prop=ref, Val={EQ=wpc})",
     storageengine : "mysql",
     selection : {
-      filter : "val='wpc'",
-      projection : [ {
+      projections : [ {
         ref : "uid",
         expr : "uid"
       } ],
-      table : "age.ref"
+      filter : "val='wpc'",
+      table : "sof-dsk.ref"
     },
-    ref : "age.ref"
+    ref : "user"
   }, {
     op : "scan",
     @id : 3,
-    memo : "Scan(Table=age.register_time, Prop=register_time, Val={GTE=2013-01-01})",
+    memo : "Scan(Table=sof-dsk.register_time, Prop=register_time, Val={GTE=2013-01-01})",
     storageengine : "mysql",
     selection : {
-      filter : "val>='2013-01-01'",
-      projection : [ {
+      projections : [ {
         ref : "uid",
         expr : "uid"
       } ],
-      table : "age.register_time"
+      filter : "val>='2013-01-01'",
+      table : "sof-dsk.register_time"
     },
-    ref : "age.register_time"
+    ref : "user"
   }, {
     op : "join",
     @id : 4,
@@ -116,7 +116,7 @@
     input : 6,
     projections : [ {
       ref : "query_id",
-      expr : "\"COMMON,age,2013-01-01,2013-01-02,visit.*,{\"ref\":\"wpc\",\"register_time\":{\"$gte\":\"2013-01-01\"}},VF-ALL-0-0,PERIOD\""
+      expr : "'95b3b005-abe6-483d-b511-42c134d9fd12'"
     }, {
       ref : "count",
       expr : "count"
