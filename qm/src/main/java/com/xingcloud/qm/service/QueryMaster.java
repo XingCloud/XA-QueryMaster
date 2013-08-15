@@ -278,9 +278,8 @@ public class QueryMaster implements QueryListener {
           for (String basicQueryID : planSubmission.originalSubmissions) {
             ResultTable value = materializedRecords.get(basicQueryID);
             BasicQuerySubmission basicSubmission = (BasicQuerySubmission) submitted.get(basicQueryID);
+            basicSubmission.value = value;
             if(value == null){
-              basicSubmission.value = value;
-            }else{
               basicSubmission.e = new NullPointerException("haven't received any results for "+basicQueryID+"!");
             }
             QueryMaster.this.onQueryResultReceived(basicQueryID, basicSubmission);
