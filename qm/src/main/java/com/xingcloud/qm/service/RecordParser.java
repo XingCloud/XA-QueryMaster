@@ -100,9 +100,9 @@ public class RecordParser {
         if(!nextQueryID.equals(currentQueryID)){
            if(currentQueryID != null){
              out.put(currentQueryID,currentValue);
-             currentQueryID = nextQueryID ;
              currentValue = new ResultTable() ;
            }
+            currentQueryID = nextQueryID ;
         }
         currentValue.put(demesionKey,new ResultRow(count,sum,user_num));
       }

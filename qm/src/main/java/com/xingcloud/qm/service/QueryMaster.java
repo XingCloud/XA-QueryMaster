@@ -115,12 +115,13 @@ public class QueryMaster implements QueryListener {
         logger.warn("execution failed!", basicQuery.e);
 
       } else {
+          /*
         try {
           NoSelectRedisXCacheOperator.getInstance().putCache(
-            new XCache(key, basicQuery.value.toCacheValue(), System.currentTimeMillis(), XCacheInfo.CACHE_INFO_0));
+           new XCache(key, basicQuery.value.toCacheValue(), System.currentTimeMillis(), XCacheInfo.CACHE_INFO_0));
         } catch (XCacheException e) {
           e.printStackTrace();  //e:
-        }
+        }*/
       }
     }
 
