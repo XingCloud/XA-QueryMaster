@@ -21,8 +21,8 @@
         ref : "value",
         expr : "value"
       }, {
-        ref : "ts",
-        expr : "ts"
+        ref : "timestamp",
+        expr : "timestamp"
       } ],
       filters : null,
       rowkey : {
@@ -38,8 +38,8 @@
         ref : "value",
         expr : "value"
       }, {
-        ref : "ts",
-        expr : "ts"
+        ref : "timestamp",
+        expr : "timestamp"
       } ],
       filters : null,
       rowkey : {
@@ -55,7 +55,7 @@
     input : 1,
     exprs : [ {
       ref : "dimension",
-      expr : "hour(ts)"
+      expr : "hour(timestamp)"
     } ],
     name : "sgmt"
   }, {
@@ -81,7 +81,7 @@
     input : 3,
     projections : [ {
       ref : "query_id",
-      expr : "'e414e39d-3304-4b4d-8b8a-fcd1ca8301c1'"
+      expr : "'ecffaf2c-eb50-42cc-aec9-521ece4e3f78'"
     }, {
       ref : "dimension",
       expr : "dimension"

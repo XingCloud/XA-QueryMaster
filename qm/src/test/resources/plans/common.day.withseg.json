@@ -49,7 +49,7 @@
     memo : "Scan(Table=sof-dsk.language, Prop=language, Val={EQ=en})",
     storageengine : "mysql",
     selection : {
-      projectoins : [ {
+      projections : [ {
         ref : "uid",
         expr : "uid"
       } ],
@@ -91,7 +91,7 @@
     input : 4,
     projections : [ {
       ref : "query_id",
-      expr : "'2ebaf357-b6ab-464b-aad9-f3e8e02d0a6b'"
+      expr : "'d699da1b-d2ac-4059-b2fc-1f6001a57134'"
     }, {
       ref : "count",
       expr : "count"

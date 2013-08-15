@@ -20,11 +20,14 @@
       }, {
         ref : "value",
         expr : "value"
+      }, {
+        ref : "event0",
+        expr : "event0"
       } ],
       filters : null,
       rowkey : {
-        end : "20130101visit",
-        start : "20130101visit"
+        end : "20130101",
+        start : "20130101"
       },
       table : "sof-dsk_deu"
     }, {
@@ -34,11 +37,14 @@
       }, {
         ref : "value",
         expr : "value"
+      }, {
+        ref : "event0",
+        expr : "event0"
       } ],
       filters : null,
       rowkey : {
-        end : "20130102visit",
-        start : "20130102visit"
+        end : "20130102",
+        start : "20130102"
       },
       table : "sof-dsk_deu"
     } ],
@@ -46,47 +52,22 @@
   }, {
     op : "scan",
     @id : 2,
-    memo : "Scan(Table=sof-dsk.ref, Prop=ref, Val={EQ=wpc})",
+    memo : "Scan(Table=sof-dsk.language, Prop=language, Val={EQ=en})",
     storageengine : "mysql",
     selection : {
       projections : [ {
         ref : "uid",
         expr : "uid"
       } ],
-      filter : "val='wpc'",
-      table : "sof-dsk.ref"
+      filter : "val='en'",
+      table : "sof-dsk.language"
     },
     ref : "user"
   }, {
-    op : "scan",
+    op : "join",
     @id : 3,
-    memo : "Scan(Table=sof-dsk.register_time, Prop=register_time, Val={GTE=2013-01-01})",
-    storageengine : "mysql",
-    selection : {
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      } ],
-      filter : "val>='2013-01-01'",
-      table : "sof-dsk.register_time"
-    },
-    ref : "user"
-  }, {
-    op : "join",
-    @id : 4,
-    left : 2,
-    right : 3,
-    conditions : [ {
-      relationship : "==",
-      left : "uid",
-      right : "uid"
-    } ],
-    type : "INNER"
-  }, {
-    op : "join",
-    @id : 5,
     left : 1,
-    right : 4,
+    right : 2,
     conditions : [ {
       relationship : "==",
       left : "uid",
@@ -95,8 +76,8 @@
     type : "INNER"
   }, {
     op : "segment",
-    @id : 6,
-    input : 5,
+    @id : 4,
+    input : 3,
     exprs : [ {
       ref : "dimension",
       expr : "event0"
@@ -104,8 +85,8 @@
     name : "sgmt"
   }, {
     op : "collapsingaggregate",
-    @id : 7,
-    input : 6,
+    @id : 5,
+    input : 4,
     within : "sgmt",
     target : null,
     carryovers : [ "dimension" ],
@@ -121,11 +102,11 @@
     } ]
   }, {
     op : "project",
-    @id : 8,
-    input : 7,
+    @id : 6,
+    input : 5,
     projections : [ {
       ref : "query_id",
-      expr : "'34004fea-f47c-44e6-b00b-94428c645774'"
+      expr : "'4af29c22-fc27-421c-938b-1f1e0619a9c5'"
     }, {
       ref : "dimension",
       expr : "dimension"
@@ -141,8 +122,8 @@
     } ]
   }, {
     op : "store",
-    @id : 9,
-    input : 8,
+    @id : 7,
+    input : 6,
     target : null,
     partition : null,
     storageEngine : "mock"
