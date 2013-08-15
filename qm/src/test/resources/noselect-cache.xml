@@ -3,7 +3,7 @@
   <!--Sharded cache -->
   <redis_sharded>
     <shard>
-      <host>65.255.35.153</host>
+      <host>69.28.58.61</host>
       <port>16379</port>
     </shard>
     <common>
