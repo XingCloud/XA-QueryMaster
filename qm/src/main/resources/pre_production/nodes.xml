@@ -2,9 +2,11 @@
 
 <root>
   <nodes>
-    <node id="QN-01" conf="drill-module-01.conf" />
     <!--
+    <node id="QN-01" conf="drill-module-01.conf" />
+    -->
     <node id="QN-02" conf="drill-module-02.conf" />
+    <!--
     <node id="QN-03" conf="drill-module-03.conf" />
     <node id="QN-04" conf="drill-module-04.conf" />
     <node id="QN-05" conf="drill-module-05.conf" />
