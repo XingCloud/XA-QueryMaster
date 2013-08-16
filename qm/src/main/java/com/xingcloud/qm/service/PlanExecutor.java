@@ -12,6 +12,7 @@ import org.apache.drill.exec.rpc.user.QueryResultBatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -62,8 +63,9 @@ public class PlanExecutor {
       logger.info("PlanSubmission {} executing...", submission.id);
       if(logger.isDebugEnabled()){
         logger.debug("PlanSubmission " + submission.id + " with "+ submission.plan.getGraph().getAdjList().getNodeSet().size()+" LOPs...");
-        logger.debug("saving images of PlanSubmission "+submission.id+".png ...");
-        GraphVisualize.visualize(submission.plan, submission.id+".png");
+        String pngPath = submission.id+".png";
+        logger.debug("saving images of PlanSubmission "+ new File(pngPath).getAbsolutePath() + "...");
+        GraphVisualize.visualize(submission.plan, pngPath);
       }
       DrillClient[] clients = QueryNode.getClients();
       List<Future<List<QueryResultBatch>>> futures = new ArrayList<>(clients.length);
