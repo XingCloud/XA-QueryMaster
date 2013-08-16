@@ -8,7 +8,10 @@ import org.apache.drill.common.graph.Edge;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.common.logical.data.LogicalOperator;
 import org.jgraph.JGraph;
+import org.jgraph.graph.AttributeMap;
+import org.jgraph.graph.GraphConstants;
 import org.jgrapht.DirectedGraph;
+import org.jgrapht.Graph;
 import org.jgrapht.ext.JGraphModelAdapter;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleDirectedGraph;
@@ -16,6 +19,7 @@ import org.jgrapht.graph.SimpleDirectedGraph;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -45,7 +49,9 @@ public class GraphVisualize {
   public static void visualize(LogicalPlan plan, String pngPath){
     DirectedGraph<LogicalOperator, DefaultEdge> grapht = buildDirectedGraph(plan);
     // create a visualization using JGraph, via the adapter
-    JGraphModelAdapter<LogicalOperator, DefaultEdge> adapter = new JGraphModelAdapter<LogicalOperator, DefaultEdge>(grapht);
+    JGraphModelAdapter<LogicalOperator, DefaultEdge> adapter = new JGraphModelAdapter<LogicalOperator, DefaultEdge>(grapht, 
+      createDefaultVertexAttributes(),
+      createDefaultEdgeAttributes(grapht));
     JGraph jgraph = new JGraph( adapter ); 
     jgraph.setDoubleBuffered(false);
     jgraph.setPreferredSize(new Dimension(20000, 20000));
@@ -66,8 +72,9 @@ public class GraphVisualize {
 //    JGraphTreeLayout treeLayout = new JGraphTreeLayout();
 //    treeLayout.run(jgf);
     JGraphHierarchicalLayout hLayout = new JGraphHierarchicalLayout();
+    hLayout.setIntraCellSpacing(75);
+    hLayout.setInterHierarchySpacing(100);
     hLayout.run(jgf);
-    
     Map nestedMap = jgf.createNestedMap(true, true);
     jgraph.getGraphLayoutCache().edit(nestedMap);
 
@@ -88,8 +95,41 @@ public class GraphVisualize {
     }
   }
 
-  public static void main(String[] args) {
-    
-    List<LogicalOperator> ops = new ArrayList<>();
+  
+  private static AttributeMap createDefaultVertexAttributes()
+  {
+      AttributeMap map = new AttributeMap();
+      Color c = Color.decode("#FF9900");
+
+      GraphConstants.setBounds(map, new Rectangle2D.Double(50, 50, 250, 60));
+      GraphConstants.setBorder(map, BorderFactory.createRaisedBevelBorder());
+      GraphConstants.setBackground(map, c);
+      GraphConstants.setForeground(map, Color.white);
+      GraphConstants.setFont(
+          map,
+          GraphConstants.DEFAULTFONT.deriveFont(Font.PLAIN, 12));
+      GraphConstants.setOpaque(map, true);
+
+      return map;
+  }
+  
+  private static <V, E> AttributeMap createDefaultEdgeAttributes(
+      Graph<V, E> jGraphTGraph)
+  {
+      AttributeMap map = new AttributeMap();
+
+      if (jGraphTGraph instanceof DirectedGraph<?, ?>) {
+          GraphConstants.setLineEnd(map, GraphConstants.ARROW_TECHNICAL);
+          GraphConstants.setEndFill(map, true);
+          GraphConstants.setEndSize(map, 10);
+      }
+
+      GraphConstants.setForeground(map, Color.decode("#25507C"));
+      GraphConstants.setFont(
+          map,
+          GraphConstants.DEFAULTFONT.deriveFont(Font.BOLD, 12));
+      GraphConstants.setLineColor(map, Color.decode("#7AA1E6"));
+
+      return map;
   }
 }
