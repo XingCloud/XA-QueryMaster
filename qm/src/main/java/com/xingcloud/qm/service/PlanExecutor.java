@@ -1,5 +1,6 @@
 package com.xingcloud.qm.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xingcloud.qm.config.QMConfig;
 import com.xingcloud.qm.remote.QueryNode;
 import com.xingcloud.qm.result.ResultRow;
@@ -70,10 +71,26 @@ public class PlanExecutor {
       }
       DrillClient[] clients = QueryNode.getClients();
       List<Future<List<QueryResultBatch>>> futures = new ArrayList<>(clients.length);
+      String planString;
+      try {
+        planString = submission.plan.toJsonString(QueryNode.LOCAL_DEFAULT_DRILL_CONFIG);
+      } catch (JsonProcessingException e) {
+        e.printStackTrace();
+        return;
+      }
+      if (logger.isDebugEnabled()) {
+        logger.debug("[PlanString]\n{}", planString);
+      }
+
+//      for (int i = 0; i < clients.length; i++) {
+//        DrillClient client = clients[i];
+//        futures.add(drillBitExecutor.submit(new DrillbitCallable(submission.plan, client)));
+//      }
       for (int i = 0; i < clients.length; i++) {
         DrillClient client = clients[i];
-        futures.add(drillBitExecutor.submit(new DrillbitCallable(submission.plan, client)));
+        futures.add(drillBitExecutor.submit(new DrillbitCallable2(planString, client)));
       }
+
       List<Map<String, ResultTable>> materializedResults = new ArrayList<>();
       //收集结果。理想情况下，应该收集所有的计算结果。
       //在有drillbit计算失败的情况下，使用剩下的结果作为估计值
@@ -164,6 +181,21 @@ public class PlanExecutor {
     public List<QueryResultBatch> call() throws Exception {
       return client.runQuery(UserProtos.QueryType.LOGICAL, plan.toJsonString(QueryNode.LOCAL_DEFAULT_DRILL_CONFIG),
                              QMConfig.conf().getLong(QMConfig.DRILL_EXEC_TIMEOUT));
+    }
+  }
+
+  private class DrillbitCallable2 implements Callable<List<QueryResultBatch>> {
+    private final String plan;
+    private final DrillClient client;
+
+    public DrillbitCallable2(String plan, DrillClient client) {
+      this.plan = plan;
+      this.client = client;
+    }
+
+    @Override
+    public List<QueryResultBatch> call() throws Exception {
+      return client.runQuery(UserProtos.QueryType.LOGICAL, plan, QMConfig.conf().getLong(QMConfig.DRILL_EXEC_TIMEOUT));
     }
   }
 }
