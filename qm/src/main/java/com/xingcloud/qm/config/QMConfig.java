@@ -10,7 +10,7 @@ public class QMConfig {
   public static final String OVERRIDE_CONF = "/conf/qm.properties";
   public static final String PROP_CONF = "qm.conf";
   public static final String DRILL_EXEC_TIMEOUT = "drill.exec.timeout";
-  
+  public static final String TEMPDIR = "qm.tempdir";
   
   private Configuration conf;
 

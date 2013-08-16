@@ -6,7 +6,6 @@ import com.xingcloud.qm.remote.QueryNode;
 import com.xingcloud.qm.result.ResultRow;
 import com.xingcloud.qm.result.ResultTable;
 import com.xingcloud.qm.utils.GraphVisualize;
-import com.xingcloud.qm.utils.QueryContextUtil;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.exec.client.DrillClient;
 import org.apache.drill.exec.proto.UserProtos;
@@ -65,7 +64,7 @@ public class PlanExecutor {
       logger.info("PlanSubmission {} executing...", submission.id);
       if(logger.isDebugEnabled()){
         logger.debug("PlanSubmission " + submission.id + " with "+ submission.plan.getGraph().getAdjList().getNodeSet().size()+" LOPs...");
-        String pngPath = QueryContextUtil.getRoot()+File.separator+submission.id+".png";
+        String pngPath = QMConfig.conf().getString(QMConfig.TEMPDIR) + File.separator+submission.id+".png";
         logger.debug("saving images of PlanSubmission " + new File(pngPath).getAbsolutePath() + "...");
         GraphVisualize.visualize(submission.plan, pngPath);
       }
@@ -82,10 +81,6 @@ public class PlanExecutor {
         logger.debug("[PlanString]\n{}", planString);
       }
 
-//      for (int i = 0; i < clients.length; i++) {
-//        DrillClient client = clients[i];
-//        futures.add(drillBitExecutor.submit(new DrillbitCallable(submission.plan, client)));
-//      }
       for (int i = 0; i < clients.length; i++) {
         DrillClient client = clients[i];
         futures.add(drillBitExecutor.submit(new DrillbitCallable2(planString, client)));

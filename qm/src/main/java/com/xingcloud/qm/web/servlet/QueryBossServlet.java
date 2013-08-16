@@ -4,7 +4,6 @@ import com.caucho.hessian.server.HessianServlet;
 import com.xingcloud.qm.exceptions.XRemoteQueryException;
 import com.xingcloud.qm.service.QueryMaster;
 import com.xingcloud.qm.service.Submit;
-import com.xingcloud.qm.utils.QueryContextUtil;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.log4j.Logger;
@@ -19,7 +18,6 @@ public class QueryBossServlet extends HessianServlet implements Submit {
 
   @Override
   public boolean submit(String cacheKey, String content, SubmitQueryType type) throws XRemoteQueryException {
-    QueryContextUtil.setContextRoot(getServletContext().getRealPath("/"));
     switch (type) {
       case SQL:
         LOGGER.info("[WS-SUBMIT] Current type(" + type + ") of operation is not supported.");
