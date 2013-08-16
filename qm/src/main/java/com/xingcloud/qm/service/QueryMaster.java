@@ -72,7 +72,6 @@ public class QueryMaster implements QueryListener {
   }
 
   private void enQueue(LogicalPlan plan, String id) {
-    logger.info("BasicQuerySubmission {} submitted.", id);
     QuerySubmission submission = new BasicQuerySubmission(plan, id);
     submitted.put(id, submission);
     String projectID = PlanMerge.getProjectID(plan);
