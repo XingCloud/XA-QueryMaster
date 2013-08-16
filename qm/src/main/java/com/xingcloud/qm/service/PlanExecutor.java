@@ -79,7 +79,7 @@ public class PlanExecutor {
         return;
       }
       if (logger.isDebugEnabled()) {
-        logger.debug("[PlanString]+\n{}", planString);
+        logger.debug("[PlanString]\n{}", planString);
       }
 
 //      for (int i = 0; i < clients.length; i++) {
