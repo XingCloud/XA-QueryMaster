@@ -5,6 +5,7 @@ import com.xingcloud.qm.remote.QueryNode;
 import com.xingcloud.qm.result.ResultRow;
 import com.xingcloud.qm.result.ResultTable;
 import com.xingcloud.qm.utils.GraphVisualize;
+import com.xingcloud.qm.utils.QueryContextUtil;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.exec.client.DrillClient;
 import org.apache.drill.exec.proto.UserProtos;
@@ -63,8 +64,8 @@ public class PlanExecutor {
       logger.info("PlanSubmission {} executing...", submission.id);
       if(logger.isDebugEnabled()){
         logger.debug("PlanSubmission " + submission.id + " with "+ submission.plan.getGraph().getAdjList().getNodeSet().size()+" LOPs...");
-        String pngPath = submission.id+".png";
-        logger.debug("saving images of PlanSubmission "+ new File(pngPath).getAbsolutePath() + "...");
+        String pngPath = QueryContextUtil.getRoot()+File.separator+submission.id+".png";
+        logger.debug("saving images of PlanSubmission " + new File(pngPath).getAbsolutePath() + "...");
         GraphVisualize.visualize(submission.plan, pngPath);
       }
       DrillClient[] clients = QueryNode.getClients();
