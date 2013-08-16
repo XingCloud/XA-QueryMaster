@@ -41,7 +41,7 @@ public class PlanExecutor {
   }
 
   public PlanExecutor() {
-    
+
   }
 
   public void executePlan(PlanSubmission plan, QueryListener listener) {
@@ -60,10 +60,11 @@ public class PlanExecutor {
     @Override
     public void run() {
       logger.info("PlanSubmission {} executing...", submission.id);
-      if(logger.isDebugEnabled()){
-        logger.debug("PlanSubmission " + submission.id + " with "+ submission.plan.getGraph().getAdjList().getNodeSet().size()+" LOPs...");
-        logger.debug("saving images of PlanSubmission "+submission.id+".png ...");
-        GraphVisualize.visualize(submission.plan, submission.id+".png");
+      if (logger.isDebugEnabled()) {
+        logger.debug("PlanSubmission " + submission.id + " with " + submission.plan.getGraph().getAdjList().getNodeSet()
+                                                                              .size() + " LOPs...");
+        logger.debug("saving images of PlanSubmission " + submission.id + ".png ...");
+        GraphVisualize.visualize(submission.plan, "/" + submission.id + ".png");
       }
       DrillClient[] clients = QueryNode.getClients();
       List<Future<List<QueryResultBatch>>> futures = new ArrayList<>(clients.length);
@@ -88,15 +89,15 @@ public class PlanExecutor {
           failedCause = e;
         }
       }
-      if(succeeded==0){
+      if (succeeded == 0) {
         submission.e = failedCause;
         submission.queryID2Table = null;
-      }else{
+      } else {
         logger.debug("PlanSubmission {}: {} drillbits returned results.", submission.id, succeeded);
-        Map<String,ResultTable> merged = mergeResults(materializedResults);
+        Map<String, ResultTable> merged = mergeResults(materializedResults);
         //如果有结果没有收到，则根据采样率估计值
-        if(succeeded < futures.size()){
-          double sampleRate = 1.0*succeeded/futures.size();
+        if (succeeded < futures.size()) {
+          double sampleRate = 1.0 * succeeded / futures.size();
           for (Map.Entry<String, ResultTable> entry : merged.entrySet()) {
             String queryID = entry.getKey();
             ResultTable result = entry.getValue();
@@ -108,7 +109,7 @@ public class PlanExecutor {
               v.userNum /= sampleRate;
               v.sampleRate *= sampleRate;
             }
-            
+
           }
         }
         submission.queryID2Table = merged;
@@ -117,14 +118,14 @@ public class PlanExecutor {
     }
 
     private Map<String, ResultTable> mergeResults(List<Map<String, ResultTable>> materializedResults) {
-      Map<String,ResultTable> merged = new HashMap<>();
+      Map<String, ResultTable> merged = new HashMap<>();
       for (int i = 0; i < materializedResults.size(); i++) {
         Map<String, ResultTable> result = materializedResults.get(i);
         for (Map.Entry<String, ResultTable> entry : result.entrySet()) {
           String queryID = entry.getKey();
           ResultTable value = entry.getValue();
           ResultTable mergedValue = merged.get(queryID);
-          if(mergedValue == null){
+          if (mergedValue == null) {
             mergedValue = new ResultTable();
             merged.put(queryID, mergedValue);
           }
@@ -132,10 +133,10 @@ public class PlanExecutor {
             String dimensionKey = entry2.getKey();
             ResultRow entryValue = entry2.getValue();
             ResultRow mergedEntryValue = mergedValue.get(dimensionKey);
-            if(mergedEntryValue == null){
+            if (mergedEntryValue == null) {
               mergedEntryValue = entryValue;
               mergedValue.put(dimensionKey, mergedEntryValue);
-            }else{
+            } else {
               mergedEntryValue.count += entryValue.count;
               mergedEntryValue.sum += entryValue.sum;
               mergedEntryValue.userNum += entryValue.userNum;
@@ -159,9 +160,8 @@ public class PlanExecutor {
 
     @Override
     public List<QueryResultBatch> call() throws Exception {
-      return client.runQuery(UserProtos.QueryType.LOGICAL, 
-        plan.toJsonString(QueryNode.LOCAL_DEFAULT_DRILL_CONFIG),
-        QMConfig.conf().getLong(QMConfig.DRILL_EXEC_TIMEOUT));
+      return client.runQuery(UserProtos.QueryType.LOGICAL, plan.toJsonString(QueryNode.LOCAL_DEFAULT_DRILL_CONFIG),
+                             QMConfig.conf().getLong(QMConfig.DRILL_EXEC_TIMEOUT));
     }
   }
 }
