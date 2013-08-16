@@ -61,10 +61,12 @@ public class PlanExecutor {
     @Override
     public void run() {
       logger.info("PlanSubmission {} executing...", submission.id);
-      if(logger.isDebugEnabled()){
-        logger.debug("PlanSubmission " + submission.id + " with "+ submission.plan.getGraph().getAdjList().getNodeSet().size()+" LOPs...");
-        String pngPath = submission.id+".png";
-        logger.debug("saving images of PlanSubmission "+ new File(pngPath).getAbsolutePath() + "...");
+      if (logger.isDebugEnabled()) {
+        logger.debug("PlanSubmission " + submission.id + " with " + submission.plan.getGraph().getAdjList().getNodeSet()
+                                                                              .size() + " LOPs...");
+        String pngRoot = this.getClass().getClassLoader().getResource(".").toString();
+        String pngPath = pngRoot + File.separator + submission.id + ".png";
+        logger.debug("saving images of PlanSubmission " + new File(pngPath).getAbsolutePath() + "...");
         GraphVisualize.visualize(submission.plan, pngPath);
       }
       DrillClient[] clients = QueryNode.getClients();
