@@ -1,5 +1,6 @@
 package com.xingcloud.qm.service;
 
+import com.xingcloud.qm.config.QMConfig;
 import com.xingcloud.qm.exceptions.XRemoteQueryException;
 import com.xingcloud.qm.result.ResultRow;
 import com.xingcloud.qm.result.ResultTable;
@@ -26,16 +27,16 @@ public class QueryMaster implements QueryListener {
   static Logger logger = LoggerFactory.getLogger(QueryMaster.class);
 
   //同时最多允许多少个plan执行
-  public static final int MAX_PLAN_EXECUTING = 16;
+  public static int MAX_PLAN_EXECUTING = 16;
 
   //每个project，同时最多允许多少个plan执行
-  public static final int MAX_PLAN_PER_PROJECT = 1;
+  public static int MAX_PLAN_PER_PROJECT = 1;
 
   //最多允许多少个plan一起合并
-  public static final int MAX_BATCHMERGE = Integer.MAX_VALUE;
+  public static int MAX_BATCHMERGE = Integer.MAX_VALUE;
 
   //最多允许的合并后的plan的cost。目前，单个原始查询的cost为1。
-  public static final int MAX_BATCHCOST = 256;
+  public static int MAX_BATCHCOST = 256;
 
   private static QueryMaster instance = new QueryMaster();
 
@@ -56,7 +57,15 @@ public class QueryMaster implements QueryListener {
   }
 
   public QueryMaster() {
+    initConfig();
     startup();
+  }
+
+  private void initConfig() {
+    MAX_PLAN_PER_PROJECT = QMConfig.conf().getInt(QMConfig.MAX_PLAN_PER_PROJECT, MAX_PLAN_PER_PROJECT);
+    MAX_PLAN_EXECUTING = QMConfig.conf().getInt(QMConfig.MAX_PLAN_EXECUTING, MAX_PLAN_EXECUTING);
+    MAX_BATCHCOST = QMConfig.conf().getInt(QMConfig.MAX_BATCHCOST, MAX_BATCHCOST);
+    MAX_BATCHMERGE = QMConfig.conf().getInt(QMConfig.MAX_BATCHMERGE, MAX_BATCHMERGE);
   }
 
   private void startup() {

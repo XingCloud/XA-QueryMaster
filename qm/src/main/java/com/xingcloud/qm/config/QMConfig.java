@@ -11,6 +11,18 @@ public class QMConfig {
   public static final String PROP_CONF = "qm.conf";
   public static final String DRILL_EXEC_TIMEOUT = "drill.exec.timeout";
   public static final String TEMPDIR = "qm.tempdir";
+    //同时最多允许多少个plan执行
+  public static final String MAX_PLAN_EXECUTING = "qm.maxplan.total";
+
+  //每个project，同时最多允许多少个plan执行
+  public static final String MAX_PLAN_PER_PROJECT = "qm.maxplan.perproject";
+
+  //最多允许多少个plan一起合并
+  public static final String MAX_BATCHMERGE = "qm.maxplan.permerge";
+
+  //最多允许的合并后的plan的cost。目前，单个原始查询的cost为1。
+  public static final String MAX_BATCHCOST = "qm.maxcost";
+
   
   private Configuration conf;
 
