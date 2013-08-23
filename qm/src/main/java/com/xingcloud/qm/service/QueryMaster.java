@@ -12,9 +12,11 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -50,6 +52,8 @@ public class QueryMaster implements QueryListener {
    */
   public Map<String, Deque<QuerySubmission>> perProjectSubmitted = new ConcurrentHashMap<>();
 
+  //public Map<String,QuerySubmission> executingPlans
+
   private Scheduler scheduler = new Scheduler("QueryMaster-Scheduler");
 
   public static QueryMaster getInstance() {
@@ -78,6 +82,18 @@ public class QueryMaster implements QueryListener {
     }
     enQueue(logicalPlan, cacheKey);
     return true;
+  }
+
+  public Set<LogicalPlan> getQueuePlans() {
+    Set<LogicalPlan> rets = new HashSet<>();
+    for (Map.Entry<String, QuerySubmission> entry : submitted.entrySet()) {
+      rets.add(entry.getValue().plan);
+    }
+    return rets;
+  }
+
+  public Set<LogicalPlan> getExecutingPlans() {
+    return null;
   }
 
   private void enQueue(LogicalPlan plan, String id) {
@@ -113,21 +129,21 @@ public class QueryMaster implements QueryListener {
       String key = queryID;
       if (basicQuery.e != null) {
         logger.warn("execution failed!", basicQuery.e);
-
       } else {
         logger.info("basicQuery Result");
         for (Map.Entry<String, ResultRow> entry : ((BasicQuerySubmission) query).value.entrySet()) {
           //String queryId=entry.getKey();
           ResultRow result = entry.getValue();
 
-          logger.info("Key - " + entry.getKey() + " - ResultTuple[" + result.count + "#" + result.sum + "#" +
+          logger.info("[RESULT-INFO] - " + queryID + " - key - " + entry
+            .getKey() + " - ResultTuple[" + result.count + "#" + result.sum + "#" +
                         result.userNum + "@" + result.sampleRate + "]");
         }
         /*
         try {
           XCache cache=
                   new XCache(key, basicQuery.value.toCacheValue(), System.currentTimeMillis(), XCacheInfo.CACHE_INFO_0);
-            XCacheOperator  cacheOperator=NoSelectRedisXCacheOperator.getInstance();
+            XCacheOperator cacheOperator= NoSelectRedisXCacheOperator.getInstance();
             cacheOperator.putCache(cache);
         } catch (XCacheException e) {
           e.printStackTrace();  //e:
@@ -293,6 +309,7 @@ public class QueryMaster implements QueryListener {
             if (basicSubmission.e == null) {
               basicSubmission.e = new NullPointerException("haven't received any results for " + basicQueryID + "!");
             }
+            //basicSubmission.value=new ResultTable();
             QueryMaster.this.onQueryResultReceived(basicQueryID, basicSubmission);
           }
         } else {
@@ -303,6 +320,8 @@ public class QueryMaster implements QueryListener {
             basicSubmission.value = value;
             if (value == null) {
               basicSubmission.e = new NullPointerException("haven't received any results for " + basicQueryID + "!");
+              basicSubmission.value = new ResultTable();
+
             }
             QueryMaster.this.onQueryResultReceived(basicQueryID, basicSubmission);
           }
