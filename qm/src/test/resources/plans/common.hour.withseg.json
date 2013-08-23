@@ -21,8 +21,8 @@
         ref : "value",
         expr : "value"
       }, {
-        ref : "ts",
-        expr : "ts"
+        ref : "timestamp",
+        expr : "timestamp"
       } ],
       filters : null,
       rowkey : {
@@ -38,8 +38,8 @@
         ref : "value",
         expr : "value"
       }, {
-        ref : "ts",
-        expr : "ts"
+        ref : "timestamp",
+        expr : "timestamp"
       } ],
       filters : null,
       rowkey : {
@@ -52,47 +52,22 @@
   }, {
     op : "scan",
     @id : 2,
-    memo : "Scan(Table=sof-dsk.ref, Prop=ref, Val={EQ=wpc})",
+    memo : "Scan(Table=sof-dsk.language, Prop=language, Val={EQ=en})",
     storageengine : "mysql",
     selection : {
       projections : [ {
         ref : "uid",
         expr : "uid"
       } ],
-      filter : "val='wpc'",
-      table : "sof-dsk.ref"
+      filter : "val='en'",
+      table : "sof-dsk.language"
     },
     ref : "user"
   }, {
-    op : "scan",
+    op : "join",
     @id : 3,
-    memo : "Scan(Table=sof-dsk.register_time, Prop=register_time, Val={EQ=2013-01-01})",
-    storageengine : "mysql",
-    selection : {
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      } ],
-      filter : "val='2013-01-01'",
-      table : "sof-dsk.register_time"
-    },
-    ref : "user"
-  }, {
-    op : "join",
-    @id : 4,
-    left : 2,
-    right : 3,
-    conditions : [ {
-      relationship : "==",
-      left : "uid",
-      right : "uid"
-    } ],
-    type : "INNER"
-  }, {
-    op : "join",
-    @id : 5,
     left : 1,
-    right : 4,
+    right : 2,
     conditions : [ {
       relationship : "==",
       left : "uid",
@@ -101,17 +76,17 @@
     type : "INNER"
   }, {
     op : "segment",
-    @id : 6,
-    input : 5,
+    @id : 4,
+    input : 3,
     exprs : [ {
       ref : "dimension",
-      expr : "min5(ts)"
+      expr : "hour(timestamp)"
     } ],
     name : "sgmt"
   }, {
     op : "collapsingaggregate",
-    @id : 7,
-    input : 6,
+    @id : 5,
+    input : 4,
     within : "sgmt",
     target : null,
     carryovers : [ "dimension" ],
@@ -127,11 +102,11 @@
     } ]
   }, {
     op : "project",
-    @id : 8,
-    input : 7,
+    @id : 6,
+    input : 5,
     projections : [ {
       ref : "query_id",
-      expr : "'f918dc1c-8a24-4934-9075-0bd8c52ed171'"
+      expr : "'ddd6627e-0274-4ec9-8032-8dc39bba6f23'"
     }, {
       ref : "dimension",
       expr : "dimension"
@@ -147,8 +122,8 @@
     } ]
   }, {
     op : "store",
-    @id : 9,
-    input : 8,
+    @id : 7,
+    input : 6,
     target : null,
     partition : null,
     storageEngine : "mock"

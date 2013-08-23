@@ -1,9 +1,11 @@
 package com.xingcloud.qm.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xingcloud.qm.config.QMConfig;
 import com.xingcloud.qm.remote.QueryNode;
 import com.xingcloud.qm.result.ResultRow;
 import com.xingcloud.qm.result.ResultTable;
+import com.xingcloud.qm.utils.GraphVisualize;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.exec.client.DrillClient;
 import org.apache.drill.exec.proto.UserProtos;
@@ -11,6 +13,7 @@ import org.apache.drill.exec.rpc.user.QueryResultBatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -40,7 +43,7 @@ public class PlanExecutor {
   }
 
   public PlanExecutor() {
-    
+
   }
 
   public void executePlan(PlanSubmission plan, QueryListener listener) {
@@ -60,14 +63,29 @@ public class PlanExecutor {
     public void run() {
       logger.info("PlanSubmission {} executing...", submission.id);
       if(logger.isDebugEnabled()){
-        logger.debug("PlanSubmission " + submission.id + " with "+ submission.plan.getGraph().getAdjList().getNodeSet().size()+" nodes...");
+        logger.debug("PlanSubmission " + submission.id + " with "+ submission.plan.getGraph().getAdjList().getNodeSet().size()+" LOPs...");
+        String pngPath = QMConfig.conf().getString(QMConfig.TEMPDIR) + File.separator+submission.id+".png";
+        logger.debug("saving images of PlanSubmission " + new File(pngPath).getAbsolutePath() + "...");
+        GraphVisualize.visualize(submission.plan, pngPath);
       }
       DrillClient[] clients = QueryNode.getClients();
       List<Future<List<QueryResultBatch>>> futures = new ArrayList<>(clients.length);
+      String planString;
+      try {
+        planString = submission.plan.toJsonString(QueryNode.LOCAL_DEFAULT_DRILL_CONFIG);
+      } catch (JsonProcessingException e) {
+        e.printStackTrace();
+        return;
+      }
+      if (logger.isDebugEnabled()) {
+        logger.debug("[PlanString]\n{}", planString);
+      }
+
       for (int i = 0; i < clients.length; i++) {
         DrillClient client = clients[i];
-        futures.add(drillBitExecutor.submit(new DrillbitCallable(submission.plan, client)));
+        futures.add(drillBitExecutor.submit(new DrillbitCallable2(planString, client)));
       }
+
       List<Map<String, ResultTable>> materializedResults = new ArrayList<>();
       //收集结果。理想情况下，应该收集所有的计算结果。
       //在有drillbit计算失败的情况下，使用剩下的结果作为估计值
@@ -85,15 +103,15 @@ public class PlanExecutor {
           failedCause = e;
         }
       }
-      if(succeeded==0){
+      if (succeeded == 0) {
         submission.e = failedCause;
         submission.queryID2Table = null;
-      }else{
+      } else {
         logger.debug("PlanSubmission {}: {} drillbits returned results.", submission.id, succeeded);
-        Map<String,ResultTable> merged = mergeResults(materializedResults);
+        Map<String, ResultTable> merged = mergeResults(materializedResults);
         //如果有结果没有收到，则根据采样率估计值
-        if(succeeded < futures.size()){
-          double sampleRate = 1.0*succeeded/futures.size();
+        if (succeeded < futures.size()) {
+          double sampleRate = 1.0 * succeeded / futures.size();
           for (Map.Entry<String, ResultTable> entry : merged.entrySet()) {
             String queryID = entry.getKey();
             ResultTable result = entry.getValue();
@@ -105,7 +123,7 @@ public class PlanExecutor {
               v.userNum /= sampleRate;
               v.sampleRate *= sampleRate;
             }
-            
+
           }
         }
         submission.queryID2Table = merged;
@@ -114,14 +132,14 @@ public class PlanExecutor {
     }
 
     private Map<String, ResultTable> mergeResults(List<Map<String, ResultTable>> materializedResults) {
-      Map<String,ResultTable> merged = new HashMap<>();
+      Map<String, ResultTable> merged = new HashMap<>();
       for (int i = 0; i < materializedResults.size(); i++) {
         Map<String, ResultTable> result = materializedResults.get(i);
         for (Map.Entry<String, ResultTable> entry : result.entrySet()) {
           String queryID = entry.getKey();
           ResultTable value = entry.getValue();
           ResultTable mergedValue = merged.get(queryID);
-          if(mergedValue == null){
+          if (mergedValue == null) {
             mergedValue = new ResultTable();
             merged.put(queryID, mergedValue);
           }
@@ -129,10 +147,10 @@ public class PlanExecutor {
             String dimensionKey = entry2.getKey();
             ResultRow entryValue = entry2.getValue();
             ResultRow mergedEntryValue = mergedValue.get(dimensionKey);
-            if(mergedEntryValue == null){
+            if (mergedEntryValue == null) {
               mergedEntryValue = entryValue;
               mergedValue.put(dimensionKey, mergedEntryValue);
-            }else{
+            } else {
               mergedEntryValue.count += entryValue.count;
               mergedEntryValue.sum += entryValue.sum;
               mergedEntryValue.userNum += entryValue.userNum;
@@ -156,9 +174,23 @@ public class PlanExecutor {
 
     @Override
     public List<QueryResultBatch> call() throws Exception {
-      return client.runQuery(UserProtos.QueryType.LOGICAL, 
-        plan.toJsonString(QueryNode.LOCAL_DEFAULT_DRILL_CONFIG),
-        QMConfig.conf().getLong(QMConfig.DRILL_EXEC_TIMEOUT));
+      return client.runQuery(UserProtos.QueryType.LOGICAL, plan.toJsonString(QueryNode.LOCAL_DEFAULT_DRILL_CONFIG),
+                             QMConfig.conf().getLong(QMConfig.DRILL_EXEC_TIMEOUT));
+    }
+  }
+
+  private class DrillbitCallable2 implements Callable<List<QueryResultBatch>> {
+    private final String plan;
+    private final DrillClient client;
+
+    public DrillbitCallable2(String plan, DrillClient client) {
+      this.plan = plan;
+      this.client = client;
+    }
+
+    @Override
+    public List<QueryResultBatch> call() throws Exception {
+      return client.runQuery(UserProtos.QueryType.LOGICAL, plan, QMConfig.conf().getLong(QMConfig.DRILL_EXEC_TIMEOUT));
     }
   }
 }

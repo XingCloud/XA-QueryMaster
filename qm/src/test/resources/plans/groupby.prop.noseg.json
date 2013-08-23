@@ -11,17 +11,17 @@
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "Scan(Table=sof-dsk.ref)",
+    memo : "Scan(Table=sof-dsk.language)",
     storageengine : "mysql",
     selection : {
-      projection : [ {
+      projections : [ {
         ref : "uid",
         expr : "uid"
       }, {
-        ref : "value",
-        expr : "value"
+        ref : "language",
+        expr : "val"
       } ],
-      table : "sof-dsk.ref"
+      table : "sof-dsk.language"
     },
     ref : "user"
   }, {
@@ -76,7 +76,7 @@
     input : 3,
     exprs : [ {
       ref : "dimension",
-      expr : "ref"
+      expr : "language"
     } ],
     name : "sgmt"
   }, {
@@ -102,7 +102,7 @@
     input : 5,
     projections : [ {
       ref : "query_id",
-      expr : "'99d52ac0-9717-4acf-b228-4bc64ff5f494'"
+      expr : "'b62f453d-19e8-40dd-8c0d-cea5f30c90fc'"
     }, {
       ref : "dimension",
       expr : "dimension"

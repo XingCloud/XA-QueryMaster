@@ -20,11 +20,14 @@
       }, {
         ref : "value",
         expr : "value"
+      }, {
+        ref : "event0",
+        expr : "event0"
       } ],
       filters : null,
       rowkey : {
-        end : "20130101visit",
-        start : "20130101visit"
+        end : "20130101",
+        start : "20130101"
       },
       table : "sof-dsk_deu"
     }, {
@@ -34,11 +37,14 @@
       }, {
         ref : "value",
         expr : "value"
+      }, {
+        ref : "event0",
+        expr : "event0"
       } ],
       filters : null,
       rowkey : {
-        end : "20130102visit",
-        start : "20130102visit"
+        end : "20130102",
+        start : "20130102"
       },
       table : "sof-dsk_deu"
     } ],
@@ -75,7 +81,7 @@
     input : 3,
     projections : [ {
       ref : "query_id",
-      expr : "'3f3dccb1-a545-408e-9afe-693f43da0969'"
+      expr : "'658daafe-ac1e-44e3-9105-fe6d1299e6f0'"
     }, {
       ref : "dimension",
       expr : "dimension"
