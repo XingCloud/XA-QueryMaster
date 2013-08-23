@@ -25,6 +25,14 @@ public class TestPlanMerge {
     LogicalPlan plan6=Utils.readPlan("/plans/groupby.event.noseg.json",c);
     LogicalPlan plan7=Utils.readPlan("/plans/common.hour.noseg.json",c);
     LogicalPlan plan8=Utils.readPlan("/plans/groupby.prop.withseg.json",c);
+
+    List<LogicalPlan> planList=new ArrayList<>();
+    for(int i=0;i<20;i++){
+        String planName="/plans/common.day.noseg.random."+i+".json";
+        LogicalPlan tmpPlan=Utils.readPlan(planName,c);
+        planList.add(tmpPlan);
+    }
+
     /*
     PlanMerge planMerge=new PlanMerge(Arrays.asList(plan));
     planMerge.splitBigScan();
@@ -33,9 +41,10 @@ public class TestPlanMerge {
        GraphVisualize.visualize(m,"splited.png");
     }
     */
-    Map<LogicalPlan, LogicalPlan> merged =
-            PlanMerge.sortAndMerge(Arrays.asList(plan, plan1,plan2,plan3,plan4,plan5
-                                                ,plan6,plan7,plan8));
+    Map<LogicalPlan, LogicalPlan> merged;
+      merged=PlanMerge.sortAndMerge(planList);
+    //        PlanMerge.sortAndMerge(Arrays.asList(plan, plan1,plan2,plan3,plan4,plan5
+    //                                            ,plan6,plan7,plan8));
     Set<LogicalPlan> set = new HashSet<>();
     set.addAll(merged.values());
     int index=0;
