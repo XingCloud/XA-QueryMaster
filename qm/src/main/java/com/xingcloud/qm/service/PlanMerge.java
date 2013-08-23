@@ -80,12 +80,14 @@ public class PlanMerge {
                          map.put(SELECTION_KEY_WORD_ROWKEY, rowkeyRangeMap);
                          map.put(SELECTION_KEY_WORD_PROJECTIONS, selection.get(SELECTION_KEY_WORD_PROJECTIONS));
                          map.put(SELECTION_KEY_WORD_FILTERS, selection.get(SELECTION_KEY_WORD_FILTERS));
+
                          List<Map<String, Object>> mapList = new ArrayList<Map<String, Object>>(1);
                          mapList.add(map);
                          ObjectMapper mapper = DrillConfig.create().getMapper();
                          String s = mapper.writeValueAsString(mapList);
                          JSONOptions childSelection=mapper.readValue(s, JSONOptions.class);
                          Scan childScan=new Scan(origScan.getStorageEngine(),childSelection,origScan.getOutputReference());
+                         childScan.setMemo(origScan.getMemo());
                          childScans.add(childScan);
                      }
                  }else{

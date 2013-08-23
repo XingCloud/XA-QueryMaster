@@ -61,6 +61,7 @@ public class PlanExecutor {
 
     @Override
     public void run() {
+        try{
       logger.info("PlanSubmission {} executing...", submission.id);
       if(logger.isDebugEnabled()){
         logger.debug("PlanSubmission " + submission.id + " with "+ submission.plan.getGraph().getAdjList().getNodeSet().size()+" LOPs...");
@@ -128,7 +129,13 @@ public class PlanExecutor {
         }
         submission.queryID2Table = merged;
       }
-      listener.onQueryResultReceived(submission.id, submission);
+        }catch (Exception e){
+            e.printStackTrace();
+            //throw e;
+        }
+        finally {
+            listener.onQueryResultReceived(submission.id, submission);
+        }
     }
 
     private Map<String, ResultTable> mergeResults(List<Map<String, ResultTable>> materializedResults) {
