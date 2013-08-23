@@ -1,11 +1,6 @@
 package com.xingcloud.qm.service;
-import com.xingcloud.cache.XCache;
-import com.xingcloud.cache.XCacheInfo;
-import com.xingcloud.cache.XCacheOperator;
-import com.xingcloud.cache.exception.XCacheException;
-import com.xingcloud.cache.redis.NoSelectRedisXCacheOperator;
-import com.xingcloud.qm.config.QMConfig;
 
+import com.xingcloud.qm.config.QMConfig;
 import com.xingcloud.qm.exceptions.XRemoteQueryException;
 import com.xingcloud.qm.result.ResultRow;
 import com.xingcloud.qm.result.ResultTable;
@@ -13,7 +8,15 @@ import org.apache.drill.common.logical.LogicalPlan;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -81,18 +84,17 @@ public class QueryMaster implements QueryListener {
     return true;
   }
 
-  public Set<LogicalPlan> getQueuePlans(){
-     Set<LogicalPlan> rets=new HashSet<>();
-     for(Map.Entry<String,QuerySubmission> entry: submitted.entrySet()){
-        rets.add(entry.getValue().plan);
-     }
-     return rets;
+  public Set<LogicalPlan> getQueuePlans() {
+    Set<LogicalPlan> rets = new HashSet<>();
+    for (Map.Entry<String, QuerySubmission> entry : submitted.entrySet()) {
+      rets.add(entry.getValue().plan);
+    }
+    return rets;
   }
 
-  public Set<LogicalPlan> getExecutingPlans(){
-     return null;
+  public Set<LogicalPlan> getExecutingPlans() {
+    return null;
   }
-
 
   private void enQueue(LogicalPlan plan, String id) {
     QuerySubmission submission = new BasicQuerySubmission(plan, id);
@@ -127,14 +129,14 @@ public class QueryMaster implements QueryListener {
       String key = queryID;
       if (basicQuery.e != null) {
         logger.warn("execution failed!", basicQuery.e);
-
       } else {
         logger.info("basicQuery Result");
         for (Map.Entry<String, ResultRow> entry : ((BasicQuerySubmission) query).value.entrySet()) {
           //String queryId=entry.getKey();
           ResultRow result = entry.getValue();
 
-          logger.info("Key - " + entry.getKey() + " - ResultTuple[" + result.count + "#" + result.sum + "#" +
+          logger.info("[RESULT-INFO] - " + queryID + " - key - " + entry
+            .getKey() + " - ResultTuple[" + result.count + "#" + result.sum + "#" +
                         result.userNum + "@" + result.sampleRate + "]");
         }
         /*
@@ -264,9 +266,8 @@ public class QueryMaster implements QueryListener {
           }
         }
       }
-        logger.info("QueryMaster scheduler exiting...");
+      logger.info("QueryMaster scheduler exiting...");
     }
-
 
     private void doSubmitExecution(PlanSubmission plan) {
       //更新各种counter
@@ -319,7 +320,7 @@ public class QueryMaster implements QueryListener {
             basicSubmission.value = value;
             if (value == null) {
               basicSubmission.e = new NullPointerException("haven't received any results for " + basicQueryID + "!");
-              basicSubmission.value=new ResultTable();
+              basicSubmission.value = new ResultTable();
 
             }
             QueryMaster.this.onQueryResultReceived(basicQueryID, basicSubmission);
