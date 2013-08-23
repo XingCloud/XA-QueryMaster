@@ -386,27 +386,11 @@ public class PlanMerge {
               }
             }
           }
-          if (mergeTo == null && planCtx.mergeResult.size() >= 6) {
-            System.out.println("store merge to plan");
-          }
           doMergeOperator(op, mergeTo, planCtx);
-
           lookForParentsAndSubstitute(opNode, child2Parents, nextStepSet, mergeTo);
         }
       }
-      System.out.println("merge plan one");
-      System.out.println("--------------------------------------\n" +
-                           "-------------------------------------------\n" +
-                           "-------------------------------------------------------");
-      try {
-        System.out.println(
-          "merge result: \n" + new LogicalPlan(head, se, planCtx.mergeResult).toJsonString(DrillConfig.create()));
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-
     }//for plans
-
     //add union/store to all roots
     List<LogicalOperator> roots = new ArrayList<LogicalOperator>();
     Set<LogicalOperator> vs = planCtx.mergedGraph.vertexSet();
