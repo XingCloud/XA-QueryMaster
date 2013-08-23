@@ -17,13 +17,25 @@ public class TestPlanMerge {
   
   @Test
   public void testIdenticalPlan() throws Exception{
+    for(int i=0;i<20;i++){
     LogicalPlan plan2 = Utils.readPlan("/plans/common.day.noseg.json", c);
-    LogicalPlan plan = Utils.readPlan("/plans/common.day.noseg.json", c);
-    Map<LogicalPlan, LogicalPlan> merged = PlanMerge.sortAndMerge(Arrays.asList(plan, plan2));
+    LogicalPlan plan = Utils.readPlan("/plans/common.day.withseg.json", c);
+    LogicalPlan plan1=Utils.readPlan("/plans/common.day.noseg.json", c);
+    /*
+    PlanMerge planMerge=new PlanMerge(Arrays.asList(plan));
+    planMerge.splitBigScan();
+
+    for(LogicalPlan m: planMerge.getSplitedPlans()){
+       GraphVisualize.visualize(m,"splited.png");
+    }
+    */
+    Map<LogicalPlan, LogicalPlan> merged = PlanMerge.sortAndMerge(Arrays.asList(plan, plan1,plan2));
     Set<LogicalPlan> set = new HashSet<>();
     set.addAll(merged.values());
     for (LogicalPlan m : set) {
       GraphVisualize.visualize(m, "test.png");      
-    }    
+    }
+    }
+
   }
 }

@@ -20,6 +20,7 @@ public abstract class LOPComparator<T extends LogicalOperator> implements Compar
     comparators.put(Scan.class, new ScanComparator());
     comparators.put(Segment.class, new SegmentComparator());
     comparators.put(Union.class, new UnionComparator());
+    comparators.put(Store.class,new StoreComparator());
   }
   public static boolean equals(LogicalOperator op1, LogicalOperator op2) {
     if(op1 == op2){
@@ -43,6 +44,21 @@ public abstract class LOPComparator<T extends LogicalOperator> implements Compar
   @Override
   public boolean equals(Object obj) {
     return super.equals(obj);  
+  }
+
+  private static class StoreComparator extends LOPComparator<Store> {
+
+      @Override
+      public int compare(Store o1, Store o2) {
+          LogicalOperator in1=o1.getInput();
+          LogicalOperator in2=o2.getInput();
+          String storeEng1=o1.getStorageEngine();
+          String storeEng2=o2.getStorageEngine();
+          if(equals(in1,in2)&&storeEng1.equals(storeEng2))
+              return 0;
+          else
+              return -1;
+      }
   }
 
   private static class UnionComparator extends LOPComparator<Union> {

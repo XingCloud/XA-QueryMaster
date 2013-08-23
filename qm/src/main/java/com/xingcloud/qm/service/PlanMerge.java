@@ -1,8 +1,18 @@
 package com.xingcloud.qm.service;
 
 import static org.apache.drill.common.util.DrillConstants.SE_HBASE;
+import static org.apache.drill.common.util.Selections.*;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_FILTERS;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_PROJECTIONS;
 
+import com.fasterxml.jackson.core.JsonLocation;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import org.apache.drill.common.JSONOptions;
 import org.apache.drill.common.PlanProperties;
+import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.graph.AdjacencyList;
 import org.apache.drill.common.graph.Edge;
 import org.apache.drill.common.logical.LogicalPlan;
@@ -21,18 +31,14 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleDirectedGraph;
 import org.jgrapht.graph.SimpleGraph;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.IOException;
+import java.util.*;
 
 public class PlanMerge {
 
   private final List<LogicalPlan> incoming;
+
+  private List<LogicalPlan> splitedPlans;
 
   private Map<LogicalPlan, LogicalPlan> merged;
 
@@ -40,16 +46,131 @@ public class PlanMerge {
 
   public PlanMerge(List<LogicalPlan> plans) throws Exception {
     this.incoming = plans;
-    sortAndMerge();
+    //splitBigScan();
+    //sortAndMerge();
   }
 
-  private void sortAndMerge() throws Exception {
+  public List<LogicalPlan> getSplitedPlans(){
+      return splitedPlans;
+  }
+
+  public void splitBigScan() throws IOException {
+     splitedPlans=new ArrayList<>();
+     for(LogicalPlan plan: incoming){
+         AdjacencyList<LogicalOperator> child2Parents = plan.getGraph().getAdjList().getReversedList();
+         Collection<AdjacencyList<LogicalOperator>.Node> leaves = child2Parents.getInternalRootNodes();
+         List<LogicalOperator> operators=new ArrayList<>();
+         Map<AdjacencyList<LogicalOperator>.Node,Union> scanNodeUnionMap=new HashMap<>();
+         for(AdjacencyList<LogicalOperator>.Node leaf: leaves){
+             if(leaf.getNodeValue() instanceof Scan){
+                 Scan origScan=(Scan)leaf.getNodeValue();
+                 List<Scan> childScans=new ArrayList<>();
+                 if(origScan.getStorageEngine().contains("hbase")){
+                     for(JsonNode selection : (origScan.getSelection().getRoot())){
+                         Map<String, Object> map = new HashMap<String, Object>(4);
+                         map.put(SELECTION_KEY_WORD_TABLE, selection.get(SELECTION_KEY_WORD_TABLE));
+
+                         Map<String, Object> rowkeyRangeMap = new HashMap<String, Object>(2);
+                         rowkeyRangeMap.put(SELECTION_KEY_WORD_ROWKEY_START,
+                                 selection.get(SELECTION_KEY_WORD_ROWKEY).get(SELECTION_KEY_WORD_ROWKEY_START));
+                         rowkeyRangeMap.put(SELECTION_KEY_WORD_ROWKEY_END,
+                                 selection.get(SELECTION_KEY_WORD_ROWKEY).get(SELECTION_KEY_WORD_ROWKEY_END));
+                         map.put(SELECTION_KEY_WORD_ROWKEY, rowkeyRangeMap);
+                         map.put(SELECTION_KEY_WORD_PROJECTIONS, selection.get(SELECTION_KEY_WORD_PROJECTIONS));
+                         map.put(SELECTION_KEY_WORD_FILTERS, selection.get(SELECTION_KEY_WORD_FILTERS));
+                         List<Map<String, Object>> mapList = new ArrayList<Map<String, Object>>(1);
+                         mapList.add(map);
+                         ObjectMapper mapper = DrillConfig.create().getMapper();
+                         String s = mapper.writeValueAsString(mapList);
+                         JSONOptions childSelection=mapper.readValue(s, JSONOptions.class);
+                         Scan childScan=new Scan(origScan.getStorageEngine(),childSelection,origScan.getOutputReference());
+                         childScans.add(childScan);
+                     }
+                 }
+                 Scan[] splitedScans= new Scan[childScans.size()];
+                 int i=0;
+                 for(Scan scan: childScans){
+                     splitedScans[i++]=scan;
+                 }
+                 if(childScans.size()>1){
+                     for(int j=0;j<splitedScans.length;j++)
+                         operators.add(splitedScans[j]);
+                     Union union=new Union(splitedScans,false);
+                     scanNodeUnionMap.put(leaf,union);
+                 }
+             }
+         }
+
+         List<AdjacencyList<LogicalOperator>.Node> nextStep=new ArrayList<>();
+         for(Map.Entry<AdjacencyList<LogicalOperator>.Node,Union> entry: scanNodeUnionMap.entrySet()){
+             Union union=entry.getValue();
+             AdjacencyList<LogicalOperator>.Node leaf=entry.getKey();
+             LogicalOperator origOp=leaf.getNodeValue();
+             List<Edge<AdjacencyList<LogicalOperator>.Node>> parentEdges = child2Parents.getAdjacent(leaf);
+             for (Edge<AdjacencyList<LogicalOperator>.Node> parentEdge : parentEdges) {
+                 //looking for all parents of scan,
+                 // substitute scan with targetScan
+                 AdjacencyList<LogicalOperator>.Node parentNode = parentEdge.getTo();
+                 LogicalOperator parent = parentNode.getNodeValue();
+                 if (parent instanceof SingleInputOperator) {
+                     ((SingleInputOperator) parent).setInput(union);
+                 } else if (parent instanceof Join) {
+                     if(((Join) parent).getLeft().equals(origOp))
+                         ((Join)parent).setLeft(union);
+                     else
+                         ((Join) parent).setRight(union);
+                 } else if (parent instanceof Union) {
+                     for(LogicalOperator op : ((Union)parent).getInputs()){
+                         if(op.equals(origOp))
+                             op=union;
+                     }
+                 }
+                 nextStep.add(parentNode);
+             }
+             operators.add(union);
+         }
+
+         putParentsToGraph(nextStep,child2Parents,operators);
+
+          PlanProperties head=plan.getProperties();
+          Map<String, StorageEngineConfig> se=plan.getStorageEngines();
+          LogicalPlan subsPlan=new LogicalPlan(head,se,operators);
+          System.out.println(subsPlan.toJsonString(DrillConfig.create()));
+          System.out.println("------------------------------------------------\n" +
+                  "--------------------------------------------------------");
+          splitedPlans.add(subsPlan);
+
+     }
+  }
+
+    private void putParentsToGraph(List<AdjacencyList<LogicalOperator>.Node> currentOps, AdjacencyList<LogicalOperator> child2Parents,
+                                   List<LogicalOperator> operators) {
+        List<AdjacencyList<LogicalOperator>.Node> nextStep=new ArrayList<>();
+        for(AdjacencyList<LogicalOperator>.Node opNode: currentOps ){
+            LogicalOperator op=opNode.getNodeValue();
+            if(!operators.contains(op))
+                operators.add(op);
+            List<Edge<AdjacencyList<LogicalOperator>.Node>>  parentEdges=child2Parents.getAdjacent(opNode);
+            for(Edge<AdjacencyList<LogicalOperator>.Node> parentEdge: parentEdges){
+                AdjacencyList.Node parentNode=parentEdge.getTo();
+                LogicalOperator parent= (LogicalOperator) parentNode.getNodeValue();
+                if(!operators.contains(parent)&&!nextStep.contains(parentNode))
+                    nextStep.add(parentNode);
+            }
+        }
+        if(nextStep.size()==0)return;
+        putParentsToGraph(nextStep,child2Parents,operators);
+
+    }
+
+    private void sortAndMerge() throws Exception {
     merged = new HashMap<LogicalPlan, LogicalPlan>();
     sortedByProjectID = new HashMap<String, List<LogicalPlan>>();
     /**
      * sort into sortedByProjectID, by projectID
      */
-    for (LogicalPlan plan : incoming) {
+    //for (LogicalPlan plan : incoming) {
+      for(LogicalPlan plan: splitedPlans){
       String projectID = getProjectID(plan);
       List<LogicalPlan> projectPlans = sortedByProjectID.get(projectID);
       if (projectPlans == null) {
@@ -218,10 +339,24 @@ public class PlanMerge {
               }
             }
           }
+            if( mergeTo==null && planCtx.mergeResult.size()>=6){
+                System.out.println("store merge to plan");
+            }
           doMergeOperator(op, mergeTo, planCtx);
+
           lookForParentsAndSubstitute(opNode, child2Parents, nextStepSet, mergeTo);
         }
       }
+      System.out.println("merge plan one");
+      System.out.println("--------------------------------------\n"+
+      "-------------------------------------------\n"+
+      "-------------------------------------------------------");
+      try{
+          System.out.println("merge result: \n"+new LogicalPlan(head,se,planCtx.mergeResult).toJsonString(DrillConfig.create()));
+      }catch (Exception e){
+         e.printStackTrace();
+      }
+
     }//for plans
 
     //add union/store to all roots
@@ -247,15 +382,20 @@ public class PlanMerge {
           unionChildren.add(root);
         }
       }
-      Union union = new Union(unionChildren.toArray(new LogicalOperator[unionChildren.size()]), false);
+      LogicalOperator[] unionChilds=new LogicalOperator[unionChildren.size()];
+      for(int i=0;i<unionChildren.size();i++)
+          unionChilds[i]=unionChildren.get(i);
+      Union union = new Union(unionChilds, false);
       doMergeOperator(union, null, planCtx);
       Store store = new Store("output", null, null);
       store.setInput(union);
       doMergeOperator(store, null, planCtx);
     } else {
-      Store store = new Store("output", null, null);
-      store.setInput(roots.get(0));
-      doMergeOperator(store, null, planCtx);
+      if(!(roots.get(0) instanceof Store)){
+        Store store = new Store("output", null, null);
+        store.setInput(roots.get(0));
+        doMergeOperator(store, null, planCtx);
+      }
     }
     return new LogicalPlan(head, se, planCtx.mergeResult);
   }
@@ -283,7 +423,10 @@ public class PlanMerge {
         ((Join) source).setLeft(null);
         ((Join) source).setRight(null);
       } else if (source instanceof Union) {
-        ((Union) source).setInputs(null);
+        for(LogicalOperator op: ((Union)source).getInputs()){
+            op=null;
+        }
+
       }
     }
   }
@@ -488,7 +631,17 @@ public class PlanMerge {
    *         没有和别的plan合并，则在返回的map中，key和value都是这个plan。
    */
   public static Map<LogicalPlan, LogicalPlan> sortAndMerge(List<LogicalPlan> plans) throws Exception {
-    return new PlanMerge(plans).getMerged();
+      PlanMerge planMerge=new PlanMerge(plans);
+      planMerge.splitBigScan();
+      /*
+      for(LogicalPlan plan : planMerge.getSplitedPlans()){
+
+          String planStr=DrillConfig.create().getMapper().writeValueAsString(plan);
+          System.out.println(planStr);
+      }
+      */
+      planMerge.sortAndMerge();
+      return planMerge.getMerged();
   }
 
   public Map<LogicalPlan, LogicalPlan> getMerged() {
