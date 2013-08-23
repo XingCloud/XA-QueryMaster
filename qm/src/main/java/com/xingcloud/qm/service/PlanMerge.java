@@ -56,11 +56,13 @@ public class PlanMerge {
 
   public void splitBigScan() throws IOException {
      splitedPlans=new ArrayList<>();
+     int index=0;
      for(LogicalPlan plan: incoming){
          AdjacencyList<LogicalOperator> child2Parents = plan.getGraph().getAdjList().getReversedList();
          Collection<AdjacencyList<LogicalOperator>.Node> leaves = child2Parents.getInternalRootNodes();
          List<LogicalOperator> operators=new ArrayList<>();
          Map<AdjacencyList<LogicalOperator>.Node,Union> scanNodeUnionMap=new HashMap<>();
+         List<AdjacencyList<LogicalOperator>.Node> nextStep=new ArrayList<>();
          for(AdjacencyList<LogicalOperator>.Node leaf: leaves){
              if(leaf.getNodeValue() instanceof Scan){
                  Scan origScan=(Scan)leaf.getNodeValue();
@@ -86,7 +88,14 @@ public class PlanMerge {
                          Scan childScan=new Scan(origScan.getStorageEngine(),childSelection,origScan.getOutputReference());
                          childScans.add(childScan);
                      }
+                 }else{
+                    operators.add(origScan);
+                    List<AdjacencyList<LogicalOperator>.Node> parents=getParents(leaf,child2Parents);
+                    for(AdjacencyList<LogicalOperator>.Node parent: parents){
+                       if(!nextStep.contains(parent))nextStep.add(parent);
+                    }
                  }
+
                  Scan[] splitedScans= new Scan[childScans.size()];
                  int i=0;
                  for(Scan scan: childScans){
@@ -97,11 +106,17 @@ public class PlanMerge {
                          operators.add(splitedScans[j]);
                      Union union=new Union(splitedScans,false);
                      scanNodeUnionMap.put(leaf,union);
+                 }else{
+                     operators.add(origScan);
+                     List<AdjacencyList<LogicalOperator>.Node> parents=getParents(leaf,child2Parents);
+                     for(AdjacencyList<LogicalOperator>.Node parent: parents){
+                         if(!nextStep.contains(parent))nextStep.add(parent);
+                     }
                  }
              }
          }
 
-         List<AdjacencyList<LogicalOperator>.Node> nextStep=new ArrayList<>();
+
          for(Map.Entry<AdjacencyList<LogicalOperator>.Node,Union> entry: scanNodeUnionMap.entrySet()){
              Union union=entry.getValue();
              AdjacencyList<LogicalOperator>.Node leaf=entry.getKey();
@@ -125,23 +140,45 @@ public class PlanMerge {
                              op=union;
                      }
                  }
-                 nextStep.add(parentNode);
+                 if(!nextStep.contains(parentNode))
+                     nextStep.add(parentNode);
              }
              operators.add(union);
+
          }
 
-         putParentsToGraph(nextStep,child2Parents,operators);
+          putParentsToGraph(nextStep,child2Parents,operators);
 
           PlanProperties head=plan.getProperties();
           Map<String, StorageEngineConfig> se=plan.getStorageEngines();
+          index++;
+          try{
           LogicalPlan subsPlan=new LogicalPlan(head,se,operators);
           System.out.println(subsPlan.toJsonString(DrillConfig.create()));
           System.out.println("------------------------------------------------\n" +
                   "--------------------------------------------------------");
           splitedPlans.add(subsPlan);
+          }catch (Exception e){
+              System.out.println(index+" plan has problem");
+              e.printStackTrace();
+
+          }
+
 
      }
   }
+
+    private List<AdjacencyList<LogicalOperator>.Node> getParents(AdjacencyList<LogicalOperator>.Node opNode,AdjacencyList<LogicalOperator> child2Parents){
+        List<AdjacencyList<LogicalOperator>.Node> parents=new ArrayList<>();
+        List<Edge<AdjacencyList<LogicalOperator>.Node>>  parentEdges=child2Parents.getAdjacent(opNode);
+        for(Edge<AdjacencyList<LogicalOperator>.Node> parentEdge: parentEdges){
+            AdjacencyList.Node parentNode=parentEdge.getTo();
+            //LogicalOperator parent= (LogicalOperator) parentNode.getNodeValue();
+            parents.add(parentNode);
+        }
+        return parents;
+    }
+
 
     private void putParentsToGraph(List<AdjacencyList<LogicalOperator>.Node> currentOps, AdjacencyList<LogicalOperator> child2Parents,
                                    List<LogicalOperator> operators) {
