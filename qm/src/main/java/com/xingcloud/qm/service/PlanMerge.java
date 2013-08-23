@@ -40,6 +40,8 @@ public class PlanMerge {
 
   private List<LogicalPlan> splitedPlans;
 
+  private Map<LogicalPlan,LogicalPlan> splitedPlan2Orig;
+
   private Map<LogicalPlan, LogicalPlan> merged;
 
   private Map<String, List<LogicalPlan>> sortedByProjectID;
@@ -56,6 +58,7 @@ public class PlanMerge {
 
   public void splitBigScan() throws IOException {
      splitedPlans=new ArrayList<>();
+     splitedPlan2Orig=new HashMap<LogicalPlan,LogicalPlan>();
      int index=0;
      for(LogicalPlan plan: incoming){
          AdjacencyList<LogicalOperator> child2Parents = plan.getGraph().getAdjList().getReversedList();
@@ -160,6 +163,7 @@ public class PlanMerge {
           System.out.println("------------------------------------------------\n" +
                   "--------------------------------------------------------");
           splitedPlans.add(subsPlan);
+          splitedPlan2Orig.put(subsPlan,plan);
           }catch (Exception e){
               System.out.println(index+" plan has problem");
               e.printStackTrace();
@@ -279,7 +283,8 @@ public class PlanMerge {
         Set<LogicalPlan> planSet = mergeSets.get(i);
         LogicalPlan mergedPlan = doMergePlan(planSet, ctx);
         for (LogicalPlan original : planSet) {
-          merged.put(original, mergedPlan);
+          LogicalPlan realOrig =splitedPlan2Orig.get(original);
+          merged.put(realOrig, mergedPlan);
         }
       }
       ctx.close();
