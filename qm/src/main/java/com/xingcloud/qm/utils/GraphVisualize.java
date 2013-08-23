@@ -73,7 +73,8 @@ public class GraphVisualize {
 //    treeLayout.run(jgf);
     JGraphHierarchicalLayout hLayout = new JGraphHierarchicalLayout();
     hLayout.setIntraCellSpacing(75);
-    hLayout.setInterHierarchySpacing(100);
+    int spacing = (grapht.vertexSet().size()/10 + 1)*50;
+    hLayout.setInterRankCellSpacing(spacing);
     hLayout.run(jgf);
     Map nestedMap = jgf.createNestedMap(true, true);
     jgraph.getGraphLayoutCache().edit(nestedMap);
@@ -101,7 +102,7 @@ public class GraphVisualize {
       AttributeMap map = new AttributeMap();
       Color c = Color.decode("#FF9900");
 
-      GraphConstants.setBounds(map, new Rectangle2D.Double(50, 50, 250, 60));
+      GraphConstants.setBounds(map, new Rectangle2D.Double(50, 50, 280, 60));
       GraphConstants.setBorder(map, BorderFactory.createRaisedBevelBorder());
       GraphConstants.setBackground(map, c);
       GraphConstants.setForeground(map, Color.white);
@@ -127,7 +128,7 @@ public class GraphVisualize {
       GraphConstants.setForeground(map, Color.decode("#25507C"));
       GraphConstants.setFont(
           map,
-          GraphConstants.DEFAULTFONT.deriveFont(Font.BOLD, 12));
+          GraphConstants.DEFAULTFONT.deriveFont(Font.PLAIN, 0));
       GraphConstants.setLineColor(map, Color.decode("#7AA1E6"));
 
       return map;
