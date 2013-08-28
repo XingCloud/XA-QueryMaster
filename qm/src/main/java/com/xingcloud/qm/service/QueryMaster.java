@@ -1,5 +1,10 @@
 package com.xingcloud.qm.service;
 
+import com.xingcloud.cache.XCache;
+import com.xingcloud.cache.XCacheInfo;
+import com.xingcloud.cache.XCacheOperator;
+import com.xingcloud.cache.exception.XCacheException;
+import com.xingcloud.cache.redis.NoSelectRedisXCacheOperator;
 import com.xingcloud.qm.config.QMConfig;
 import com.xingcloud.qm.exceptions.XRemoteQueryException;
 import com.xingcloud.qm.result.ResultRow;
@@ -139,19 +144,16 @@ public class QueryMaster implements QueryListener {
             .getKey() + " - ResultTuple[" + result.count + "#" + result.sum + "#" +
                         result.userNum + "@" + result.sampleRate + "]");
         }
-        /*
-        try {
-          XCache cache=
-                  new XCache(key, basicQuery.value.toCacheValue(), System.currentTimeMillis(), XCacheInfo.CACHE_INFO_0);
-            XCacheOperator cacheOperator= NoSelectRedisXCacheOperator.getInstance();
-            cacheOperator.putCache(cache);
-        } catch (XCacheException e) {
-          e.printStackTrace();  //e:
-        }
-        */
+//        try {
+//          XCache cache = new XCache(key, basicQuery.value.toCacheValue(), System.currentTimeMillis(),
+//                                    XCacheInfo.CACHE_INFO_0);
+//          XCacheOperator cacheOperator = NoSelectRedisXCacheOperator.getInstance();
+//          cacheOperator.putCache(cache);
+//        } catch (XCacheException e) {
+//          e.printStackTrace();
+//        }
       }
     }
-
   }
 
   public void shutDown() {
@@ -294,7 +296,6 @@ public class QueryMaster implements QueryListener {
     @Override
     public void onQueryResultReceived(String queryID, QuerySubmission query) {
       if (query instanceof PlanSubmission) {
-        logger.debug("PlanSubmission: {} completed.", queryID);
         PlanSubmission planSubmission = (PlanSubmission) query;
         //修改scheduler计数器
         executing.decrementAndGet();
@@ -302,6 +303,7 @@ public class QueryMaster implements QueryListener {
 
         // 分发数据
         if (planSubmission.e != null || planSubmission.getValues() == null || planSubmission.getValues().size() == 0) {
+          logger.debug("PlanSubmission: {} completed.", queryID);
           //出错处理
           for (String basicQueryID : planSubmission.originalSubmissions) {
             BasicQuerySubmission basicSubmission = (BasicQuerySubmission) submitted.get(basicQueryID);
@@ -319,9 +321,9 @@ public class QueryMaster implements QueryListener {
             BasicQuerySubmission basicSubmission = (BasicQuerySubmission) submitted.get(basicQueryID);
             basicSubmission.value = value;
             if (value == null) {
-              basicSubmission.e = new NullPointerException("haven't received any results for " + basicQueryID + "!");
+//              basicSubmission.e = new NullPointerException("haven't received any results for " + basicQueryID + "!");
+              logger.info("PlanSubmission: {} completed with empty result.", queryID);
               basicSubmission.value = new ResultTable();
-
             }
             QueryMaster.this.onQueryResultReceived(basicQueryID, basicSubmission);
           }

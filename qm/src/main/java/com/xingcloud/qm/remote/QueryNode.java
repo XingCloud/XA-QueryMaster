@@ -113,4 +113,8 @@ public class QueryNode {
     return "QueryClient." + id;
   }
 
+  public void reconnect() {
+    this.drillClient.reconnect();
+  }
+
 }

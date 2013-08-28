@@ -4,70 +4,7 @@
   <redis_sharded>
     <shard>
       <host>192.168.1.61</host>
-      <port>6379</port>
-    </shard>
-    <shard>
-      <host>192.168.1.61</host>
-      <port>6380</port>
-    </shard>
-    <shard>
-      <host>192.168.1.61</host>
-      <port>6381</port>
-    </shard>
-    <shard>
-      <host>192.168.1.61</host>
-      <port>6382</port>
-    </shard>
-
-    <shard>
-      <host>192.168.1.61</host>
-      <port>6383</port>
-    </shard>
-    <shard>
-      <host>192.168.1.61</host>
-      <port>6384</port>
-    </shard>
-    <shard>
-      <host>192.168.1.61</host>
-      <port>6385</port>
-    </shard>
-    <shard>
-      <host>192.168.1.61</host>
-      <port>6386</port>
-    </shard>
-
-    <shard>
-      <host>192.168.1.61</host>
-      <port>6387</port>
-    </shard>
-    <shard>
-      <host>192.168.1.61</host>
-      <port>6388</port>
-    </shard>
-    <shard>
-      <host>192.168.1.61</host>
-      <port>6389</port>
-    </shard>
-    <shard>
-      <host>192.168.1.61</host>
-      <port>6390</port>
-    </shard>
-
-    <shard>
-      <host>192.168.1.61</host>
-      <port>6391</port>
-    </shard>
-    <shard>
-      <host>192.168.1.61</host>
-      <port>6392</port>
-    </shard>
-    <shard>
-      <host>192.168.1.61</host>
-      <port>6393</port>
-    </shard>
-    <shard>
-      <host>192.168.1.61</host>
-      <port>6394</port>
+      <port>16379</port>
     </shard>
     <common>
       <max_active>4096</max_active>
