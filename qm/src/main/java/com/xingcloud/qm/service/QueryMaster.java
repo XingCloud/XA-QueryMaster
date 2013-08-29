@@ -1,10 +1,9 @@
 package com.xingcloud.qm.service;
 
-import com.xingcloud.cache.XCache;
-import com.xingcloud.cache.XCacheInfo;
-import com.xingcloud.cache.XCacheOperator;
-import com.xingcloud.cache.exception.XCacheException;
-import com.xingcloud.cache.redis.NoSelectRedisXCacheOperator;
+import com.xingcloud.maincache.MapXCache;
+import com.xingcloud.maincache.XCacheException;
+import com.xingcloud.maincache.XCacheOperator;
+import com.xingcloud.maincache.redis.RedisXCacheOperator;
 import com.xingcloud.qm.config.QMConfig;
 import com.xingcloud.qm.exceptions.XRemoteQueryException;
 import com.xingcloud.qm.result.ResultRow;
@@ -45,6 +44,9 @@ public class QueryMaster implements QueryListener {
   //最多允许的合并后的plan的cost。目前，单个原始查询的cost为1。
   public static int MAX_BATCHCOST = 256;
 
+  // 查询结束后是否存放缓存
+  public static boolean USING_CACHE;
+
   private static QueryMaster instance = new QueryMaster();
 
   /**
@@ -75,6 +77,7 @@ public class QueryMaster implements QueryListener {
     MAX_PLAN_EXECUTING = QMConfig.conf().getInt(QMConfig.MAX_PLAN_EXECUTING, MAX_PLAN_EXECUTING);
     MAX_BATCHCOST = QMConfig.conf().getInt(QMConfig.MAX_BATCHCOST, MAX_BATCHCOST);
     MAX_BATCHMERGE = QMConfig.conf().getInt(QMConfig.MAX_BATCHMERGE, MAX_BATCHMERGE);
+    USING_CACHE = QMConfig.conf().getBoolean(QMConfig.USING_CACHE, USING_CACHE);
   }
 
   private void startup() {
@@ -144,14 +147,16 @@ public class QueryMaster implements QueryListener {
             .getKey() + " - ResultTuple[" + result.count + "#" + result.sum + "#" +
                         result.userNum + "@" + result.sampleRate + "]");
         }
-//        try {
-//          XCache cache = new XCache(key, basicQuery.value.toCacheValue(), System.currentTimeMillis(),
-//                                    XCacheInfo.CACHE_INFO_0);
-//          XCacheOperator cacheOperator = NoSelectRedisXCacheOperator.getInstance();
-//          cacheOperator.putCache(cache);
-//        } catch (XCacheException e) {
-//          e.printStackTrace();
-//        }
+        if (USING_CACHE) {
+          try {
+            MapXCache xCache = MapXCache.buildMapXCache(key, basicQuery.value.toCacheValue());
+            XCacheOperator cacheOperator = RedisXCacheOperator.getInstance();
+            cacheOperator.putMapCache(xCache);
+            logger.info("[X-CACHE] - Result of {} has been added to main cache.", key);
+          } catch (XCacheException e) {
+            e.printStackTrace();
+          }
+        }
       }
     }
   }

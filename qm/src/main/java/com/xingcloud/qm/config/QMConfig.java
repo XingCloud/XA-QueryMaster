@@ -23,6 +23,9 @@ public class QMConfig {
   //最多允许的合并后的plan的cost。目前，单个原始查询的cost为1。
   public static final String MAX_BATCHCOST = "qm.maxcost";
 
+  // 是否在查询结束后存放缓存
+  public static final String USING_CACHE = "qm.using_cache";
+
   
   private Configuration conf;
 
