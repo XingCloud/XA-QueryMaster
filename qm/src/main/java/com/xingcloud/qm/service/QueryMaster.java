@@ -84,12 +84,12 @@ public class QueryMaster implements QueryListener {
     this.scheduler.start();
   }
 
-  public boolean submit(String cacheKey, LogicalPlan logicalPlan) throws XRemoteQueryException {
-    if (submitted.containsKey(cacheKey)) {
-      return false;
+  public synchronized boolean submit(String cacheKey, LogicalPlan logicalPlan) throws XRemoteQueryException {
+    if (!submitted.containsKey(cacheKey)) {
+      enQueue(logicalPlan, cacheKey);
+      return true;
     }
-    enQueue(logicalPlan, cacheKey);
-    return true;
+    return false;
   }
 
   public Set<LogicalPlan> getQueuePlans() {
