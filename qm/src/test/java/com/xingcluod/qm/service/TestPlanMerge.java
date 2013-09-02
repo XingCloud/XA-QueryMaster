@@ -18,17 +18,22 @@ public class TestPlanMerge {
     //for(int i=0;i<20;i++){
     LogicalPlan plan2 = Utils.readPlan("/plans/common.day.noseg.json", c);
     LogicalPlan plan = Utils.readPlan("/plans/common.day.withseg.json", c);
+      /*
     LogicalPlan plan1=Utils.readPlan("/plans/common.day.noseg.json", c);
     LogicalPlan plan3=Utils.readPlan("/plans/common.day.noseg.json", c);
     LogicalPlan plan4=Utils.readPlan("/plans/groupby.prop.noseg.json",c);
     LogicalPlan plan5=Utils.readPlan("/plans/common.hour.withseg.json",c);
     LogicalPlan plan6=Utils.readPlan("/plans/groupby.event.noseg.json",c);
-    LogicalPlan plan7=Utils.readPlan("/plans/common.hour.noseg.json",c);
-    LogicalPlan plan8=Utils.readPlan("/plans/groupby.prop.withseg.json",c);
+    */
+    //LogicalPlan plan7=Utils.readPlan("/plans/common.hour.noseg.json",c);
+    /*
+      LogicalPlan plan8=Utils.readPlan("/plans/groupby.prop.withseg.json",c);
+    */
 
     List<LogicalPlan> planList=new ArrayList<>();
     for(int i=0;i<20;i++){
-        String planName="/plans/common.day.noseg.random."+i+".json";
+        //String planName="/plans/common.day.noseg.random."+i+".json";
+        String planName="/plans/random/random-plan."+i+".json";
         LogicalPlan tmpPlan=Utils.readPlan(planName,c);
         planList.add(tmpPlan);
     }
@@ -44,8 +49,8 @@ public class TestPlanMerge {
     */
     Map<LogicalPlan, LogicalPlan> merged;
       merged=PlanMerge.sortAndMerge(planList,config);
-    //        PlanMerge.sortAndMerge(Arrays.asList(plan, plan1,plan2,plan3,plan4,plan5
-    //                                            ,plan6,plan7,plan8));
+     //       merged=PlanMerge.sortAndMerge(Arrays.asList(plan,plan2),config);
+    //
     Set<LogicalPlan> set = new HashSet<>();
     set.addAll(merged.values());
     int index=0;

@@ -49,26 +49,28 @@ public class LogicalPlanUtil {
 
          //filter
             JsonNode filters=selectionRoot.get(Selections.SELECTION_KEY_WORD_FILTERS);
-            List<Object> filterList=new ArrayList<>();
-            for(JsonNode node: filters){
-                Map<String,Object> filterFieldMap=new HashMap<>();
-                String filterType=node.get(Selections.SELECTION_KEY_WORD_FILTER_TYPE).toString();
-                filterFieldMap.put(Selections.SELECTION_KEY_WORD_FILTER_TYPE,filterType);
-                JsonNode includes=node.get(Selections.SELECTION_KEY_WORD_ROWKEY_INCLUDES);
-                List<Object> exprs=new ArrayList<>();
-                for(JsonNode node1: includes){
-                    exprs.add(node1.toString());
+            if(filters!=null && !(filters instanceof NullNode)){
+                List<Object> filterList=new ArrayList<>();
+                for(JsonNode node: filters){
+                    Map<String,Object> filterFieldMap=new HashMap<>();
+                    String filterType=node.get(Selections.SELECTION_KEY_WORD_FILTER_TYPE).toString();
+                    filterFieldMap.put(Selections.SELECTION_KEY_WORD_FILTER_TYPE,filterType);
+                    JsonNode includes=node.get(Selections.SELECTION_KEY_WORD_ROWKEY_INCLUDES);
+                    List<Object> exprs=new ArrayList<>();
+                    for(JsonNode node1: includes){
+                        exprs.add(node1.toString());
+                    }
+                    filterFieldMap.put(Selections.SELECTION_KEY_WORD_ROWKEY_INCLUDES,exprs);
+                    List<Object> mappingExprs=new ArrayList<>();
+                    JsonNode mapping=node.get(Selections.SELECTION_KEY_WORD_ROWKEY_EVENT_MAPPING);
+                    for(JsonNode node1: mapping){
+                        mappingExprs.add(node1.toString());
+                    }
+                    filterFieldMap.put(Selections.SELECTION_KEY_WORD_ROWKEY_EVENT_MAPPING,mappingExprs);
+                    filterList.add(filterFieldMap);
                 }
-                filterFieldMap.put(Selections.SELECTION_KEY_WORD_ROWKEY_INCLUDES,exprs);
-                List<Object> mappingExprs=new ArrayList<>();
-                JsonNode mapping=node.get(Selections.SELECTION_KEY_WORD_ROWKEY_EVENT_MAPPING);
-                for(JsonNode node1: mapping){
-                    mappingExprs.add(node1.toString());
-                }
-                filterFieldMap.put(Selections.SELECTION_KEY_WORD_ROWKEY_EVENT_MAPPING,mappingExprs);
-                filterList.add(filterFieldMap);
+                selectionMap.put(Selections.SELECTION_KEY_WORD_FILTERS, filterList);
             }
-            selectionMap.put(Selections.SELECTION_KEY_WORD_FILTERS, filterList);
          //rowkey
             JsonNode rowkeyRange=selectionRoot.get(Selections.SELECTION_KEY_WORD_ROWKEY);
             Map<String,Object> rkMap=new HashMap<>();
@@ -103,35 +105,77 @@ public class LogicalPlanUtil {
         rkMap.remove(SELECTION_KEY_WORD_ROWKEY_END);
         rkMap.put(SELECTION_KEY_WORD_ROWKEY_START, ByteUtils.toStringBinary(range.getStartRowKey()));
         rkMap.put(SELECTION_KEY_WORD_ROWKEY_END,ByteUtils.toStringBinary(range.getEndRowKey()));
-
+        List<Map<String,Object>> baseFilters=new ArrayList<>();
+        List<NamedExpression> addePprojections=new ArrayList<>();
         if(swps.size()!=1){
             boolean needFilter=true;
             List<String> patterns=new ArrayList<>();
+
+
             for(int i=0;i<swps.size();i++){
                 JSONOptions selection=swps.get(i).scan.getSelection();
                 JsonNode selectionNode=selection.getRoot().get(0);
                 JsonNode filters=selectionNode.get(SELECTION_KEY_WORD_FILTERS);
-                if(filters instanceof NullNode){
+                if(filters instanceof NullNode || filters==null){
                     needFilter=false;
-                    break;
+                    continue;
                 }
-                JsonNode patternFilter=filters.get(0);
-                JsonNode patternIncludes=patternFilter.get(Selections.SELECTION_KEY_WORD_ROWKEY_INCLUDES);
-                for(JsonNode pattern: patternIncludes){
-                    if(!patterns.contains(pattern.textValue()))
-                        patterns.add(pattern.textValue());
+                for(JsonNode filter : filters){
+                    String type=filter.get(SELECTION_KEY_WORD_FILTER_TYPE).toString();
+                    if(type.contains("ROWKEY")){
+                        JsonNode patternIncludes=filter.get(Selections.SELECTION_KEY_WORD_ROWKEY_INCLUDES);
+                        for(JsonNode pattern: patternIncludes){
+                            if(!patterns.contains(pattern.textValue()))
+                                patterns.add(pattern.textValue());
+                        }
+                        JsonNode mappings=filter.get(SELECTION_KEY_WORD_ROWKEY_EVENT_MAPPING);
+                        for(JsonNode mapping: mappings){
+                            String mapStr=mapping.toString();
+                            LogicalExpression le=config.getMapper().readValue(mapStr,LogicalExpression.class);
+                            String refName=((SchemaPath)((FunctionCall)le).args.get(0)).getPath().toString();
+                            FieldReference ref=new FieldReference(refName,le.getPosition());
+                            LogicalExpression expr=ref;
+                            NamedExpression ne=new NamedExpression(expr,ref);
+                            if(!addePprojections.contains(ne))addePprojections.add(ne);
+                        }
+                    }else {
+                        JsonNode includes=filter.get(SELECTION_KEY_WORD_ROWKEY_INCLUDES);
+                        for(JsonNode filterExpr : includes){
+                            LogicalExpression le=config.getMapper().readValue(filterExpr.toString(),LogicalExpression.class);
+                            String refName=((SchemaPath)((FunctionCall)le).args.get(0)).getPath().toString();
+                            FieldReference ref=new FieldReference(refName,le.getPosition());
+                            LogicalExpression expr=ref;
+                            NamedExpression ne=new NamedExpression(expr,ref);
+                            if(!addePprojections.contains(ne))
+                                addePprojections.add(ne);
+                        }
+                    }
                 }
+                //JsonNode patternFilter=filters.get(0);
+
             }
             if(needFilter){
-                Map<String,Object> filters=(Map<String,Object>)
+                List<Map<String,Object>> filterList=(List<Map<String,Object>>)
                     selectionMap.get(Selections.SELECTION_KEY_WORD_FILTERS);
-                filters.remove(Selections.SELECTION_KEY_WORD_ROWKEY_INCLUDES);
-                filters.remove(Selections.SELECTION_KEY_WORD_ROWKEY_EVENT_MAPPING);
-                filters.put(SELECTION_KEY_WORD_ROWKEY_INCLUDES,patterns);
-                filters.put(SELECTION_KEY_WORD_ROWKEY_EVENT_MAPPING,null);
+                filterList.get(0).remove(Selections.SELECTION_KEY_WORD_ROWKEY_INCLUDES);
+                filterList.get(0).remove(Selections.SELECTION_KEY_WORD_ROWKEY_EVENT_MAPPING);
+                filterList.get(0).put(SELECTION_KEY_WORD_ROWKEY_INCLUDES, patterns);
+                filterList.get(0).put(SELECTION_KEY_WORD_ROWKEY_EVENT_MAPPING, null);
+                baseFilters.add(filterList.get(0));
             }
         }
 
+        if(addePprojections.size()>0){
+            Map<String,Object> selctionNode=selctionMapList.get(0);
+            List<Map<String,Object>> projections=(List<Map<String,Object>>)
+                    selctionNode.get(SELECTION_KEY_WORD_PROJECTIONS);
+            for(NamedExpression ne: addePprojections){
+                Map<String,Object> projection=new HashMap<>();
+                projection.put("ref",config.getMapper().writeValueAsString(ne.getRef()));
+                projection.put("expr",config.getMapper().writeValueAsString(ne.getExpr()));
+                projections.add(projection);
+            }
+        }
 
         JSONOptions selection= LogicalPlanUtil.buildJsonOptions(selctionMapList, config);
         FieldReference ref=swps.get(0).scan.getOutputReference();
@@ -141,17 +185,27 @@ public class LogicalPlanUtil {
 
     public static List<LogicalExpression> getFilterEntry(Scan scan,DrillConfig config) throws IOException {
         JsonNode filters=scan.getSelection().getRoot().get(0).get(SELECTION_KEY_WORD_FILTERS);
-        JsonNode mapping=filters.get(Selections.SELECTION_KEY_WORD_ROWKEY_EVENT_MAPPING);
+        if(filters==null || filters instanceof NullNode){
+            return null;
+        }
         List<LogicalExpression> les=new ArrayList<>();
-        for(JsonNode expr: mapping){
-            LogicalExpression le=config.getMapper().readValue(expr.textValue(),LogicalExpression.class);
-            les.add(le);
+        for(JsonNode filter: filters){
+            JsonNode mapping=filter.get(Selections.SELECTION_KEY_WORD_ROWKEY_EVENT_MAPPING);
+            if(mapping==null || mapping instanceof  NullNode){
+                return null;
+            }
+            for(JsonNode expr: mapping){
+                LogicalExpression le=config.getMapper().readValue(expr.toString(),LogicalExpression.class);                les.add(le);
+            }
         }
         return les;
     }
 
     public static Filter getFilter(Scan scan,DrillConfig config) throws IOException {
         List<LogicalExpression> filterEntry=getFilterEntry(scan,config);
+        if(filterEntry==null){
+            return null;
+        }
         ExpressionPosition position=new ExpressionPosition(null,0);
         FunctionRegistry registry=new FunctionRegistry(config);
         LogicalExpression filterExpr=registry.createExpression("and",position,filterEntry);
@@ -159,7 +213,7 @@ public class LogicalPlanUtil {
         return filter;
     }
 
-    public static List<LogicalOperator> getParents(Scan scan, LogicalPlan plan){
+    public static List<LogicalOperator> getParents(LogicalOperator scan, LogicalPlan plan){
         AdjacencyList<LogicalOperator> child2Parents = plan.getGraph().getAdjList().getReversedList();
         Collection<AdjacencyList<LogicalOperator>.Node> leaves = child2Parents.getInternalRootNodes();
         AdjacencyList<LogicalOperator>.Node child=null;
@@ -325,6 +379,10 @@ public class LogicalPlanUtil {
         }
         public byte[] getEndRowKey(){
             return endRowKey;
+        }
+        public String toString(){
+            return "srk: "+ByteUtils.toStringBinary(startRowKey)+"\n"
+                    +"enk: "+ByteUtils.toStringBinary(endRowKey);
         }
     }
 
