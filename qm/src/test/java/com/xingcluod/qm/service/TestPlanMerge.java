@@ -32,6 +32,7 @@ public class TestPlanMerge {
         LogicalPlan tmpPlan=Utils.readPlan(planName,c);
         planList.add(tmpPlan);
     }
+    DrillConfig config=DrillConfig.create();
 
     /*
     PlanMerge planMerge=new PlanMerge(Arrays.asList(plan));
@@ -42,7 +43,7 @@ public class TestPlanMerge {
     }
     */
     Map<LogicalPlan, LogicalPlan> merged;
-      merged=PlanMerge.sortAndMerge(planList);
+      merged=PlanMerge.sortAndMerge(planList,config);
     //        PlanMerge.sortAndMerge(Arrays.asList(plan, plan1,plan2,plan3,plan4,plan5
     //                                            ,plan6,plan7,plan8));
     Set<LogicalPlan> set = new HashSet<>();
@@ -61,7 +62,7 @@ public class TestPlanMerge {
       String path = paths[i];
       plans.add(Utils.readPlan(path, c));
     }
-    Map<LogicalPlan, LogicalPlan> merged = PlanMerge.sortAndMerge(plans);
+    Map<LogicalPlan, LogicalPlan> merged = PlanMerge.sortAndMerge(plans,DrillConfig.create());
     Set<LogicalPlan> set = new HashSet<>();
     set.addAll(merged.values());
     int i=0;

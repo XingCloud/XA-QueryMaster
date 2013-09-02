@@ -4,14 +4,14 @@
     version : 1,
     generator : {
       type : "AUTO",
-      info : "sof-dsk"
+      info : "age"
     }
   },
   storage : { },
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "age_deu,2013-08-15,2013-08-15,pay.*",
+    memo : "deu_age,2013-08-15,2013-08-15,Age.Menu.*.Success",
     storageengine : "hbase",
     selection : [ {
       projections : [ {
@@ -21,13 +21,15 @@
         ref : "value",
         expr : "value"
       } ],
-      filters:[
-      ],
+      filters : [ {
+        includes : [ "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn" ],
+        type : "ROWKEY"
+      } ],
       rowkey : {
-        end : "20130101visit.",
-        start : "201301012"
+        end : "20130815Age.Menu.vip_btn.Success",
+        start : "20130815Age.Menu.Alliance_btn.Success"
       },
-      table : "sof-dsk_deu"
+      table : "deu_age"
     } ],
     ref : "event"
   }, {
@@ -53,7 +55,7 @@
     input : 2,
     projections : [ {
       ref : "query_id",
-      expr : "'COMMON,age,2013-08-15,2013-08-15,pay.*,TOTAL_USER,VF-ALL-0-0,PERIOD'"
+      expr : "'COMMON,age,2013-08-15,2013-08-15,Age.Menu.*.Success,TOTAL_USER,VF-ALL-0-0,PERIOD'"
     }, {
       ref : "count",
       expr : "count"
