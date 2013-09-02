@@ -56,7 +56,8 @@ public class TestPlanMerge {
     int index=0;
     for (LogicalPlan m : set) {
       index++;
-      GraphVisualize.visualize(m, "test"+index+".png");
+      System.out.println(index);
+      //GraphVisualize.visualize(m, "test"+index+".png");
     }
     }
 
