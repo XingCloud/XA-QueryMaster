@@ -9,11 +9,16 @@ import com.mxgraph.layout.mxCompactTreeLayout;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxGraphModel;
 import com.mxgraph.util.mxCellRenderer;
+import com.mxgraph.util.mxConstants;
+import com.mxgraph.util.mxUtils;
 import com.mxgraph.view.mxGraph;
 import org.apache.drill.common.graph.AdjacencyList;
 import org.apache.drill.common.graph.Edge;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.common.logical.data.LogicalOperator;
+import org.apache.drill.common.logical.data.Scan;
+import org.apache.drill.common.logical.data.UnionedScan;
+import org.apache.drill.common.logical.data.UnionedScanSplit;
 import org.apache.drill.exec.physical.base.PhysicalOperator;
 import org.jgraph.JGraph;
 import org.jgraph.graph.AttributeMap;
@@ -48,23 +53,30 @@ public class GraphVisualize {
   private static final int VERTEX_WIDTH = 140;
   private static final int SCAN_WIDTH = 200;
   private static final int VERTEX_FONTSIZE = 6;
+  private static final String STYLE_SCAN = "scan";
   
   private static mxGraph buildDirectedGraphMX(LogicalPlan plan) {
     Collection<Edge<AdjacencyList<LogicalOperator>.Node>> edges = plan.getGraph().getAdjList().getAllEdges();    
     mxGraph mx = new mxGraph();
     mx.getModel().beginUpdate();
+    //style
+    Map<String, Object> scanStyle = new HashMap<>();
+    String color = "#"+mxUtils.getHexColorString(new Color(255, 195, 217, 0));
+    scanStyle.put(mxConstants.STYLE_FILLCOLOR, color);//
+    mx.getStylesheet().putCellStyle(STYLE_SCAN, scanStyle);
     Object parent = mx.getDefaultParent();
     Map<LogicalOperator, Object> vertexes = new HashMap<>();    
     for(Edge<AdjacencyList<LogicalOperator>.Node> edge:edges){
       LogicalOperator node = edge.getFrom().getNodeValue();
       if(!vertexes.containsKey(node)){
-        Object cell = mx.insertVertex(parent, null, node, 0, 0, VERTEX_WIDTH, VERTEX_HEIGHT);        
+        Object cell = insertVertex(parent, node, mx);
         vertexes.put(node, cell);
       }
       Object source = vertexes.get(node);
       node = edge.getTo().getNodeValue();
       if(!vertexes.containsKey(node)){
-        Object cell = mx.insertVertex(parent, null, node, 0, 0, VERTEX_WIDTH, VERTEX_HEIGHT);        
+        
+        Object cell = insertVertex(parent, node, mx);      
         vertexes.put(node, cell);
       }
       Object target = vertexes.get(node);
@@ -75,7 +87,16 @@ public class GraphVisualize {
     return mx;
   }
 
-  
+  private static Object insertVertex(Object parent, LogicalOperator operator, mxGraph mx) {
+    String style = null;
+    if(operator instanceof Scan || operator instanceof UnionedScan || operator instanceof UnionedScanSplit){
+      style = STYLE_SCAN;
+//      style = null;
+    }
+    return mx.insertVertex(parent, null, operator, 0, 0, VERTEX_WIDTH, VERTEX_HEIGHT, style);
+  }
+
+
   static int WIDTH = 1200;
   static int HEIGHT = 1200;
   
