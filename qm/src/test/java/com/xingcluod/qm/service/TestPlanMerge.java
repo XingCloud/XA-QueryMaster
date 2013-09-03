@@ -56,10 +56,9 @@ public class TestPlanMerge {
     int index=0;
     for (LogicalPlan m : set) {
       index++;
-      System.out.println(index);
-      //GraphVisualize.visualize(m, "test"+index+".png");
+      GraphVisualize.visualizeMX(m, "test"+index+".svg");
     }
-    }
+  }
 
 
   public void doTestMerge(String ... paths) throws Exception {
@@ -73,7 +72,7 @@ public class TestPlanMerge {
     set.addAll(merged.values());
     int i=0;
     for (LogicalPlan m : set) {
-      GraphVisualize.visualize(m, "test"+(i++)+".png");      
+      GraphVisualize.visualizeMX(m, "test"+(i++)+".svg");      
     }    
   }
   

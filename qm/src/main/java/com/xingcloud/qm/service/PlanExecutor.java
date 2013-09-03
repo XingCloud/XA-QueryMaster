@@ -68,9 +68,9 @@ public class PlanExecutor {
           logger.debug(
             "PlanSubmission " + submission.id + " with " + submission.plan.getGraph().getAdjList().getNodeSet()
                                                                      .size() + " LOPs...");
-          String pngPath = QMConfig.conf().getString(QMConfig.TEMPDIR) + File.separator + submission.id + ".png";
-          logger.debug("saving images of PlanSubmission " + new File(pngPath).getAbsolutePath() + "...");
-          GraphVisualize.visualize(submission.plan, pngPath);
+          String svgPath = QMConfig.conf().getString(QMConfig.TEMPDIR) + File.separator + submission.id + ".svg";
+          logger.debug("saving images of PlanSubmission http://69.28.58.61/" + submission.id + ".png");
+          GraphVisualize.visualizeMX(submission.plan, svgPath);
         }
         DrillClient[] clients = QueryNode.getClients();
         List<Future<List<QueryResultBatch>>> futures = new ArrayList<>(clients.length);
@@ -204,7 +204,6 @@ public class PlanExecutor {
     public List<QueryResultBatch> call() throws Exception {
       List<QueryResultBatch> result = null;
       if (client.reconnect()) {
-        logger.info("[DrillbitCallable2] - submitted.");
         result = client
           .runQuery(UserProtos.QueryType.LOGICAL, plan, QMConfig.conf().getLong(QMConfig.DRILL_EXEC_TIMEOUT));
       } else {
