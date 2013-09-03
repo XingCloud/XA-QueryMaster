@@ -203,6 +203,7 @@ public class PlanExecutor {
 
     @Override
     public List<QueryResultBatch> call() throws Exception {
+      logger.info("[DrillbitCallable2] - Connection - " + client.isActive());
       List<QueryResultBatch> result = null;
       if (client.reconnect()) {
         result = client
