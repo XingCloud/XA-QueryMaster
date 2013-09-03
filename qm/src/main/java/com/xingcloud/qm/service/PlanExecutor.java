@@ -203,11 +203,15 @@ public class PlanExecutor {
 
     @Override
     public List<QueryResultBatch> call() throws Exception {
-      if(client.reconnect()){
-        return client.runQuery(UserProtos.QueryType.LOGICAL, plan, QMConfig.conf().getLong(QMConfig.DRILL_EXEC_TIMEOUT));
+      List<QueryResultBatch> result = null;
+      if (client.reconnect()) {
+        result = client
+          .runQuery(UserProtos.QueryType.LOGICAL, plan, QMConfig.conf().getLong(QMConfig.DRILL_EXEC_TIMEOUT));
+        logger.info("[DrillbitCallable2] - submitted.");
+      } else {
+        logger.info("[DrillbitCallable2] - Cannot connect to server.");
       }
-      logger.info("[DrillbitCallable2] - Cannot connect to server.");
-      return null;
+      return result;
     }
   }
 }
