@@ -88,7 +88,7 @@ public class PlanExecutor {
         for (int i = 0; i < clients.length; i++) {
           DrillClient client = clients[i];
           futures.add(drillBitExecutor.submit(new DrillbitCallable2(planString, client)));
-          logger.info("[PLAN-SUBMISSION] - Client({}) submitted");
+          logger.info("[PLAN-SUBMISSION] - Client({}) submitted", i);
         }
         logger.info("[PLAN-SUBMISSION] - All client submit their queries.");
 
@@ -203,7 +203,11 @@ public class PlanExecutor {
 
     @Override
     public List<QueryResultBatch> call() throws Exception {
-      return client.runQuery(UserProtos.QueryType.LOGICAL, plan, QMConfig.conf().getLong(QMConfig.DRILL_EXEC_TIMEOUT));
+      if(client.reconnect()){
+        return client.runQuery(UserProtos.QueryType.LOGICAL, plan, QMConfig.conf().getLong(QMConfig.DRILL_EXEC_TIMEOUT));
+      }
+      logger.info("[DrillbitCallable2] - Cannot connect to server.");
+      return null;
     }
   }
 }
