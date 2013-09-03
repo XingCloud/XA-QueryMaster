@@ -99,7 +99,10 @@ public class PlanExecutor {
         for (int i = 0; i < futures.size(); i++) {
           Future<List<QueryResultBatch>> future = futures.get(i);
           try {
+            long tt1 = System.currentTimeMillis(), tt2;
             List<QueryResultBatch> batches = future.get();
+            tt2 = System.currentTimeMillis();
+            logger.info("[PlanExec] - Single future get use " + (tt2 - tt1) + " milliseconds.");
             Map<String, ResultTable> ret = RecordParser.materializeRecords(batches, QueryNode.getAllocator());
             materializedResults.add(ret);
             succeeded++;
