@@ -88,7 +88,9 @@ public class PlanExecutor {
         for (int i = 0; i < clients.length; i++) {
           DrillClient client = clients[i];
           futures.add(drillBitExecutor.submit(new DrillbitCallable2(planString, client)));
+          logger.info("[PLAN-SUBMISSION] - Client({}) submitted");
         }
+        logger.info("[PLAN-SUBMISSION] - All client submit their queries.");
 
         List<Map<String, ResultTable>> materializedResults = new ArrayList<>();
         //收集结果。理想情况下，应该收集所有的计算结果。
