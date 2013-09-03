@@ -1,5 +1,6 @@
 package com.xingcloud.qm.service;
 
+import com.xingcloud.qm.utils.LogicalPlanUtil;
 import org.apache.drill.common.logical.data.*;
 
 import java.util.Arrays;
@@ -150,7 +151,7 @@ public abstract class LOPComparator<T extends LogicalOperator> implements Compar
     @Override
     public int compare(Scan o1, Scan o2) {
         try {
-            if(PlanMerge.getTableName(o1).equals(PlanMerge.getTableName(o2))
+            if(LogicalPlanUtil.getTableName(o1).equals(LogicalPlanUtil.getTableName(o2))
                   && o1.getSelection().equals(o2.getSelection())){
               return 0;
             }

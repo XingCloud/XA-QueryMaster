@@ -8,6 +8,7 @@ import com.xingcloud.qm.config.QMConfig;
 import com.xingcloud.qm.exceptions.XRemoteQueryException;
 import com.xingcloud.qm.result.ResultRow;
 import com.xingcloud.qm.result.ResultTable;
+import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +50,8 @@ public class QueryMaster implements QueryListener {
 
   private static QueryMaster instance = new QueryMaster();
 
+  //private static DrillConfig config=DrillConfig.create();
+
   /**
    * 所有已经提交的任务。 由QueryMaster写入和删除。
    */
@@ -61,7 +64,7 @@ public class QueryMaster implements QueryListener {
 
   //public Map<String,QuerySubmission> executingPlans
 
-  private Scheduler scheduler = new Scheduler("QueryMaster-Scheduler");
+  private Scheduler scheduler = new Scheduler("QueryMaster-Scheduler",DrillConfig.create());
 
   public static QueryMaster getInstance() {
     return instance;
@@ -178,8 +181,11 @@ public class QueryMaster implements QueryListener {
 
     private boolean stop = false;
 
-    Scheduler(String name) {
+    private DrillConfig config;
+
+    Scheduler(String name,DrillConfig config) {
       super(name);
+      this.config=config;
     }
 
     @Override
@@ -220,7 +226,7 @@ public class QueryMaster implements QueryListener {
           }
           Map<LogicalPlan, LogicalPlan> origin2Merged = null;
           try {
-            origin2Merged = PlanMerge.sortAndMerge(pickedPlans);
+            origin2Merged = PlanMerge.sortAndMerge(pickedPlans,config);
             int executed = 0;
 
             //建立合并后的plan和原始用户提交的BasicQuerySubmission之间的对应关系

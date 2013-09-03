@@ -1,0 +1,178 @@
+{
+  head : {
+    type : "APACHE_DRILL_LOGICAL",
+    version : 1,
+    generator : {
+      type : "AUTO",
+      info : "age"
+    }
+  },
+  storage : { },
+  query : [ {
+    op : "scan",
+    @id : 1,
+    memo : "Table=age.ref",
+    storageengine : "mysql",
+    selection : {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "ref",
+        expr : "val"
+      } ],
+      table : "age.ref"
+    },
+    ref : "user"
+  }, {
+    op : "scan",
+    @id : 2,
+    memo : "deu_age,2013-07-14,2013-07-16,Age.Menu.*.Success",
+    storageengine : "hbase",
+    selection : [ {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      filters : [ {
+        includes : [ "20130714Age.Menu.vip_btn", "20130714Age.Menu.vip_btn", "20130714Age.Menu.vip_btn", "20130714Age.Menu.vip_btn", "20130714Age.Menu.vip_btn", "20130714Age.Menu.vip_btn", "20130714Age.Menu.vip_btn", "20130714Age.Menu.vip_btn", "20130714Age.Menu.vip_btn", "20130714Age.Menu.vip_btn", "20130714Age.Menu.vip_btn", "20130714Age.Menu.vip_btn", "20130714Age.Menu.vip_btn", "20130714Age.Menu.vip_btn", "20130714Age.Menu.vip_btn", "20130714Age.Menu.vip_btn", "20130714Age.Menu.vip_btn" ],
+        type : "ROWKEY",
+        mapping : [ " (event3)  == ('Success') ", " (event0)  == ('Age') ", " (event1)  == ('Menu') " ]
+      } ],
+      rowkey : {
+        end : "20130714Age.Menu.vip_btn.Success",
+        start : "20130714Age.Menu.Alliance_btn.Success"
+      },
+      table : "deu_age"
+    }, {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      filters : [ {
+        includes : [ "20130715Age.Menu.vip_btn", "20130715Age.Menu.vip_btn", "20130715Age.Menu.vip_btn", "20130715Age.Menu.vip_btn", "20130715Age.Menu.vip_btn", "20130715Age.Menu.vip_btn", "20130715Age.Menu.vip_btn", "20130715Age.Menu.vip_btn", "20130715Age.Menu.vip_btn", "20130715Age.Menu.vip_btn", "20130715Age.Menu.vip_btn", "20130715Age.Menu.vip_btn", "20130715Age.Menu.vip_btn", "20130715Age.Menu.vip_btn", "20130715Age.Menu.vip_btn", "20130715Age.Menu.vip_btn", "20130715Age.Menu.vip_btn" ],
+        type : "ROWKEY",
+        mapping : [ " (event3)  == ('Success') ", " (event0)  == ('Age') ", " (event1)  == ('Menu') " ]
+      } ],
+      rowkey : {
+        end : "20130715Age.Menu.vip_btn.Success",
+        start : "20130715Age.Menu.Alliance_btn.Success"
+      },
+      table : "deu_age"
+    }, {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      filters : [ {
+        includes : [ "20130716Age.Menu.vip_btn", "20130716Age.Menu.vip_btn", "20130716Age.Menu.vip_btn", "20130716Age.Menu.vip_btn", "20130716Age.Menu.vip_btn", "20130716Age.Menu.vip_btn", "20130716Age.Menu.vip_btn", "20130716Age.Menu.vip_btn", "20130716Age.Menu.vip_btn", "20130716Age.Menu.vip_btn", "20130716Age.Menu.vip_btn", "20130716Age.Menu.vip_btn", "20130716Age.Menu.vip_btn", "20130716Age.Menu.vip_btn", "20130716Age.Menu.vip_btn", "20130716Age.Menu.vip_btn", "20130716Age.Menu.vip_btn" ],
+        type : "ROWKEY",
+        mapping : [ " (event3)  == ('Success') ", " (event0)  == ('Age') ", " (event1)  == ('Menu') " ]
+      } ],
+      rowkey : {
+        end : "20130716Age.Menu.vip_btn.Success",
+        start : "20130716Age.Menu.Alliance_btn.Success"
+      },
+      table : "deu_age"
+    } ],
+    ref : "event"
+  }, {
+    op : "scan",
+    @id : 3,
+    memo : "Scan(Table=age.first_pay_time, Prop=first_pay_time, Val={EQ=2013-06-01})",
+    storageengine : "mysql",
+    selection : {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      } ],
+      filter : "date(val)='2013-06-01'",
+      table : "age.first_pay_time"
+    },
+    ref : "user"
+  }, {
+    op : "join",
+    @id : 4,
+    left : 2,
+    right : 3,
+    conditions : [ {
+      relationship : "==",
+      left : "uid",
+      right : "uid"
+    } ],
+    type : "INNER"
+  }, {
+    op : "join",
+    @id : 5,
+    left : 1,
+    right : 4,
+    conditions : [ {
+      relationship : "==",
+      left : "uid",
+      right : "uid"
+    } ],
+    type : "RIGHT"
+  }, {
+    op : "segment",
+    @id : 6,
+    input : 5,
+    exprs : [ {
+      ref : "dimension",
+      expr : "ref"
+    } ],
+    name : "sgmt"
+  }, {
+    op : "collapsingaggregate",
+    @id : 7,
+    input : 6,
+    within : "sgmt",
+    target : null,
+    carryovers : [ "dimension" ],
+    aggregations : [ {
+      ref : "count",
+      expr : "count(uid) "
+    }, {
+      ref : "user_num",
+      expr : "count_distinct(uid) "
+    }, {
+      ref : "sum",
+      expr : "sum(value) "
+    } ]
+  }, {
+    op : "project",
+    @id : 8,
+    input : 7,
+    projections : [ {
+      ref : "query_id",
+      expr : "'GROUP,age,2013-07-14,2013-07-16,Age.Menu.*.Success,{\"first_pay_time\":\"2013-06-01\"},VF-ALL-0-0,USER_PROPERTIES,ref'"
+    }, {
+      ref : "dimension",
+      expr : "dimension"
+    }, {
+      ref : "count",
+      expr : "count"
+    }, {
+      ref : "user_num",
+      expr : "user_num"
+    }, {
+      ref : "sum",
+      expr : "sum"
+    } ]
+  }, {
+    op : "store",
+    @id : 9,
+    input : 8,
+    target : null,
+    partition : null,
+    storageEngine : "DEFAULT-STORE"
+  } ]
+}

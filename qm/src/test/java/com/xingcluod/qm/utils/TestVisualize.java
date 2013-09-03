@@ -17,7 +17,7 @@ public class TestVisualize {
   public void testVisualization()throws Exception{
     LogicalPlan plan2 = Utils.readPlan("/plans/common.segm.json", c);
     LogicalPlan plan = Utils.readPlan("/plans/common.nosegm.json", c);
-    Map<LogicalPlan, LogicalPlan> merged = PlanMerge.sortAndMerge(Arrays.asList(plan, plan2));
+    Map<LogicalPlan, LogicalPlan> merged = PlanMerge.sortAndMerge(Arrays.asList(plan, plan2),DrillConfig.create());
     for (LogicalPlan m : merged.values()) {
       GraphVisualize.visualize(m, "test.png");      
     }
