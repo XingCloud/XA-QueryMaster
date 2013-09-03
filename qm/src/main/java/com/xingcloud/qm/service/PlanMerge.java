@@ -249,8 +249,7 @@ public class PlanMerge {
   }
 
   private LogicalPlan produceBigScan(Set<LogicalPlan> plans,ProjectMergeContext projectCtx,DrillConfig config) throws IOException {
-      PlanProperties head = null;
-      Map<String, StorageEngineConfig> se = null;
+
       List<LogicalOperator> roots=new ArrayList<>();
       for(LogicalPlan plan: plans){
           Collection<SinkOperator> unitRoots=plan.getGraph().getRoots();
@@ -318,8 +317,13 @@ public class PlanMerge {
           }
           */
       }
-
+      PlanProperties head = null;
+      Map<String, StorageEngineConfig> se = null;
       for(LogicalPlan plan: plans){
+          if(head==null)
+              head=plan.getProperties();
+          if(se==null)
+              se=plan.getStorageEngines();
           List<LogicalOperator> origPlanOperators=plan.getSortedOperators();
           for(LogicalOperator lo: origPlanOperators){
               if(substituteMap.containsKey(lo)){
@@ -979,7 +983,7 @@ public class PlanMerge {
         LogicalPlan splitRkResultPlan=splitRkPlanMap.get(splitBigScanResultPlan);
         LogicalPlan mergePlanResultPlan=mergePlanMap.get(splitRkResultPlan);
         LogicalPlan mergeToTableScanResultPlan=mergeToTalbeScanMap.get(mergePlanResultPlan);
-        result.put(orig,mergePlanResultPlan);
+        result.put(orig,mergeToTableScanResultPlan);
     }
     return result;
     //return planMerge.getMerged();
