@@ -25,6 +25,8 @@ import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleDirectedGraph;
 import org.jgrapht.graph.SimpleGraph;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
@@ -40,6 +42,8 @@ public class PlanMerge {
   private Map<LogicalPlan, LogicalPlan> merged;
 
   private Map<String, List<LogicalPlan>> sortedByProjectID;
+
+  public static Logger logger= LoggerFactory.getLogger(PlanMerge.class);
 
   public PlanMerge(List<LogicalPlan> plans) throws Exception {
     this.incoming = plans;
@@ -802,7 +806,7 @@ public class PlanMerge {
       planCtx.mergedGraph.addVertex(source);
       for (LogicalOperator child : source) {
         if (planCtx.mergedGraph.containsEdge(source, child)) {
-          System.err.println("noooo!");
+          logger.info("noooo!");
         }
         planCtx.mergedGraph.addEdge(source, child);
       }
