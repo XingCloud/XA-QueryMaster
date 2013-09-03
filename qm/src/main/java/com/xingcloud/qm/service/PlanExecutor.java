@@ -89,6 +89,7 @@ public class PlanExecutor {
           DrillClient client = clients[i];
           futures.add(drillBitExecutor.submit(new DrillbitCallable2(planString, client)));
         }
+        logger.info("[PLAN-SUBMISSION] - All client submit their queries.");
 
         List<Map<String, ResultTable>> materializedResults = new ArrayList<>();
         //收集结果。理想情况下，应该收集所有的计算结果。
@@ -137,7 +138,7 @@ public class PlanExecutor {
         //throw e;
       } finally {
         t2 = System.currentTimeMillis();
-        logger.debug("[PlanExec] time use - " + (t2 - t1));
+        logger.info("[PlanExec] time use - " + (t2 - t1));
         listener.onQueryResultReceived(submission.id, submission);
       }
     }
@@ -201,7 +202,15 @@ public class PlanExecutor {
 
     @Override
     public List<QueryResultBatch> call() throws Exception {
-      return client.runQuery(UserProtos.QueryType.LOGICAL, plan, QMConfig.conf().getLong(QMConfig.DRILL_EXEC_TIMEOUT));
+      List<QueryResultBatch> result = null;
+      if (client.reconnect()) {
+        logger.info("[DrillbitCallable2] - submitted.");
+        result = client
+          .runQuery(UserProtos.QueryType.LOGICAL, plan, QMConfig.conf().getLong(QMConfig.DRILL_EXEC_TIMEOUT));
+      } else {
+        logger.info("[DrillbitCallable2] - Cannot connect to server.");
+      }
+      return result;
     }
   }
 }

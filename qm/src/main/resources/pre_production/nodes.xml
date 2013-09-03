@@ -3,7 +3,6 @@
 <root>
   <nodes>
     <node id="QN-00" conf="drill-module-00.conf" />
-    <!--
     <node id="QN-01" conf="drill-module-01.conf" />
     <node id="QN-02" conf="drill-module-02.conf" />
     <node id="QN-03" conf="drill-module-03.conf" />
@@ -19,6 +18,5 @@
     <node id="QN-13" conf="drill-module-13.conf" />
     <node id="QN-14" conf="drill-module-14.conf" />
     <node id="QN-15" conf="drill-module-15.conf" />
-    -->
   </nodes>
 </root>
