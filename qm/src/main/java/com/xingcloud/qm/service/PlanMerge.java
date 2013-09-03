@@ -3,6 +3,7 @@ package com.xingcloud.qm.service;
 import static org.apache.drill.common.util.Selections.*;
 
 
+import com.xingcloud.qm.utils.GraphVisualize;
 import com.xingcloud.qm.utils.LogicalPlanUtil.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -124,7 +125,7 @@ public class PlanMerge {
                       continue;
                   List<LogicalOperator> unionInputs=new ArrayList<>();
                   List<LogicalOperator> operators=new ArrayList<>();
-                  // get union--->List(filter--->scan)
+                  // get union--->List(project-->filter--->scan)
                   for(RowKeyRange range: rangeList){
                       List<ScanWithPlan> swpList=crosses.get(range);
                       Scan baseScan= LogicalPlanUtil.getBaseScan(range, swpList, config);
@@ -138,10 +139,30 @@ public class PlanMerge {
                           Filter filter= LogicalPlanUtil.getFilter(swp.scan,config);
                           if(filter!=null){
                             filter.setInput(baseScan);
-                            unionInputs.add(filter);
-                            operators.add(filter);
+
+                            if(LogicalPlanUtil.getProjectionEntry(swp.scan,config).size()<
+                                LogicalPlanUtil.getProjectionEntry(baseScan,config).size()){
+                                Project project=LogicalPlanUtil.getProject(swp.scan,config);
+                                project.setInput(filter);
+                                operators.add(filter);
+                                operators.add(project);
+                                unionInputs.add(project);
+                            }else {
+                                operators.add(filter);
+                                unionInputs.add(filter);
+                            }
+
                           }else{
-                              unionInputs.add(baseScan);
+                              if(LogicalPlanUtil.getProjectionEntry(swp.scan,config).size()<
+                                      LogicalPlanUtil.getProjectionEntry(baseScan,config).size()){
+                                  Project project=LogicalPlanUtil.getProject(swp.scan,config);
+                                  project.setInput(baseScan);
+                                  //operators.add(filter);
+                                  operators.add(project);
+                                  unionInputs.add(project);
+                              }else {
+                                unionInputs.add(baseScan);
+                              }
                           }
                       }
                   }
@@ -228,8 +249,12 @@ public class PlanMerge {
   }
 
   private LogicalPlan produceBigScan(Set<LogicalPlan> plans,ProjectMergeContext projectCtx,DrillConfig config) throws IOException {
-      PlanProperties head = null;
-      Map<String, StorageEngineConfig> se = null;
+
+      List<LogicalOperator> roots=new ArrayList<>();
+      for(LogicalPlan plan: plans){
+          Collection<SinkOperator> unitRoots=plan.getGraph().getRoots();
+          roots.addAll(unitRoots);
+      }
       //PlanMergeContext planCtx = new PlanMergeContext();
       List<LogicalOperator> operators=new ArrayList<>();
       Map<Scan,UnionedScanSplit> substituteMap=new HashMap<>();
@@ -292,8 +317,13 @@ public class PlanMerge {
           }
           */
       }
-
+      PlanProperties head = null;
+      Map<String, StorageEngineConfig> se = null;
       for(LogicalPlan plan: plans){
+          if(head==null)
+              head=plan.getProperties();
+          if(se==null)
+              se=plan.getStorageEngines();
           List<LogicalOperator> origPlanOperators=plan.getSortedOperators();
           for(LogicalOperator lo: origPlanOperators){
               if(substituteMap.containsKey(lo)){
@@ -305,6 +335,24 @@ public class PlanMerge {
                   operators.add(lo);
               }
           }
+      }
+
+      if(roots.size()>1){
+         List<LogicalOperator> unionInputs=new ArrayList<>();
+         //Store store=null;
+         for(LogicalOperator root: roots){
+             if(root instanceof Store){
+                 unionInputs.add(((Store)root).getInput());
+                 ((Store)root).setInput(null);
+                 operators.remove(root);
+             }else {
+                 unionInputs.add(root);
+             }
+         }
+         Union union=new Union(unionInputs.toArray(new LogicalOperator[unionInputs.size()]),false);
+         Store store=new Store(((Store)roots.get(0)).getStorageEngine(),((Store)roots.get(0)).getTarget(),((Store)roots.get(0)).getPartition());
+         store.setInput(union);
+         operators.add(union);operators.add(store);
       }
 
       return new LogicalPlan(head, se, operators);
@@ -915,9 +963,18 @@ public class PlanMerge {
     Map<LogicalPlan,LogicalPlan> splitRkPlanMap=
             planMerge.splitScanByRowKey(bigPlanSplitedPlans,config);
     List<LogicalPlan> rkSplitedPlans=new ArrayList<>(splitRkPlanMap.values());
+    int index=0;
+    for(LogicalPlan pl: rkSplitedPlans){
+        //GraphVisualize.visualize(pl,"test-rkSplited"+(index++)+".png");
+    }
     Map<LogicalPlan,LogicalPlan> mergePlanMap=planMerge.sortAndMergePlans(rkSplitedPlans,config);
     Set<LogicalPlan> scanMergedPlanSet=new HashSet<>(mergePlanMap.values());
     List<LogicalPlan> scanMergedPlans=new ArrayList<>(scanMergedPlanSet);
+    index=0;
+    for(LogicalPlan pl: scanMergedPlans){
+
+          //GraphVisualize.visualize(pl,"test-scanMerged"+(index++)+".png");
+    }
     Map<LogicalPlan,LogicalPlan> mergeToTalbeScanMap=planMerge.mergeToBigScan(scanMergedPlans,config);
     Map<LogicalPlan,LogicalPlan> result=new HashMap<>();
     for(Map.Entry<LogicalPlan,LogicalPlan> entry: splitBigPlanMap.entrySet()){

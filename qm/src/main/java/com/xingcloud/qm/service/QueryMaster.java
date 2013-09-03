@@ -48,7 +48,7 @@ public class QueryMaster implements QueryListener {
 
   private static QueryMaster instance = new QueryMaster();
 
-  private static DrillConfig config=DrillConfig.create();
+  //private static DrillConfig config=DrillConfig.create();
 
   /**
    * 所有已经提交的任务。 由QueryMaster写入和删除。
@@ -62,7 +62,7 @@ public class QueryMaster implements QueryListener {
 
   //public Map<String,QuerySubmission> executingPlans
 
-  private Scheduler scheduler = new Scheduler("QueryMaster-Scheduler",config);
+  private Scheduler scheduler = new Scheduler("QueryMaster-Scheduler",DrillConfig.create());
 
   public static QueryMaster getInstance() {
     return instance;
@@ -176,7 +176,7 @@ public class QueryMaster implements QueryListener {
 
     private boolean stop = false;
 
-    DrillConfig config;
+    private DrillConfig config;
 
     Scheduler(String name,DrillConfig config) {
       super(name);

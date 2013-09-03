@@ -58,7 +58,7 @@ public class TestPlanMerge {
       index++;
       GraphVisualize.visualizeMX(m, "test"+index+".svg");
     }
-    }
+  }
 
 
   public void doTestMerge(String ... paths) throws Exception {

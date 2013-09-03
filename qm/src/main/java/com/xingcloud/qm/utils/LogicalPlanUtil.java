@@ -43,7 +43,12 @@ public class LogicalPlanUtil {
             JsonNode projections=selectionRoot.get(Selections.SELECTION_KEY_WORD_PROJECTIONS);
             List<Object> projectionFields=new ArrayList<>();
             for(JsonNode node: projections){
-                projectionFields.add(node.toString());
+                Map<String,Object> projectionField=new HashMap<>();
+                String ref=node.get("ref").toString();
+                String expr=node.get("expr").toString();
+                projectionField.put("ref",ref);
+                projectionField.put("expr",expr);
+                projectionFields.add(projectionField);
             }
             selectionMap.put(Selections.SELECTION_KEY_WORD_PROJECTIONS,projectionFields);
 
@@ -211,6 +216,30 @@ public class LogicalPlanUtil {
         LogicalExpression filterExpr=registry.createExpression("and",position,filterEntry);
         Filter filter=new Filter(filterExpr);
         return filter;
+    }
+
+    public static Project getProject(Scan scan,DrillConfig config) throws IOException{
+        List<NamedExpression> nes=getProjectionEntry(scan,config);
+        NamedExpression[] namedExpressions=nes.toArray(new NamedExpression[nes.size()]);
+        Project project=new Project(namedExpressions);
+        return project;
+    }
+
+    public static List<NamedExpression> getProjectionEntry(Scan scan,DrillConfig config){
+        //JsonNode projectionNode=scan.getSelection().getRoot().get(0).get(SELECTION_KEY_WORD_PROJECTIONS);
+        List<Map<String,Object>> selectionList=getSelectionMap(scan);
+        List<NamedExpression> nes=new ArrayList<>();
+        for(Map<String,Object> selecitonMap: selectionList){
+            List<Map<String,Object>> projections=(List<Map<String,Object>>)
+                    selecitonMap.get(SELECTION_KEY_WORD_PROJECTIONS);
+            for(Map<String,Object> projection: projections){
+                FieldReference ref=new FieldReference((String)projection.get("ref"),null);
+                LogicalExpression le=new SchemaPath((String)projection.get("expr"),null);
+                NamedExpression ne=new NamedExpression(le,ref);
+                nes.add(ne);
+            }
+        }
+        return nes;
     }
 
     public static List<LogicalOperator> getParents(LogicalOperator scan, LogicalPlan plan){
