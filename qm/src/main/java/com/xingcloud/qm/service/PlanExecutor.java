@@ -68,9 +68,9 @@ public class PlanExecutor {
           logger.debug(
             "PlanSubmission " + submission.id + " with " + submission.plan.getGraph().getAdjList().getNodeSet()
                                                                      .size() + " LOPs...");
-          String pngPath = QMConfig.conf().getString(QMConfig.TEMPDIR) + File.separator + submission.id + ".png";
-          logger.debug("saving images of PlanSubmission " + new File(pngPath).getAbsolutePath() + "...");
-          GraphVisualize.visualize(submission.plan, pngPath);
+          String svgPath = QMConfig.conf().getString(QMConfig.TEMPDIR) + File.separator + submission.id + ".svg";
+          logger.debug("saving images of PlanSubmission " + new File(svgPath).getAbsolutePath() + "...");
+          GraphVisualize.visualizeMX(submission.plan, svgPath);
         }
         DrillClient[] clients = QueryNode.getClients();
         List<Future<List<QueryResultBatch>>> futures = new ArrayList<>(clients.length);
