@@ -320,7 +320,9 @@ public class QueryMaster implements QueryListener {
             BasicQuerySubmission basicSubmission = (BasicQuerySubmission) submitted.get(basicQueryID);
             basicSubmission.e = planSubmission.e;
             if (basicSubmission.e == null) {
-              basicSubmission.e = new NullPointerException("haven't received any results for " + basicQueryID + "!");
+              basicSubmission.value = new ResultTable();
+              logger.info("PlanSubmission: {} completed with empty result.", queryID);
+//              basicSubmission.e = new NullPointerException("haven't received any results for " + basicQueryID + "!");
             }
             //basicSubmission.value=new ResultTable();
             QueryMaster.this.onQueryResultReceived(basicQueryID, basicSubmission);
