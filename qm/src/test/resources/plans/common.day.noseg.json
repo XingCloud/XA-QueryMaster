@@ -23,7 +23,7 @@
       } ],
       filters : null,
       rowkey : {
-        end : "20130101visit",
+        end : "20130101visit.a.b",
         start : "20130101visit"
       },
       table : "sof-dsk_deu"
@@ -37,7 +37,7 @@
       } ],
       filters : null,
       rowkey : {
-        end : "20130102visit",
+        end : "20130102visit.b.c",
         start : "20130102visit"
       },
       table : "sof-dsk_deu"

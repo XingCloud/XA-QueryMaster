@@ -1,15 +1,15 @@
 package com.xingcloud.qm.service;
 
-import static org.apache.drill.common.util.DrillConstants.SE_HBASE;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_FILTERS;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_PROJECTIONS;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY_END;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY_START;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_TABLE;
+import static org.apache.drill.common.util.Selections.*;
 
+
+import com.xingcloud.qm.utils.GraphVisualize;
+import com.xingcloud.qm.utils.LogicalPlanUtil.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.xingcloud.meta.ByteUtils;
+import com.xingcloud.qm.utils.LogicalPlanUtil;
 import org.apache.drill.common.JSONOptions;
 import org.apache.drill.common.PlanProperties;
 import org.apache.drill.common.config.DrillConfig;
@@ -17,13 +17,8 @@ import org.apache.drill.common.graph.AdjacencyList;
 import org.apache.drill.common.graph.Edge;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.common.logical.StorageEngineConfig;
-import org.apache.drill.common.logical.data.Join;
-import org.apache.drill.common.logical.data.LogicalOperator;
-import org.apache.drill.common.logical.data.Scan;
-import org.apache.drill.common.logical.data.SingleInputOperator;
-import org.apache.drill.common.logical.data.SourceOperator;
-import org.apache.drill.common.logical.data.Store;
-import org.apache.drill.common.logical.data.Union;
+import org.apache.drill.common.logical.data.*;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.UndirectedGraph;
 import org.jgrapht.alg.ConnectivityInspector;
@@ -32,14 +27,7 @@ import org.jgrapht.graph.SimpleDirectedGraph;
 import org.jgrapht.graph.SimpleGraph;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class PlanMerge {
 
@@ -55,19 +43,339 @@ public class PlanMerge {
 
   public PlanMerge(List<LogicalPlan> plans) throws Exception {
     this.incoming = plans;
-    //splitBigScan();
-    //sortAndMerge();
   }
 
-  public List<LogicalPlan> getSplitedPlans() {
-    return splitedPlans;
+  private Map<LogicalPlan,LogicalPlan> sortAndMergePlans(List<LogicalPlan> plans,DrillConfig config) throws Exception {
+        Map<LogicalPlan,LogicalPlan> resultMap=new HashMap<>();
+        /**
+         * sort into sortedByProjectID, by projectID
+         */
+        sortPlanByProjectId(plans);
+        Map<String,ProjectMergeContext> projectCtxMap=splitByTableName();
+        markMergability(projectCtxMap,MergeType.same);
+        resultMap=mergePlans(projectCtxMap);
+        return  resultMap;
   }
 
-  public void splitBigScan() throws IOException {
+  private Map<LogicalPlan,LogicalPlan> splitScanByRowKey(List<LogicalPlan> origPlans,DrillConfig config) throws Exception {
+      sortPlanByProjectId(origPlans);
+      Map<String,ProjectMergeContext> projectCtxMap=splitByTableName();
+      List<LogicalPlan> resultPlans=new ArrayList<>();
+      Map<LogicalPlan,LogicalPlan> resultPlanMap=new HashMap<>();
+      for(Map.Entry<String,ProjectMergeContext> entry: projectCtxMap.entrySet()){
+          String projectId=entry.getKey();
+          ProjectMergeContext ctx=entry.getValue();
+          Map<String,Set<ScanWithPlan>> tableName2Scans=ctx.tableName2Plans;
+          Map<ScanWithPlan, List<LogicalOperator>> scan2Los=new HashMap<>();
+          for(Map.Entry<String,Set<ScanWithPlan>> entry1: tableName2Scans.entrySet()){
+              String tableName=entry1.getKey();
+              if(!tableName.contains("deu"))continue;
+              ScanWithPlan[] swps=new ArrayList<>(entry1.getValue()).toArray
+                      (new ScanWithPlan[entry1.getValue().size()]);
+              Arrays.sort(swps,new Comparator<ScanWithPlan>() {
+                  @Override
+                  public int compare(ScanWithPlan o1, ScanWithPlan o2) {
+                      RowKeyRange range1=LogicalPlanUtil.getRowKeyRange(o1.scan);
+                      RowKeyRange range2=LogicalPlanUtil.getRowKeyRange(o2.scan);
+                      return new RowKeyRangeComparator().compare(range1,range2);
+                  }
+              });
+              String[] rkPoints=new String[swps.length*2];
+              Map<RowKeyRange,List<ScanWithPlan>> crosses=new HashMap<>();
+              Map<ScanWithPlan,List<RowKeyRange>> scanSplits=new HashMap<>();
+              for(int i=0;i<swps.length;i++){
+                 RowKeyRange range=LogicalPlanUtil.getRowKeyRange(swps[i].scan);
+                 rkPoints[i*2]=ByteUtils.toStringBinary(range.getStartRowKey());
+                 rkPoints[i*2+1]=ByteUtils.toStringBinary(range.getEndRowKey());
+              }
+              Arrays.sort(rkPoints,new Comparator<String>() {
+                  @Override
+                  public int compare(String o1, String o2) {
+                      if(o1==null||o2==null)
+                          System.out.println("null!!!!!!!");
+                      byte[] rk1=ByteUtils.toBytesBinary(o1);
+                      byte[] rk2=ByteUtils.toBytesBinary(o2);
+                      return Bytes.compareTo(rk1,rk2);
+                  }
+              });
+              for(int i=0;i<rkPoints.length-1;i++){
+                  RowKeyRange range=new RowKeyRange(rkPoints[i],rkPoints[i+1]);
+                  for(int j=0;j<swps.length;j++){
+                      if(LogicalPlanUtil.isRkRangeInScan(range, swps[j])){
+                         List<ScanWithPlan> swpList=crosses.get(range);
+                         if(null==swpList){
+                             swpList=new ArrayList<>();
+                             crosses.put(range,swpList);
+                         }
+                         swpList.add(swps[j]);
+                         List<RowKeyRange> rangeList=scanSplits.get(swps[j]);
+                         if(rangeList==null){
+                             rangeList=new ArrayList<>();
+                             scanSplits.put(swps[j],rangeList);
+                         }
+                         rangeList.add(range);
+                      }
+                  }
+              }
+
+              for(Map.Entry<ScanWithPlan,List<RowKeyRange>> entry2: scanSplits.entrySet()){
+                  ScanWithPlan swp=entry2.getKey();
+                  List<RowKeyRange> rangeList=entry2.getValue();
+                  if(rangeList.size()==1&&crosses.get(rangeList.get(0)).size()==1)
+                      continue;
+                  List<LogicalOperator> unionInputs=new ArrayList<>();
+                  List<LogicalOperator> operators=new ArrayList<>();
+                  // get union--->List(project-->filter--->scan)
+                  for(RowKeyRange range: rangeList){
+                      List<ScanWithPlan> swpList=crosses.get(range);
+                      Scan baseScan= LogicalPlanUtil.getBaseScan(range, swpList, config);
+                      if(swpList.size()==1){
+                          unionInputs.add(baseScan);
+                          operators.add(baseScan);
+                      }
+                      else{
+                          operators.add(baseScan);
+
+                          Filter filter= LogicalPlanUtil.getFilter(swp.scan,config);
+                          if(filter!=null){
+                            filter.setInput(baseScan);
+
+                            if(LogicalPlanUtil.getProjectionEntry(swp.scan,config).size()<
+                                LogicalPlanUtil.getProjectionEntry(baseScan,config).size()){
+                                Project project=LogicalPlanUtil.getProject(swp.scan,config);
+                                project.setInput(filter);
+                                operators.add(filter);
+                                operators.add(project);
+                                unionInputs.add(project);
+                            }else {
+                                operators.add(filter);
+                                unionInputs.add(filter);
+                            }
+
+                          }else{
+                              if(LogicalPlanUtil.getProjectionEntry(swp.scan,config).size()<
+                                      LogicalPlanUtil.getProjectionEntry(baseScan,config).size()){
+                                  Project project=LogicalPlanUtil.getProject(swp.scan,config);
+                                  project.setInput(baseScan);
+                                  //operators.add(filter);
+                                  operators.add(project);
+                                  unionInputs.add(project);
+                              }else {
+                                unionInputs.add(baseScan);
+                              }
+                          }
+                      }
+                  }
+                  if(unionInputs.size()!=1){
+                      Union union=new Union(unionInputs.toArray(new LogicalOperator[unionInputs.size()]),false);
+                      operators.add(union);
+
+                  }
+
+                  scan2Los.put(swp,operators);
+              }
+          }
+          for(LogicalPlan plan: sortedByProjectID.get(projectId)){
+              List<LogicalOperator> operators=plan.getSortedOperators();
+              Set<ScanWithPlan> swps=ctx.plan2Swps.get(plan);
+              for(ScanWithPlan swp:swps){
+                  String tableName=LogicalPlanUtil.getTableName(swp.scan);
+                  if(!tableName.contains("deu"))continue;
+                  List<LogicalOperator> targetOperators=scan2Los.get(swp);
+                  if(targetOperators!=null)
+                  {
+                     for(LogicalOperator lo: LogicalPlanUtil.getParents(swp.scan, plan)){
+                         LogicalPlanUtil.substituteInParent(swp.scan,
+                                 targetOperators.get(targetOperators.size() - 1), lo);
+
+                     }
+                     operators.addAll(targetOperators);
+                     operators.remove(swp.scan);
+                 }
+
+              }
+              PlanProperties head=plan.getProperties();
+              Map<String,StorageEngineConfig> storageEngines=plan.getStorageEngines();
+              LogicalPlan resultPlan=new LogicalPlan(head,storageEngines,operators);
+              resultPlans.add(resultPlan);
+              resultPlanMap.put(plan,resultPlan);
+          }
+      }
+      return resultPlanMap;
+  }
+
+
+
+
+
+
+
+
+
+    private Map<LogicalPlan,LogicalPlan> mergeToBigScan(List<LogicalPlan> plans,DrillConfig config) throws Exception {
+        Map<LogicalPlan,LogicalPlan> result=new HashMap<LogicalPlan,LogicalPlan>();
+        sortPlanByProjectId(plans);
+        Map<String,ProjectMergeContext> projectCtxMap=splitByTableName();
+        markMergability(projectCtxMap,MergeType.sametable);
+        result=producePlansWithUniondScan(projectCtxMap,config);
+        return result;
+  }
+
+
+
+
+  private Map<LogicalPlan,LogicalPlan> producePlansWithUniondScan(Map<String,ProjectMergeContext> projectCtxMap,DrillConfig config) throws IOException {
+      Map<LogicalPlan,LogicalPlan> result=new HashMap<>();
+      for (Map.Entry<String, List<LogicalPlan>> entry : sortedByProjectID.entrySet()) {
+          String project=entry.getKey();
+          ProjectMergeContext ctx=projectCtxMap.get(project);
+          //开始合并
+          ctx.planInspector = new ConnectivityInspector<LogicalPlan, DefaultEdge>(ctx.mergePlanSets);
+          List<Set<LogicalPlan>> mergeSets = ctx.planInspector.connectedSets();
+          ctx.scanInspector = new ConnectivityInspector<Scan, DefaultEdge>(ctx.mergedScanSets);
+          ctx.devidedScanSets = ctx.scanInspector.connectedSets();
+
+          for (int i = 0; i < mergeSets.size(); i++) {
+              Set<LogicalPlan> planSet = mergeSets.get(i);
+              LogicalPlan mergedPlan = produceBigScan(planSet, ctx,config);
+              for (LogicalPlan original : planSet) {
+                  //LogicalPlan realOrig = splitedPlan2Orig.get(original);
+                  result.put(original, mergedPlan);
+              }
+          }
+          ctx.close();
+      }
+      return result;
+  }
+
+  private LogicalPlan produceBigScan(Set<LogicalPlan> plans,ProjectMergeContext projectCtx,DrillConfig config) throws IOException {
+
+      List<LogicalOperator> roots=new ArrayList<>();
+      for(LogicalPlan plan: plans){
+          Collection<SinkOperator> unitRoots=plan.getGraph().getRoots();
+          roots.addAll(unitRoots);
+      }
+      //PlanMergeContext planCtx = new PlanMergeContext();
+      List<LogicalOperator> operators=new ArrayList<>();
+      Map<Scan,UnionedScanSplit> substituteMap=new HashMap<>();
+      for(Map.Entry<String,Set<ScanWithPlan>> entry: projectCtx.tableName2Plans.entrySet()){
+          //String tableName=entry.getKey();
+
+          Set<ScanWithPlan> swps=entry.getValue();
+          ScanWithPlan[] swpArr=new ArrayList<ScanWithPlan>(swps).toArray(new ScanWithPlan[swps.size()]);
+          if(!plans.contains(swpArr[0].plan))
+              continue;
+          if(!swpArr[0].scan.getStorageEngine().contains("hbase"))
+              continue;
+          ObjectMapper mapper=config.getMapper();
+          ArrayNode jsonArray=new ArrayNode(mapper.getNodeFactory());
+          //List<Map<String,Object>> mapList=new ArrayList<Map<String,Object>>();
+          for(int i=0;i<swpArr.length;i++){
+              for(JsonNode node:swpArr[i].scan.getSelection().getRoot()){
+                  jsonArray.add(node);
+              }
+          }
+          String selectionStr=mapper.writeValueAsString(jsonArray);
+          JSONOptions selection=mapper.readValue(selectionStr,JSONOptions.class);
+          UnionedScan unionedScan=new UnionedScan(swpArr[0].scan.getStorageEngine(),selection,swpArr[0].scan.getOutputReference());
+          UnionedScanSplit[] unionedScanSplits=new UnionedScanSplit[swpArr.length];
+
+          for(int i=0;i<swpArr.length;i++){
+              int[] entries=new int[1];
+              entries[0]=i;
+
+              unionedScanSplits[i]=new UnionedScanSplit(entries);
+              unionedScanSplits[i].setInput(unionedScan);
+              LogicalPlan plan=swpArr[i].plan;
+              AdjacencyList<LogicalOperator> adjacencyList=plan.getGraph().getAdjList().getReversedList();
+              for(AdjacencyList<LogicalOperator>.Node lo:adjacencyList.getInternalRootNodes()){
+                  if(lo.getNodeValue().equals(swpArr[i].scan)){
+                      for(Edge<AdjacencyList<LogicalOperator>.Node> edge:adjacencyList.getAdjacent(lo)){
+                          AdjacencyList<LogicalOperator>.Node parent=edge.getTo();
+                          LogicalOperator parentLo=parent.getNodeValue();
+                          LogicalPlanUtil.substituteInParent(swpArr[i].scan,unionedScanSplits[i],parentLo);
+
+                      }
+                  }
+              }
+
+              substituteMap.put(swpArr[i].scan,unionedScanSplits[i]);
+          }
+
+          operators.add(unionedScan);
+          /*
+          for(int i=0;i<swpArr.length;i++){
+              List<LogicalOperator> origPlanOperators=swpArr[i].plan.getSortedOperators();
+              for(LogicalOperator lo: origPlanOperators){
+                  LogicalOperator target=substituteMap.get(lo);
+                  if(target!=null){
+                      operators.add(target);
+                  }else{
+                      if(operators.contains(lo))operators.add(lo);
+                  }
+              }
+          }
+          */
+      }
+      PlanProperties head = null;
+      Map<String, StorageEngineConfig> se = null;
+      for(LogicalPlan plan: plans){
+          if(head==null)
+              head=plan.getProperties();
+          if(se==null)
+              se=plan.getStorageEngines();
+          List<LogicalOperator> origPlanOperators=plan.getSortedOperators();
+          for(LogicalOperator lo: origPlanOperators){
+              if(substituteMap.containsKey(lo)){
+                 LogicalOperator target=substituteMap.get(lo);
+                 if(!operators.contains(target))
+                    operators.add(substituteMap.get(lo));
+              }else{
+                  if(!operators.contains(lo))
+                  operators.add(lo);
+              }
+          }
+      }
+
+      if(roots.size()>1){
+         List<LogicalOperator> unionInputs=new ArrayList<>();
+         //Store store=null;
+         for(LogicalOperator root: roots){
+             if(root instanceof Store){
+                 unionInputs.add(((Store)root).getInput());
+                 ((Store)root).setInput(null);
+                 operators.remove(root);
+             }else {
+                 unionInputs.add(root);
+             }
+         }
+         Union union=new Union(unionInputs.toArray(new LogicalOperator[unionInputs.size()]),false);
+         Store store=new Store(((Store)roots.get(0)).getStorageEngine(),((Store)roots.get(0)).getTarget(),((Store)roots.get(0)).getPartition());
+         store.setInput(union);
+         operators.add(union);operators.add(store);
+      }
+
+      return new LogicalPlan(head, se, operators);
+  }
+
+  /*
+
+    public JSONOptions toSingleJsonOptions() throws IOException {
+        List<Map<String, Object>> mapList = new ArrayList<Map<String, Object>>(1);
+        mapList.add(this.toSelectionMap());
+        ObjectMapper mapper = config.getMapper();
+        String s = mapper.writeValueAsString(mapList);
+        return mapper.readValue(s, JSONOptions.class);
+    }
+
+  */
+
+    public Map<LogicalPlan,LogicalPlan> splitBigScan(List<LogicalPlan> plans,DrillConfig config) throws IOException {
     splitedPlans = new ArrayList<>();
-    splitedPlan2Orig = new HashMap<LogicalPlan, LogicalPlan>();
+    splitedPlan2Orig = new HashMap<>();
+    Map<LogicalPlan,LogicalPlan> results=new HashMap<>();
     int index = 0;
-    for (LogicalPlan plan : incoming) {
+    for (LogicalPlan plan : plans) {
       AdjacencyList<LogicalOperator> child2Parents = plan.getGraph().getAdjList().getReversedList();
       Collection<AdjacencyList<LogicalOperator>.Node> leaves = child2Parents.getInternalRootNodes();
       List<LogicalOperator> operators = new ArrayList<>();
@@ -93,7 +401,7 @@ public class PlanMerge {
 
               List<Map<String, Object>> mapList = new ArrayList<Map<String, Object>>(1);
               mapList.add(map);
-              ObjectMapper mapper = DrillConfig.create().getMapper();
+              ObjectMapper mapper = config.getMapper();
               String s = mapper.writeValueAsString(mapList);
               JSONOptions childSelection = mapper.readValue(s, JSONOptions.class);
               Scan childScan = new Scan(origScan.getStorageEngine(), childSelection, origScan.getOutputReference());
@@ -109,7 +417,7 @@ public class PlanMerge {
             }
           }
 
-          Scan[] splitedScans = new Scan[childScans.size()];
+          LogicalOperator[] splitedScans = new LogicalOperator[childScans.size()];
           int i = 0;
           for (Scan scan : childScans) {
             splitedScans[i++] = scan;
@@ -169,12 +477,16 @@ public class PlanMerge {
         LogicalPlan subsPlan = new LogicalPlan(head, se, operators);
         splitedPlans.add(subsPlan);
         splitedPlan2Orig.put(subsPlan, plan);
+        results.put(plan,subsPlan);
       } catch (Exception e) {
         System.out.println(index + " plan has problem");
         e.printStackTrace();
       }
     }
+    return results;
   }
+
+
 
   private List<AdjacencyList<LogicalOperator>.Node> getParents(AdjacencyList<LogicalOperator>.Node opNode,
                                                                AdjacencyList<LogicalOperator> child2Parents) {
@@ -209,90 +521,134 @@ public class PlanMerge {
 
   }
 
-  private void sortAndMerge() throws Exception {
-    merged = new HashMap<LogicalPlan, LogicalPlan>();
-    sortedByProjectID = new HashMap<String, List<LogicalPlan>>();
-    /**
-     * sort into sortedByProjectID, by projectID
-     */
-    //for (LogicalPlan plan : incoming) {
-    for (LogicalPlan plan : splitedPlans) {
-      String projectID = getProjectID(plan);
-      List<LogicalPlan> projectPlans = sortedByProjectID.get(projectID);
-      if (projectPlans == null) {
-        projectPlans = new ArrayList<>();
-        sortedByProjectID.put(projectID, projectPlans);
-      }
-      projectPlans.add(plan);
-    }
-    for (Map.Entry<String, List<LogicalPlan>> entry : sortedByProjectID.entrySet()) {
-      String project = entry.getKey();
-      List<LogicalPlan> plans = entry.getValue();
 
-      ProjectMergeContext ctx = new ProjectMergeContext();
+
+  private void sortPlanByProjectId(List<LogicalPlan> plans){
+      sortedByProjectID =new HashMap<String,List<LogicalPlan>>();
       for (LogicalPlan plan : plans) {
-        //init merging plan sets:初始状态每个plan自成一组
-        ctx.mergePlanSets.addVertex(plan);
-//        ctx.mergeID2plans.put(mergeID, new HashSet<LogicalPlan>(Arrays.asList(plan)));
-//        ctx.plan2MergeID.put(plan, mergeID);
-        //找到有对相同table操作的scan
-        Collection<SourceOperator> leaves = plan.getGraph().getLeaves();
-        for (SourceOperator leaf : leaves) {
-          if (leaf instanceof Scan) {
-            Scan scan = (Scan) leaf;
-            //初始状态，每个scan自成一组
-            ctx.mergedScanSets.addVertex(scan);
-            String tableName = getTableName(scan);
-            ScanWithPlan swp = new ScanWithPlan(scan, plan, tableName);
-            Set<ScanWithPlan> swps = ctx.tableName2Plans.get(tableName);
-            if (swps == null) {
-              swps = new HashSet<>();
-              ctx.tableName2Plans.put(tableName, swps);
-            }
-            swps.add(swp);
-            Set<String> tableNames = ctx.plan2TableNames.get(plan);
-            if (tableNames == null) {
-              tableNames = new HashSet<>();
-              ctx.plan2TableNames.put(plan, tableNames);
-            }
-            tableNames.add(tableName);
+          String projectID = getProjectID(plan);
+          List<LogicalPlan> projectPlans = sortedByProjectID.get(projectID);
+          if (projectPlans == null) {
+              projectPlans = new ArrayList<>();
+              sortedByProjectID.put(projectID, projectPlans);
           }
-        }
+          projectPlans.add(plan);
       }
-
-      //检查scan，标记合并
-      for (Map.Entry<String, Set<ScanWithPlan>> entry2 : ctx.tableName2Plans.entrySet()) {
-        String tableName = entry2.getKey();
-        ScanWithPlan[] swps = new ScanWithPlan[entry2.getValue().size()];
-        entry2.getValue().toArray(swps);
-        for (int i = 0; i < swps.length; i++) {
-          ScanWithPlan swpFrom = swps[i];
-          for (int j = i + 1; j < swps.length; j++) {
-            ScanWithPlan swpTo = swps[j];
-            Mergeability<Scan> mergeability = mergeable(swpFrom.scan, swpTo.scan);
-            if (mergeability != null) {
-              markMerge(swpFrom, swpTo, mergeability, ctx);
-            }
-          }
-        }
-      }
-      //开始合并
-      ctx.planInspector = new ConnectivityInspector<LogicalPlan, DefaultEdge>(ctx.mergePlanSets);
-      List<Set<LogicalPlan>> mergeSets = ctx.planInspector.connectedSets();
-      ctx.scanInspector = new ConnectivityInspector<Scan, DefaultEdge>(ctx.mergedScanSets);
-      ctx.devidedScanSets = ctx.scanInspector.connectedSets();
-
-      for (int i = 0; i < mergeSets.size(); i++) {
-        Set<LogicalPlan> planSet = mergeSets.get(i);
-        LogicalPlan mergedPlan = doMergePlan(planSet, ctx);
-        for (LogicalPlan original : planSet) {
-          LogicalPlan realOrig = splitedPlan2Orig.get(original);
-          merged.put(realOrig, mergedPlan);
-        }
-      }
-      ctx.close();
-    }//for sortedByProjectID
   }
+
+  private Map<String,ProjectMergeContext> splitByTableName() throws Exception {
+      Map<String,ProjectMergeContext> projectCtxMap=new HashMap<String,ProjectMergeContext>();
+      for (Map.Entry<String, List<LogicalPlan>> entry : sortedByProjectID.entrySet()) {
+          String project = entry.getKey();
+          List<LogicalPlan> plans = entry.getValue();
+
+          ProjectMergeContext ctx = new ProjectMergeContext();
+          projectCtxMap.put(project,ctx);
+          for (LogicalPlan plan : plans) {
+          //init merging plan sets:初始状态每个plan自成一组
+          ctx.mergePlanSets.addVertex(plan);
+          //找到有对相同table操作的scan
+          Collection<SourceOperator> leaves = plan.getGraph().getLeaves();
+          for (SourceOperator leaf : leaves) {
+              if (leaf instanceof Scan) {
+                  Scan scan = (Scan) leaf;
+                  //初始状态，每个scan自成一组
+                  ctx.mergedScanSets.addVertex(scan);
+                  String tableName = null;
+                  try {
+                      tableName = LogicalPlanUtil.getTableName(scan);
+                  } catch (Exception e) {
+                      e.printStackTrace();
+                      throw e;
+                  }
+                  ScanWithPlan swp = new ScanWithPlan(scan, plan, tableName);
+                  Set<ScanWithPlan> swps = ctx.tableName2Plans.get(tableName);
+                  if (swps == null) {
+                      swps = new HashSet<>();
+                      ctx.tableName2Plans.put(tableName, swps);
+                  }
+                  swps.add(swp);
+                  Set<ScanWithPlan> scanWithPlans=ctx.plan2Swps.get(plan);
+                  if(scanWithPlans==null){
+                      scanWithPlans=new HashSet<>();
+                      ctx.plan2Swps.put(plan,scanWithPlans);
+                  }
+                  scanWithPlans.add(swp);
+
+                  Set<String> tableNames = ctx.plan2TableNames.get(plan);
+                  if (tableNames == null) {
+                      tableNames = new HashSet<>();
+                      ctx.plan2TableNames.put(plan, tableNames);
+                  }
+                  tableNames.add(tableName);
+              }
+          }
+      }
+    }
+      return projectCtxMap;
+  }
+
+  private  Map<String,ProjectMergeContext> markMergability(
+          Map<String,ProjectMergeContext> projectCtxMap,MergeType option){
+      Map<String,ProjectMergeContext> result=new HashMap<>();
+      for (Map.Entry<String, List<LogicalPlan>> entry : sortedByProjectID.entrySet()) {
+          String project=entry.getKey();
+          ProjectMergeContext ctx=projectCtxMap.get(project);
+          result.put(project,ctx);
+          //检查scan，标记合并
+          for (Map.Entry<String, Set<ScanWithPlan>> entry2 : ctx.tableName2Plans.entrySet()) {
+              String tableName = entry2.getKey();
+              ScanWithPlan[] swps = new ScanWithPlan[entry2.getValue().size()];
+              entry2.getValue().toArray(swps);
+              for (int i = 0; i < swps.length; i++) {
+                  ScanWithPlan swpFrom = swps[i];
+                  for (int j = i + 1; j < swps.length; j++) {
+                      ScanWithPlan swpTo = swps[j];
+                      Mergeability<Scan> mergeability=null;
+                      switch (option){
+                          case same:
+                           mergeability= LogicalPlanUtil.mergeable(swpFrom.scan, swpTo.scan);
+                          break;
+                          case sametable:
+                              mergeability=new LogicalPlanUtil.Mergeability<Scan>(MergeType.sametable,swpFrom.scan,swpTo.scan);
+                          break;
+                      }
+                      if (mergeability != null) {
+                          markMerge(swpFrom, swpTo, mergeability, ctx);
+                      }
+
+                  }
+              }
+          }
+      }
+      return result;
+  }
+
+  private Map<LogicalPlan,LogicalPlan> mergePlans(Map<String,ProjectMergeContext> projectCtxMap){
+      Map<LogicalPlan,LogicalPlan> mergeResult=new HashMap<>();
+      for (Map.Entry<String, List<LogicalPlan>> entry : sortedByProjectID.entrySet()) {
+          String project=entry.getKey();
+          ProjectMergeContext ctx=projectCtxMap.get(project);
+          //开始合并
+          ctx.planInspector = new ConnectivityInspector<LogicalPlan, DefaultEdge>(ctx.mergePlanSets);
+          List<Set<LogicalPlan>> mergeSets = ctx.planInspector.connectedSets();
+          ctx.scanInspector = new ConnectivityInspector<Scan, DefaultEdge>(ctx.mergedScanSets);
+          ctx.devidedScanSets = ctx.scanInspector.connectedSets();
+
+          for (int i = 0; i < mergeSets.size(); i++) {
+              Set<LogicalPlan> planSet = mergeSets.get(i);
+              LogicalPlan mergedPlan = doMergePlan(planSet, ctx);
+              for (LogicalPlan original : planSet) {
+                  //LogicalPlan realOrig = splitedPlan2Orig.get(original);
+                  mergeResult.put(original, mergedPlan);
+              }
+          }
+          ctx.close();
+      }//for sortedByProjectID
+      return mergeResult;
+  }
+
+
 
   /**
    * 合并两个plan的方法：
@@ -379,7 +735,7 @@ public class PlanMerge {
             Set<DefaultEdge> childEdges = planCtx.mergedGraph.incomingEdgesOf(child);
             for (DefaultEdge e : childEdges) {
               LogicalOperator otherParent = planCtx.mergedGraph.getEdgeSource(e);
-              if (equals(op, otherParent) != null) {
+              if (LogicalPlanUtil.equals(op, otherParent) != null) {
                 //found someone to merge
                 mergeTo = otherParent;
                 break childrenLoop;
@@ -432,6 +788,9 @@ public class PlanMerge {
     return new LogicalPlan(head, se, planCtx.mergeResult);
   }
 
+
+
+
   private void doMergeOperator(LogicalOperator source, LogicalOperator target, PlanMergeContext planCtx) {
     if (target == null) {
       //no merge can be done; it's a new operator added to mergeResult
@@ -476,85 +835,30 @@ public class PlanMerge {
       //add parent for candidate for next round check
       output.add(parentNode);
       if (substitutionInParents != null) {
-        substituteInParent(child.getNodeValue(), substitutionInParents, parent);
+        LogicalPlanUtil.substituteInParent(child.getNodeValue(), substitutionInParents, parent);
       }
     }
   }
 
-  private void substituteInParent(LogicalOperator source, LogicalOperator target, LogicalOperator parent) {
-    if (parent instanceof SingleInputOperator) {
-      ((SingleInputOperator) parent).setInput(target);
-    } else if (parent instanceof Join) {
-      Join join = (Join) parent;
-      if (join.getLeft() == source) {
-        join.setLeft(target);
-      } else if (join.getRight() == (source)) {
-        join.setRight(target);
-      }
-    } else if (parent instanceof Union) {
-      Union union = (Union) parent;
-      LogicalOperator[] inputs = union.getInputs();
-      for (int j = 0; j < inputs.length; j++) {
-        LogicalOperator input = inputs[j];
-        if (input == (source)) {
-          inputs[j] = target;
-          break;
-        }
-      }
-    } else {
-      throw new IllegalArgumentException("operator not supported!" + parent);
-    }
-  }
+
+
 
   private void markMerge(ScanWithPlan swpFrom, ScanWithPlan swpTo, Mergeability<Scan> mergeability,
                          ProjectMergeContext ctx) {
     ctx.mergePlanSets.addVertex(swpFrom.plan);
     ctx.mergePlanSets.addVertex(swpTo.plan);
-    ctx.mergePlanSets.addEdge(swpFrom.plan, swpTo.plan);
+    if(swpFrom.plan!=swpTo.plan)
+        ctx.mergePlanSets.addEdge(swpFrom.plan, swpTo.plan);
     ctx.mergedScanSets.addVertex(mergeability.from);
     ctx.mergedScanSets.addVertex(mergeability.to);
-    ctx.mergedScanSets.addEdge(mergeability.from, mergeability.to);
+    if(mergeability.from!=mergeability.to)
+        ctx.mergedScanSets.addEdge(mergeability.from, mergeability.to);
 
   }
 
-  private Mergeability<LogicalOperator> equals(LogicalOperator op1, LogicalOperator op2) {
-    if (LOPComparator.equals(op1, op2)) {
-      return new Mergeability<>(MergeType.same, op1, op2);
-    }
-    return null;
-  }
 
-  private boolean childrenSame(LogicalOperator op1, LogicalOperator op2) {
-    Iterator<LogicalOperator> iter1 = op1.iterator();
-    Iterator<LogicalOperator> iter2 = op2.iterator();
-    for (; iter1.hasNext(); ) {
-      if (!iter2.hasNext()) {
-        return false;
-      }
-      if (!iter1.next().equals(iter2.next())) {
-        return false;
-      }
-    }
-    return true;
-  }
 
-  /**
-   * 判断两个plan是否合并： 如果两个plan有相同的scan，那就合并。 如果两个plan，其中一个的scan范围包含另外一个，那就合并。 TODO 现在只合并一模一样的scan。需要更多的merge的策略和相应的数据
-   *
-   * @param scan1
-   * @param scan2
-   * @return
-   */
-  private Mergeability<Scan> mergeable(Scan scan1, Scan scan2) {
-    return LOPComparator.equals(scan1, scan2) ? new Mergeability<Scan>(MergeType.same, scan1, scan2) : null;
-  }
 
-  private Mergeability<Scan> equals(Scan scan1, Scan scan2) throws Exception {
-    if (getTableName(scan1).equals(getTableName(scan2)) && scan1.getSelection().equals(scan2.getSelection())) {
-      return new Mergeability<>(MergeType.same, scan1, scan2);
-    }
-    return null;
-  }
 
   static class PlanMergeContext {
     //merge output
@@ -569,6 +873,7 @@ public class PlanMerge {
   static class ProjectMergeContext {
     Map<String, Set<ScanWithPlan>> tableName2Plans = new HashMap<>();//equals
     Map<LogicalPlan, Set<String>> plan2TableNames = new HashMap<>();//equals
+    Map<LogicalPlan,Set<ScanWithPlan>> plan2Swps=new HashMap<>();
     UndirectedGraph<LogicalPlan, DefaultEdge> mergePlanSets = new SimpleGraph<LogicalPlan, DefaultEdge>(
       DefaultEdge.class);//==
     UndirectedGraph<Scan, DefaultEdge> mergedScanSets = new SimpleGraph<Scan, DefaultEdge>(DefaultEdge.class);//==
@@ -588,10 +893,10 @@ public class PlanMerge {
     }
   }
 
-  static class ScanWithPlan {
-    Scan scan;
-    LogicalPlan plan;
-    String tableName;
+  public static class ScanWithPlan {
+    public Scan scan;
+    public LogicalPlan plan;
+    public String tableName;
 
     ScanWithPlan() {
     }
@@ -644,59 +949,51 @@ public class PlanMerge {
     plan.getProperties().generator.info = projectID;
   }
 
-  public static String getTableName(Scan scan) throws Exception {
-    try {
-      String storageEngine = scan.getStorageEngine();
-      if (SE_HBASE.equals(storageEngine)) {
-        return scan.getSelection().getRoot().get(0).get("table").asText();
-      } else {
-        return scan.getSelection().getRoot().get("table").asText();
-      }
-    } catch (Exception e) {
-      throw new Exception(e);
-    }
-  }
+
 
   /**
    * @param plans 需要merge的LogicalPlan 列表
    * @return 原始的LogicalPlan和合并以后LogicalPlan之间的对应关系。 Map的key 是 原始的LogicalPlan，value是合并后的LogicalPlan。 如果输入的plans当中，有plan
    *         没有和别的plan合并，则在返回的map中，key和value都是这个plan。
    */
-  public static Map<LogicalPlan, LogicalPlan> sortAndMerge(List<LogicalPlan> plans) throws Exception {
+  public static Map<LogicalPlan, LogicalPlan> sortAndMerge(List<LogicalPlan> plans,DrillConfig config) throws Exception {
     PlanMerge planMerge = new PlanMerge(plans);
-    planMerge.splitBigScan();
-      /*
-      for(LogicalPlan plan : planMerge.getSplitedPlans()){
+    Map<LogicalPlan,LogicalPlan> splitBigPlanMap=planMerge.splitBigScan(plans,config);
+    List<LogicalPlan> bigPlanSplitedPlans=new ArrayList(splitBigPlanMap.values());
+    Map<LogicalPlan,LogicalPlan> splitRkPlanMap=
+            planMerge.splitScanByRowKey(bigPlanSplitedPlans,config);
+    List<LogicalPlan> rkSplitedPlans=new ArrayList<>(splitRkPlanMap.values());
+    int index=0;
+    for(LogicalPlan pl: rkSplitedPlans){
+        //GraphVisualize.visualize(pl,"test-rkSplited"+(index++)+".png");
+    }
+    Map<LogicalPlan,LogicalPlan> mergePlanMap=planMerge.sortAndMergePlans(rkSplitedPlans,config);
+    Set<LogicalPlan> scanMergedPlanSet=new HashSet<>(mergePlanMap.values());
+    List<LogicalPlan> scanMergedPlans=new ArrayList<>(scanMergedPlanSet);
+    index=0;
+    for(LogicalPlan pl: scanMergedPlans){
 
-          String planStr=DrillConfig.create().getMapper().writeValueAsString(plan);
-          System.out.println(planStr);
-      }
-      */
-    planMerge.sortAndMerge();
-    return planMerge.getMerged();
+          //GraphVisualize.visualize(pl,"test-scanMerged"+(index++)+".png");
+    }
+    Map<LogicalPlan,LogicalPlan> mergeToTalbeScanMap=planMerge.mergeToBigScan(scanMergedPlans,config);
+    Map<LogicalPlan,LogicalPlan> result=new HashMap<>();
+    for(Map.Entry<LogicalPlan,LogicalPlan> entry: splitBigPlanMap.entrySet()){
+        LogicalPlan orig=entry.getKey();
+        LogicalPlan splitBigScanResultPlan=splitBigPlanMap.get(entry.getKey());
+        LogicalPlan splitRkResultPlan=splitRkPlanMap.get(splitBigScanResultPlan);
+        LogicalPlan mergePlanResultPlan=mergePlanMap.get(splitRkResultPlan);
+        LogicalPlan mergeToTableScanResultPlan=mergeToTalbeScanMap.get(mergePlanResultPlan);
+        result.put(orig,mergeToTableScanResultPlan);
+    }
+    return result;
+    //return planMerge.getMerged();
   }
 
   public Map<LogicalPlan, LogicalPlan> getMerged() {
     return merged;
   }
 
-  static class Mergeability<T extends LogicalOperator> {
 
-    MergeType mergeType;
-    T from;
-    T to;
 
-    Mergeability() {
-    }
 
-    Mergeability(MergeType mergeType, T from, T to) {
-      this.mergeType = mergeType;
-      this.from = from;
-      this.to = to;
-    }
-  }
-
-  static enum MergeType {
-    same, belongsto
-  }
 }
