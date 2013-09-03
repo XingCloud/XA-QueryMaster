@@ -262,6 +262,8 @@ public class PlanMerge {
           //String tableName=entry.getKey();
 
           Set<ScanWithPlan> swps=entry.getValue();
+          if(swps.size()<=1)
+              continue;
           ScanWithPlan[] swpArr=new ArrayList<ScanWithPlan>(swps).toArray(new ScanWithPlan[swps.size()]);
           if(!plans.contains(swpArr[0].plan))
               continue;
