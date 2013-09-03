@@ -99,10 +99,7 @@ public class PlanExecutor {
         for (int i = 0; i < futures.size(); i++) {
           Future<List<QueryResultBatch>> future = futures.get(i);
           try {
-            long tt1 = System.nanoTime(), tt2;
             List<QueryResultBatch> batches = future.get();
-            tt2 = System.nanoTime();
-            logger.info("[PlanExec] - Single future get use " + (tt2 - tt1) / 1000000 + " milliseconds.");
             Map<String, ResultTable> ret = RecordParser.materializeRecords(batches, QueryNode.getAllocator());
             materializedResults.add(ret);
             succeeded++;
@@ -206,9 +203,13 @@ public class PlanExecutor {
     @Override
     public List<QueryResultBatch> call() throws Exception {
       List<QueryResultBatch> result = null;
+
       if (client.reconnect()) {
+        long t1 = System.nanoTime(), t2;
         result = client
           .runQuery(UserProtos.QueryType.LOGICAL, plan, QMConfig.conf().getLong(QMConfig.DRILL_EXEC_TIMEOUT));
+        t2 = System.nanoTime();
+        logger.info("[PlanExec] - Single future get use " + (t2 - t1) / 1000000 + " milliseconds.");
       } else {
         logger.info("[DrillbitCallable2] - Cannot connect to server.");
       }
