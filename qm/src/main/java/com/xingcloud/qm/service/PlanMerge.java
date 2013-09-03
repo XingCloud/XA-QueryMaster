@@ -280,14 +280,15 @@ public class PlanMerge {
           String selectionStr=mapper.writeValueAsString(jsonArray);
           JSONOptions selection=mapper.readValue(selectionStr,JSONOptions.class);
           UnionedScan unionedScan=new UnionedScan(swpArr[0].scan.getStorageEngine(),selection,swpArr[0].scan.getOutputReference());
-          UnionedScanSplit[] unionedScanSplits=new UnionedScanSplit[swpArr.length];
+          unionedScan.setMemo(swpArr[0].scan.getMemo());  
 
           for(int i=0;i<swpArr.length;i++){
               int[] entries=new int[1];
               entries[0]=i;
 
-              unionedScanSplits[i]=new UnionedScanSplit(entries);
-              unionedScanSplits[i].setInput(unionedScan);
+            UnionedScanSplit unionedScanSplit = new UnionedScanSplit(entries);
+            unionedScanSplit.setMemo(Arrays.toString(entries));
+              unionedScanSplit.setInput(unionedScan);
               LogicalPlan plan=swpArr[i].plan;
               AdjacencyList<LogicalOperator> adjacencyList=plan.getGraph().getAdjList().getReversedList();
               for(AdjacencyList<LogicalOperator>.Node lo:adjacencyList.getInternalRootNodes()){
@@ -295,13 +296,13 @@ public class PlanMerge {
                       for(Edge<AdjacencyList<LogicalOperator>.Node> edge:adjacencyList.getAdjacent(lo)){
                           AdjacencyList<LogicalOperator>.Node parent=edge.getTo();
                           LogicalOperator parentLo=parent.getNodeValue();
-                          LogicalPlanUtil.substituteInParent(swpArr[i].scan,unionedScanSplits[i],parentLo);
+                          LogicalPlanUtil.substituteInParent(swpArr[i].scan,unionedScanSplit,parentLo);
 
                       }
                   }
               }
 
-              substituteMap.put(swpArr[i].scan,unionedScanSplits[i]);
+              substituteMap.put(swpArr[i].scan,unionedScanSplit);
           }
 
           operators.add(unionedScan);
