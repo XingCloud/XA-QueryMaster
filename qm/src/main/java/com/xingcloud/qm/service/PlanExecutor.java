@@ -204,7 +204,6 @@ public class PlanExecutor {
     public List<QueryResultBatch> call() throws Exception {
       List<QueryResultBatch> result = null;
       if (client.reconnect()) {
-        logger.info("[DrillbitCallable2] - submitted.");
         result = client
           .runQuery(UserProtos.QueryType.LOGICAL, plan, QMConfig.conf().getLong(QMConfig.DRILL_EXEC_TIMEOUT));
       } else {
