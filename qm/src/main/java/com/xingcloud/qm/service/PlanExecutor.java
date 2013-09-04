@@ -206,8 +206,12 @@ public class PlanExecutor {
 
       if (client.reconnect()) {
         long t1 = System.nanoTime(), t2;
-        result = client
-          .runQuery(UserProtos.QueryType.LOGICAL, plan, QMConfig.conf().getLong(QMConfig.DRILL_EXEC_TIMEOUT));
+        try {
+          result = client
+            .runQuery(UserProtos.QueryType.LOGICAL, plan, QMConfig.conf().getLong(QMConfig.DRILL_EXEC_TIMEOUT));
+        } catch (Exception e) {
+          throw e;
+        }
         t2 = System.nanoTime();
         logger.info("[PlanExec] - Single future get use " + (t2 - t1) / 1000000 + " milliseconds.");
       } else {
