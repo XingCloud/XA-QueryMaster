@@ -61,6 +61,15 @@ public class PlanMerge {
         return  resultMap;
   }
 
+  Comparator<ScanWithPlan> swpComparator = new Comparator<ScanWithPlan>() {
+      @Override
+      public int compare(ScanWithPlan o1, ScanWithPlan o2) {
+          RowKeyRange range1=LogicalPlanUtil.getRowKeyRange(o1.scan);
+          RowKeyRange range2=LogicalPlanUtil.getRowKeyRange(o2.scan);
+          return Bytes.compareTo(range1.getStartRowKey(), range2.getStartRowKey());
+      }
+  };
+  
   private Map<LogicalPlan,LogicalPlan> splitScanByRowKey(List<LogicalPlan> origPlans,DrillConfig config) throws Exception {
       sortPlanByProjectId(origPlans);
       Map<String,ProjectMergeContext> projectCtxMap=splitByTableName();
@@ -76,14 +85,7 @@ public class PlanMerge {
               if(!tableName.contains("deu"))continue;
               ScanWithPlan[] swps=new ArrayList<>(entry1.getValue()).toArray
                       (new ScanWithPlan[entry1.getValue().size()]);
-              Arrays.sort(swps,new Comparator<ScanWithPlan>() {
-                  @Override
-                  public int compare(ScanWithPlan o1, ScanWithPlan o2) {
-                      RowKeyRange range1=LogicalPlanUtil.getRowKeyRange(o1.scan);
-                      RowKeyRange range2=LogicalPlanUtil.getRowKeyRange(o2.scan);
-                      return new RowKeyRangeComparator().compare(range1,range2);
-                  }
-              });
+              Arrays.sort(swps, swpComparator);
               String[] rkPoints=new String[swps.length*2];
               Map<RowKeyRange,List<ScanWithPlan>> crosses=new HashMap<>();
               Map<ScanWithPlan,List<RowKeyRange>> scanSplits=new HashMap<>();
@@ -284,14 +286,20 @@ public class PlanMerge {
           String selectionStr=mapper.writeValueAsString(jsonArray);
           JSONOptions selection=mapper.readValue(selectionStr,JSONOptions.class);
           UnionedScan unionedScan=new UnionedScan(swpArr[0].scan.getStorageEngine(),selection,swpArr[0].scan.getOutputReference());
-          unionedScan.setMemo(swpArr[0].scan.getMemo());  
+        List<String> memos = new ArrayList<>();
 
           for(int i=0;i<swpArr.length;i++){
               int[] entries=new int[1];
               entries[0]=i;
-
+            ScanWithPlan swp = swpArr[i];
+            if(swp.scan.getMemo() != null){
+              memos.add(swp.scan.getMemo());
+            }else{
+              memos.add("n/a");
+            }
             UnionedScanSplit unionedScanSplit = new UnionedScanSplit(entries);
             unionedScanSplit.setMemo(Arrays.toString(entries));
+            
               unionedScanSplit.setInput(unionedScan);
               LogicalPlan plan=swpArr[i].plan;
               AdjacencyList<LogicalOperator> adjacencyList=plan.getGraph().getAdjList().getReversedList();
@@ -308,6 +316,7 @@ public class PlanMerge {
 
               substituteMap.put(swpArr[i].scan,unionedScanSplit);
           }
+          unionedScan.setMemo(memos.toString());  
 
           operators.add(unionedScan);
           /*

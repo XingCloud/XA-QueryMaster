@@ -59,11 +59,7 @@ public class GraphVisualize {
     Collection<Edge<AdjacencyList<LogicalOperator>.Node>> edges = plan.getGraph().getAdjList().getAllEdges();    
     mxGraph mx = new mxGraph();
     mx.getModel().beginUpdate();
-    //style
-    Map<String, Object> scanStyle = new HashMap<>();
-    String color = "#"+mxUtils.getHexColorString(new Color(255, 195, 217, 0));
-    scanStyle.put(mxConstants.STYLE_FILLCOLOR, color);//
-    mx.getStylesheet().putCellStyle(STYLE_SCAN, scanStyle);
+    initStyle(mx);
     Object parent = mx.getDefaultParent();
     Map<LogicalOperator, Object> vertexes = new HashMap<>();    
     for(Edge<AdjacencyList<LogicalOperator>.Node> edge:edges){
@@ -85,6 +81,14 @@ public class GraphVisualize {
     mx.getModel().endUpdate();
     vertexes.clear();
     return mx;
+  }
+
+  private static void initStyle(mxGraph mx) {
+    //style
+    Map<String, Object> scanStyle = new HashMap<>();
+    String color = "#"+mxUtils.getHexColorString(new Color(255, 195, 217, 0));
+    scanStyle.put(mxConstants.STYLE_FILLCOLOR, color);//
+    mx.getStylesheet().putCellStyle(STYLE_SCAN, scanStyle);
   }
 
   private static Object insertVertex(Object parent, LogicalOperator operator, mxGraph mx) {
