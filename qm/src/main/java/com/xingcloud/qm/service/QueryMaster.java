@@ -269,7 +269,7 @@ public class QueryMaster implements QueryListener {
               QuerySubmission unExecuted = mergedSubmissions.next();
               projectSubmissions.addFirst(unExecuted);
             }
-          } catch (Exception e) {
+          } catch (Throwable e) {
             e.printStackTrace();
             for (QuerySubmission qs : pickedSubmissions) {
               String queryId = qs.id;
