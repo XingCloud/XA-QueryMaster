@@ -59,45 +59,41 @@ public class PlanExecutor {
       this.listener = listener;
     }
 
-    @Override
-    public void run() {
-      long t1 = System.currentTimeMillis(), t2;
+    public void _run() {
+      logger.info("PlanSubmission {} executing...", submission.id);
+      if (logger.isDebugEnabled()) {
+        logger.debug("PlanSubmission " + submission.id + " with " + submission.plan.getGraph().getAdjList().getNodeSet()
+                                                                              .size() + " LOPs...");
+        String svgPath = QMConfig.conf().getString(QMConfig.TEMPDIR) + File.separator + submission.id + ".svg";
+        logger.debug("Image url: http://69.28.58.61/" + submission.id + ".svg");
+        GraphVisualize.visualizeMX(submission.plan, svgPath);
+      }
+      DrillClient[] clients = QueryNode.getClients();
+      List<Future<List<QueryResultBatch>>> futures = new ArrayList<>(clients.length);
+      String planString;
       try {
-        logger.info("PlanSubmission {} executing...", submission.id);
-        if (logger.isDebugEnabled()) {
-          logger.debug(
-            "PlanSubmission " + submission.id + " with " + submission.plan.getGraph().getAdjList().getNodeSet()
-                                                                     .size() + " LOPs...");
-          String svgPath = QMConfig.conf().getString(QMConfig.TEMPDIR) + File.separator + submission.id + ".svg";
-          logger.debug("saving images of PlanSubmission http://69.28.58.61/" + submission.id + ".png");
-          GraphVisualize.visualizeMX(submission.plan, svgPath);
-        }
-        DrillClient[] clients = QueryNode.getClients();
-        List<Future<List<QueryResultBatch>>> futures = new ArrayList<>(clients.length);
-        String planString;
-        try {
-          planString = submission.plan.toJsonString(QueryNode.LOCAL_DEFAULT_DRILL_CONFIG);
-        } catch (JsonProcessingException e) {
-          e.printStackTrace();
-          return;
-        }
+        planString = submission.plan.toJsonString(QueryNode.LOCAL_DEFAULT_DRILL_CONFIG);
+      } catch (JsonProcessingException e) {
+        e.printStackTrace();
+        return;
+      }
 //      if (logger.isDebugEnabled()) {
 //        logger.debug("[PlanString]\n{}", planString);
 //      }
 
-        for (int i = 0; i < clients.length; i++) {
-          DrillClient client = clients[i];
-          futures.add(drillBitExecutor.submit(new DrillbitCallable2(planString, client)));
-        }
-        logger.info("[PLAN-SUBMISSION] - All client submit their queries.");
+      for (int i = 0; i < clients.length; i++) {
+        DrillClient client = clients[i];
+        futures.add(drillBitExecutor.submit(new DrillbitCallable2(planString, client)));
+      }
+      logger.info("[PLAN-SUBMISSION] - All client submit their queries.");
 
+      try {
         List<Map<String, ResultTable>> materializedResults = new ArrayList<>();
         //收集结果。理想情况下，应该收集所有的计算结果。
         //在有drillbit计算失败的情况下，使用剩下的结果作为估计值
         int succeeded = 0;
         Exception failedCause = null;
-        for (int i = 0; i < futures.size(); i++) {
-          Future<List<QueryResultBatch>> future = futures.get(i);
+        for (Future<List<QueryResultBatch>> future : futures) {
           try {
             List<QueryResultBatch> batches = future.get();
             Map<String, ResultTable> ret = RecordParser.materializeRecords(batches, QueryNode.getAllocator());
@@ -108,6 +104,7 @@ public class PlanExecutor {
             failedCause = e;
           }
         }
+
         if (succeeded == 0) {
           submission.e = failedCause;
           submission.queryID2Table = null;
@@ -118,29 +115,31 @@ public class PlanExecutor {
           if (succeeded < futures.size()) {
             double sampleRate = 1.0 * succeeded / futures.size();
             for (Map.Entry<String, ResultTable> entry : merged.entrySet()) {
-              String queryID = entry.getKey();
               ResultTable result = entry.getValue();
               for (Map.Entry<String, ResultRow> entry2 : result.entrySet()) {
-                String dimensionKey = entry2.getKey();
                 ResultRow v = entry2.getValue();
                 v.count /= sampleRate;
                 v.sum /= sampleRate;
                 v.userNum /= sampleRate;
                 v.sampleRate *= sampleRate;
               }
-
             }
           }
           submission.queryID2Table = merged;
         }
       } catch (Exception e) {
         e.printStackTrace();
-        //throw e;
       } finally {
-        t2 = System.currentTimeMillis();
-        logger.info("[PlanExec] time use - " + (t2 - t1));
         listener.onQueryResultReceived(submission.id, submission);
       }
+    }
+
+    @Override
+    public void run() {
+      long t1 = System.currentTimeMillis(), t2;
+      _run();
+      t2 = System.currentTimeMillis();
+      logger.info("[PlanExec] time use - " + (t2 - t1));
     }
 
     private Map<String, ResultTable> mergeResults(List<Map<String, ResultTable>> materializedResults) {
@@ -203,9 +202,17 @@ public class PlanExecutor {
     @Override
     public List<QueryResultBatch> call() throws Exception {
       List<QueryResultBatch> result = null;
+
       if (client.reconnect()) {
-        result = client
-          .runQuery(UserProtos.QueryType.LOGICAL, plan, QMConfig.conf().getLong(QMConfig.DRILL_EXEC_TIMEOUT));
+        long t1 = System.nanoTime(), t2;
+        try {
+          result = client
+            .runQuery(UserProtos.QueryType.LOGICAL, plan, QMConfig.conf().getLong(QMConfig.DRILL_EXEC_TIMEOUT));
+        } catch (Exception e) {
+          throw e;
+        }
+        t2 = System.nanoTime();
+        logger.info("[PlanExec] - Single future get use " + (t2 - t1) / 1000000 + " milliseconds.");
       } else {
         logger.info("[DrillbitCallable2] - Cannot connect to server.");
       }
