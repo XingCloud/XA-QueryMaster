@@ -276,6 +276,7 @@ public class PlanMerge {
           ObjectMapper mapper=config.getMapper();
           ArrayNode jsonArray=new ArrayNode(mapper.getNodeFactory());
           //List<Map<String,Object>> mapList=new ArrayList<Map<String,Object>>();
+          Arrays.sort(swpArr,);
           for(int i=0;i<swpArr.length;i++){
               for(JsonNode node:swpArr[i].scan.getSelection().getRoot()){
                   jsonArray.add(node);

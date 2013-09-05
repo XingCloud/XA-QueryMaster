@@ -2,6 +2,7 @@ package com.xingcloud.qm.utils;
 
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.xingcloud.qm.service.LOPComparator;
+import com.xingcloud.qm.service.PlanMerge;
 import com.xingcloud.qm.service.PlanMerge.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -419,6 +420,18 @@ public class LogicalPlanUtil {
         @Override
         public int compare(RowKeyRange o1, RowKeyRange o2) {
             return Bytes.compareTo(o1.getStartRowKey(), o2.getEndRowKey());
+        }
+    }
+
+    public static class ScanRkCompartor implements Comparator<ScanWithPlan>{
+
+        @Override
+        public int compare(ScanWithPlan o1, ScanWithPlan o2) {
+
+            RowKeyRange range1=getRowKeyRange(o1.scan);
+            RowKeyRange range2=getRowKeyRange(o2.scan);
+            return
+
         }
     }
 }
