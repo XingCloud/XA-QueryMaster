@@ -77,9 +77,7 @@ public class PlanExecutor {
         e.printStackTrace();
         return;
       }
-//      if (logger.isDebugEnabled()) {
-//        logger.debug("[PlanString]\n{}", planString);
-//      }
+      logger.info("[PlanString]\n{}", planString);
 
       for (int i = 0; i < clients.length; i++) {
         DrillClient client = clients[i];
