@@ -75,6 +75,6 @@ rm -rf ${tomcat_home}/webapps/${aid}
 rm -rf ${tomcat_home}/webapps/${aid}*.war
 
 echo "[CHECK-POINT] - Copy application - ${aid}"
-cp ${code_home}/target/${aid}.war ${tomcat_home}/webapps
+cp ${code_home}/qm/target/${aid}.war ${tomcat_home}/webapps
 echo "[CHECK-POINT] - Start web server."
 sh ${tomcat_home}/bin/startup.sh
