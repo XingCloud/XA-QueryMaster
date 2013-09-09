@@ -50,7 +50,7 @@ fi
 
 echo ${line}
 echo "[CHECK-POINT] - Packaging."
-mvn -f ${code_home}/pom.xml clean package -Dxa_env=${xa_env}
+mvn -f ${code_home}/qm/pom.xml clean package -Dxa_env=${xa_env}
 
 echo "[CHECK-POINT] - Shutdown tomcat."
 sh ${tomcat_home}/bin/shutdown.sh
