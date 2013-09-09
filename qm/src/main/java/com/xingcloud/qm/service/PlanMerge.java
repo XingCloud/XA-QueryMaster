@@ -108,6 +108,7 @@ public class PlanMerge {
               Arrays.sort(rkPoints,rkComprator);
               for(int i=0;i<rkPoints.length-1;i++){
                   RowKeyRange range=new RowKeyRange(rkPoints[i],rkPoints[i+1]);
+                  if(rkPoints[i].equals(rkPoints[i+1]))continue;
                   for(int j=0;j<swps.length;j++){
                       if(LogicalPlanUtil.isRkRangeInScan(range, swps[j])){
                          List<ScanWithPlan> swpList=crosses.get(range);
