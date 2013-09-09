@@ -68,8 +68,8 @@ public class PlanExecutor {
         logger.debug("Image url: http://69.28.58.61/" + submission.id + ".svg");
         GraphVisualize.visualizeMX(submission.plan, svgPath);
       }
-      DrillClient[] clients = QueryNode.getClients();
-      List<Future<List<QueryResultBatch>>> futures = new ArrayList<>(clients.length);
+      QueryNode[] nodes = QueryNode.getNodes();
+      List<Future<List<QueryResultBatch>>> futures = new ArrayList<>(nodes.length);
       String planString;
       try {
         planString = submission.plan.toJsonString(QueryNode.LOCAL_DEFAULT_DRILL_CONFIG);
@@ -77,11 +77,10 @@ public class PlanExecutor {
         e.printStackTrace();
         return;
       }
-      logger.info("[PlanString]\n{}", planString);
+      logger.debug("[PlanString]\n{}", planString);
 
-      for (int i = 0; i < clients.length; i++) {
-        DrillClient client = clients[i];
-        futures.add(drillBitExecutor.submit(new DrillbitCallable2(planString, client)));
+      for (int i = 0; i < nodes.length; i++) {
+        futures.add(drillBitExecutor.submit(new DrillbitCallable2(planString, nodes[i])));
       }
       logger.info("[PLAN-SUBMISSION] - All client submit their queries.");
 
@@ -190,17 +189,17 @@ public class PlanExecutor {
 
   private class DrillbitCallable2 implements Callable<List<QueryResultBatch>> {
     private final String plan;
-    private final DrillClient client;
+    private final QueryNode node;
 
-    public DrillbitCallable2(String plan, DrillClient client) {
+    public DrillbitCallable2(String plan, QueryNode node) {
       this.plan = plan;
-      this.client = client;
+      this.node = node;
     }
 
     @Override
     public List<QueryResultBatch> call() throws Exception {
       List<QueryResultBatch> result = null;
-
+      DrillClient client = node.getDrillClient();
       if (client.reconnect()) {
         long t1 = System.nanoTime(), t2;
         try {
@@ -210,7 +209,7 @@ public class PlanExecutor {
           throw e;
         }
         t2 = System.nanoTime();
-        logger.info("[PlanExec] - Single future get use " + (t2 - t1) / 1000000 + " milliseconds.");
+        logger.info("[PlanExec] - Single node["+node.getId()+"] future get use " + (t2 - t1) / 1000000 + " milliseconds.");
       } else {
         logger.info("[DrillbitCallable2] - Cannot connect to server.");
       }
