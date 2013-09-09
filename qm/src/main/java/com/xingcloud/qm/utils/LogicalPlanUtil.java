@@ -34,6 +34,19 @@ import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY_
  * To change this template use File | Settings | File Templates.
  */
 public class LogicalPlanUtil {
+    public static String trimSingleQuote(String rkStr){
+        if(rkStr.startsWith("'"))
+           rkStr=rkStr.substring(1);
+        if(rkStr.endsWith("'"))
+            rkStr=rkStr.substring(0,rkStr.length()-1);
+        return rkStr;
+    }
+
+    public static String addSingleQuote(String rkStr){
+        rkStr=rkStr.concat("'");
+        rkStr=new String("'").concat(rkStr);
+        return rkStr;
+    }
     public static List<Map<String,Object>> getSelectionMap(Scan scan){
          List<Map<String,Object>> selectionMapList=new ArrayList<>();
 
@@ -299,7 +312,7 @@ public class LogicalPlanUtil {
 
 
     public boolean isRowKeyCrossed(LogicalPlanUtil.RowKeyRange range1, LogicalPlanUtil.RowKeyRange range2){
-        if(Bytes.compareTo(range1.getStartRowKey(),range2.getEndRowKey())>0&&
+        if(Bytes.compareTo(range1.getStartRowKey(),range2.getEndRowKey())>0 ||
                 Bytes.compareTo(range1.getEndRowKey(),range2.getStartRowKey())<0)
             return false;
         return true;
@@ -419,7 +432,7 @@ public class LogicalPlanUtil {
     public static class RowKeyRangeComparator implements Comparator<RowKeyRange> {
         @Override
         public int compare(RowKeyRange o1, RowKeyRange o2) {
-            return Bytes.compareTo(o1.getStartRowKey(), o2.getEndRowKey());
+            return Bytes.compareTo(o1.getStartRowKey(), o2.getStartRowKey());
         }
     }
 
@@ -430,7 +443,7 @@ public class LogicalPlanUtil {
 
             RowKeyRange range1=getRowKeyRange(o1.scan);
             RowKeyRange range2=getRowKeyRange(o2.scan);
-            return
+            return Bytes.compareTo(range1.getStartRowKey(),range2.getStartRowKey());
 
         }
     }

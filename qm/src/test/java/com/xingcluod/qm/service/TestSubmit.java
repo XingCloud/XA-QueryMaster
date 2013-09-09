@@ -11,8 +11,8 @@ public class TestSubmit {
   
   @Test
   public void testSubmit0()throws Exception{
-    LogicalPlan plan = Utils.readPlan("/plans/test3.json",c);
-    QueryMaster.getInstance().submit("COMMON,sof-dsk,2013-08-15,2013-08-15,visit.*,TOTAL_USER,VF-ALL-0-0,PERIOD", plan);
+    LogicalPlan plan = Utils.readPlan("/plans/test2.json",c);
+    QueryMaster.getInstance().submit("COMMON,sof-dsk,2013-01-01,2013-01-01,click.*.*.1,TOTAL_USER,VF-ALL-0-0,PERIOD", plan);
     Thread.sleep(10000);
       /*
     LogicalPlan plan1= Utils.readPlan("/plans/common.day.noseg.json",c);

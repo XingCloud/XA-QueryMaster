@@ -6,18 +6,22 @@ import com.xingcluod.qm.utils.Utils;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
 public class TestPlanMerge {
   DrillConfig c = DrillConfig.create();
+
+  public static Logger logger= LoggerFactory.getLogger(TestPlanMerge.class);
   
 
   @Test
   public void testPlan8() throws Exception{
     //for(int i=0;i<20;i++){
-    LogicalPlan plan2 = Utils.readPlan("/plans/common.day.noseg.json", c);
-    LogicalPlan plan = Utils.readPlan("/plans/common.day.withseg.json", c);
+    LogicalPlan plan2 = Utils.readPlan("/plans/test2.json", c);
+    //LogicalPlan plan = Utils.readPlan("/plans/common.day.withseg.json", c);
       /*
     LogicalPlan plan1=Utils.readPlan("/plans/common.day.noseg.json", c);
     LogicalPlan plan3=Utils.readPlan("/plans/common.day.noseg.json", c);
@@ -48,14 +52,15 @@ public class TestPlanMerge {
     }
     */
     Map<LogicalPlan, LogicalPlan> merged;
-      merged=PlanMerge.sortAndMerge(planList,config);
-     //       merged=PlanMerge.sortAndMerge(Arrays.asList(plan,plan2),config);
+      //merged=PlanMerge.sortAndMerge(planList,config);
+            merged=PlanMerge.sortAndMerge(Arrays.asList(plan2),config);
     //
     Set<LogicalPlan> set = new HashSet<>();
     set.addAll(merged.values());
     int index=0;
     for (LogicalPlan m : set) {
       index++;
+      System.out.println(config.getMapper().writeValueAsString(m));
       GraphVisualize.visualizeMX(m, "test"+index+".svg");
     }
   }

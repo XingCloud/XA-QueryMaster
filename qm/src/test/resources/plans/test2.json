@@ -11,7 +11,23 @@
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "deu_age,2013-08-15,2013-08-15,Age.Menu.*.Success",
+    memo : "Table=age.geoip",
+    storageengine : "mysql",
+    selection : {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "geoip",
+        expr : "val"
+      } ],
+      table : "age.geoip"
+    },
+    ref : "user"
+  }, {
+    op : "scan",
+    @id : 2,
+    memo : "deu_age,2013-09-01,2013-09-01,pay.*",
     storageengine : "hbase",
     selection : [ {
       projections : [ {
@@ -21,27 +37,65 @@
         ref : "value",
         expr : "value"
       } ],
-      filters : [ {
-        includes : [ "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn", "20130815Age.Menu.vip_btn" ],
-        type : "ROWKEY",
-        mapping:[
-
-        ]
-      } ],
       rowkey : {
-        end : "20130815Age.Menu.vip_btn.Success",
-        start : "20130815Age.Menu.Alliance_btn.Success"
+        end : "20130901pay",
+        start : "20130901pay.fee.alipay"
       },
       table : "deu_age"
     } ],
     ref : "event"
   }, {
+    op : "scan",
+    @id : 3,
+    memo : "Scan(Table=age.identifier, Prop=identifier, Val={EQ=android.global.s77})",
+    storageengine : "mysql",
+    selection : {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      } ],
+      filter : "val='android.global.s77'",
+      table : "age.identifier"
+    },
+    ref : "user"
+  }, {
+    op : "join",
+    @id : 4,
+    left : 2,
+    right : 3,
+    conditions : [ {
+      relationship : "==",
+      left : "uid",
+      right : "uid"
+    } ],
+    type : "INNER"
+  }, {
+    op : "join",
+    @id : 5,
+    left : 1,
+    right : 4,
+    conditions : [ {
+      relationship : "==",
+      left : "uid",
+      right : "uid"
+    } ],
+    type : "RIGHT"
+  }, {
+    op : "segment",
+    @id : 6,
+    input : 5,
+    exprs : [ {
+      ref : "dimension",
+      expr : "geoip"
+    } ],
+    name : "sgmt"
+  }, {
     op : "collapsingaggregate",
-    @id : 2,
-    input : 1,
-    within : null,
+    @id : 7,
+    input : 6,
+    within : "sgmt",
     target : null,
-    carryovers : null,
+    carryovers : [ "dimension" ],
     aggregations : [ {
       ref : "count",
       expr : "count(uid) "
@@ -54,11 +108,14 @@
     } ]
   }, {
     op : "project",
-    @id : 3,
-    input : 2,
+    @id : 8,
+    input : 7,
     projections : [ {
       ref : "query_id",
-      expr : "'COMMON,age,2013-08-15,2013-08-15,Age.Menu.*.Success,TOTAL_USER,VF-ALL-0-0,PERIOD'"
+      expr : "'GROUP,age,2013-09-01,2013-09-01,pay.*,{\"identifier\":\"android.global.s77\"},VF-ALL-0-0,USER_PROPERTIES,geoip'"
+    }, {
+      ref : "dimension",
+      expr : "dimension"
     }, {
       ref : "count",
       expr : "count"
@@ -71,8 +128,8 @@
     } ]
   }, {
     op : "store",
-    @id : 4,
-    input : 3,
+    @id : 9,
+    input : 8,
     target : null,
     partition : null,
     storageEngine : "DEFAULT-STORE"

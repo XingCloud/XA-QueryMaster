@@ -23,8 +23,8 @@
       } ],
       filters : null,
       rowkey : {
-        end : "20130101visit.b.c",
-        start : "20130101visit"
+        end : "20130103visit",
+        start : "20130103visit.auto"
       },
       table : "sof-dsk_deu"
     }, {
@@ -37,41 +37,16 @@
       } ],
       filters : null,
       rowkey : {
-        end : "20130102visit.a.b",
-        start : "20130102visit"
+        end : "20130101visit.v",
+        start : "20130101visit.auto"
       },
       table : "sof-dsk_deu"
     } ],
     ref : "event"
-  }, {
-    op : "scan",
-    @id : 2,
-    memo : "Scan(Table=sof-dsk.language, Prop=language, Val={EQ=en})",
-    storageengine : "mysql",
-    selection : {
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      } ],
-      filter : "val='en'",
-      table : "sof-dsk.language"
-    },
-    ref : "user"
-  }, {
-    op : "join",
-    @id : 3,
-    left : 1,
-    right : 2,
-    conditions : [ {
-      relationship : "==",
-      left : "uid",
-      right : "uid"
-    } ],
-    type : "INNER"
-  }, {
+  },  {
     op : "collapsingaggregate",
-    @id : 4,
-    input : 3,
+    @id : 2,
+    input : 1,
     within : null,
     target : null,
     carryovers : null,
@@ -87,8 +62,8 @@
     } ]
   }, {
     op : "project",
-    @id : 5,
-    input : 4,
+    @id : 3,
+    input : 2,
     projections : [ {
       ref : "query_id",
       expr : "'d699da1b-d2ac-4059-b2fc-1f6001a57134'"
@@ -104,8 +79,8 @@
     } ]
   }, {
     op : "store",
-    @id : 6,
-    input : 5,
+    @id : 4,
+    input : 3,
     target : null,
     partition : null,
     storageEngine : "mock"

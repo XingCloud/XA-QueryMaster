@@ -23,7 +23,7 @@
           expr : "value"
         } ],
         rowkey : {
-          end : "20130102visit.\\xFF",
+          end : "20130102visit",
           start : "20130102visit.\\xC5\\xA1\\x08\\xED\\x87\\xA8E"
         },
         table : "sof-dsk_deu"
@@ -38,7 +38,7 @@
        } ],
        rowkey : {
        end :  "20130101visit",
-       start : "20130101visit"
+       start : "20130101visit.auto"
        },
        table : "sof-dsk_deu"
   },
@@ -56,21 +56,6 @@
        start : "20130103visit.\\xC5\\xA1\\x08\\xED\\x87\\xA8E"
        },
        table : "sof-dsk_deu"
-     },
-     {
-     projections : [
-     {
-       ref : "uid",
-       expr : "uid"
-     }, {
-     ref : "value",
-     expr : "value"
-     } ],
-     rowkey : {
-        end : "20130103visit.\\xC5\\xA1\\x08\\xED\\x87\\xA8E",
-        start : "20130103visit.\\xC5\\xA1\\x08\\xED\\x87\\xA8F"
-     },
-     table : "sof-dsk_deu"
      },
      {
        projections : [
