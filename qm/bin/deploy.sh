@@ -10,13 +10,13 @@ then
   branch=i20
 else
   echo "User defined branch found($1)"
-  branch=$1
+  branch=$2
 fi
 
 # deploy bin home
 scripts_home=${code_home}/bin/
 # tomcat port
-port=$2
+port=$1
 aid=qm
 
 if [ "8181" = ${port} ];then
