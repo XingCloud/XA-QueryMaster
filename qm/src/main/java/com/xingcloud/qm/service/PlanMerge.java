@@ -3,6 +3,7 @@ package com.xingcloud.qm.service;
 import static org.apache.drill.common.util.Selections.*;
 
 
+import com.fasterxml.jackson.databind.node.NullNode;
 import com.xingcloud.qm.utils.GraphVisualize;
 import com.xingcloud.qm.utils.LogicalPlanUtil.*;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -75,6 +76,16 @@ public class PlanMerge {
       Map<String,ProjectMergeContext> projectCtxMap=splitByTableName();
       List<LogicalPlan> resultPlans=new ArrayList<>();
       Map<LogicalPlan,LogicalPlan> resultPlanMap=new HashMap<>();
+      Comparator<String> rkComprator=new Comparator<String>() {
+          @Override
+          public int compare(String o1, String o2) {
+              if(o1==null||o2==null)
+                  System.out.println("null!!!!!!!");
+              byte[] rk1=ByteUtils.toBytesBinary(o1);
+              byte[] rk2=ByteUtils.toBytesBinary(o2);
+              return Bytes.compareTo(rk1,rk2);
+          }
+      };
       for(Map.Entry<String,ProjectMergeContext> entry: projectCtxMap.entrySet()){
           String projectId=entry.getKey();
           ProjectMergeContext ctx=entry.getValue();
@@ -94,18 +105,10 @@ public class PlanMerge {
                  rkPoints[i*2]=ByteUtils.toStringBinary(range.getStartRowKey());
                  rkPoints[i*2+1]=ByteUtils.toStringBinary(range.getEndRowKey());
               }
-              Arrays.sort(rkPoints,new Comparator<String>() {
-                  @Override
-                  public int compare(String o1, String o2) {
-                      if(o1==null||o2==null)
-                          System.out.println("null!!!!!!!");
-                      byte[] rk1=ByteUtils.toBytesBinary(o1);
-                      byte[] rk2=ByteUtils.toBytesBinary(o2);
-                      return Bytes.compareTo(rk1,rk2);
-                  }
-              });
+              Arrays.sort(rkPoints,rkComprator);
               for(int i=0;i<rkPoints.length-1;i++){
                   RowKeyRange range=new RowKeyRange(rkPoints[i],rkPoints[i+1]);
+                  if(rkPoints[i].equals(rkPoints[i+1]))continue;
                   for(int j=0;j<swps.length;j++){
                       if(LogicalPlanUtil.isRkRangeInScan(range, swps[j])){
                          List<ScanWithPlan> swpList=crosses.get(range);
@@ -264,6 +267,7 @@ public class PlanMerge {
       //PlanMergeContext planCtx = new PlanMergeContext();
       List<LogicalOperator> operators=new ArrayList<>();
       Map<Scan,UnionedScanSplit> substituteMap=new HashMap<>();
+      ScanRkCompartor scanRkCompartor =new ScanRkCompartor();
       for(Map.Entry<String,Set<ScanWithPlan>> entry: projectCtx.tableName2Plans.entrySet()){
           //String tableName=entry.getKey();
 
@@ -278,6 +282,7 @@ public class PlanMerge {
           ObjectMapper mapper=config.getMapper();
           ArrayNode jsonArray=new ArrayNode(mapper.getNodeFactory());
           //List<Map<String,Object>> mapList=new ArrayList<Map<String,Object>>();
+          Arrays.sort(swpArr,scanRkCompartor);
           for(int i=0;i<swpArr.length;i++){
               for(JsonNode node:swpArr[i].scan.getSelection().getRoot()){
                   jsonArray.add(node);
@@ -286,7 +291,7 @@ public class PlanMerge {
           String selectionStr=mapper.writeValueAsString(jsonArray);
           JSONOptions selection=mapper.readValue(selectionStr,JSONOptions.class);
           UnionedScan unionedScan=new UnionedScan(swpArr[0].scan.getStorageEngine(),selection,swpArr[0].scan.getOutputReference());
-        List<String> memos = new ArrayList<>();
+          List<String> memos = new ArrayList<>();
 
           for(int i=0;i<swpArr.length;i++){
               int[] entries=new int[1];
@@ -392,14 +397,14 @@ public class PlanMerge {
     Map<LogicalPlan,LogicalPlan> results=new HashMap<>();
     int index = 0;
     for (LogicalPlan plan : plans) {
-      AdjacencyList<LogicalOperator> child2Parents = plan.getGraph().getAdjList().getReversedList();
-      Collection<AdjacencyList<LogicalOperator>.Node> leaves = child2Parents.getInternalRootNodes();
+      //AdjacencyList<LogicalOperator> child2Parents = plan.getGraph().getAdjList().getReversedList();
+      //Collection<AdjacencyList<LogicalOperator>.Node> leaves = child2Parents.getInternalRootNodes();
       List<LogicalOperator> operators = new ArrayList<>();
-      Map<AdjacencyList<LogicalOperator>.Node, Union> scanNodeUnionMap = new HashMap<>();
-      List<AdjacencyList<LogicalOperator>.Node> nextStep = new ArrayList<>();
-      for (AdjacencyList<LogicalOperator>.Node leaf : leaves) {
-        if (leaf.getNodeValue() instanceof Scan) {
-          Scan origScan = (Scan) leaf.getNodeValue();
+      Map<LogicalOperator, LogicalOperator> scanReplaceMap = new HashMap<>();
+      //List<AdjacencyList<LogicalOperator>.Node> nextStep = new ArrayList<>();
+      for (LogicalOperator leaf : plan.getGraph().getLeaves()) {
+        if (leaf instanceof Scan) {
+          Scan origScan = (Scan) leaf;
           List<Scan> childScans = new ArrayList<>();
           if (origScan.getStorageEngine().contains("hbase")) {
             for (JsonNode selection : (origScan.getSelection().getRoot())) {
@@ -407,13 +412,47 @@ public class PlanMerge {
               map.put(SELECTION_KEY_WORD_TABLE, selection.get(SELECTION_KEY_WORD_TABLE));
 
               Map<String, Object> rowkeyRangeMap = new HashMap<String, Object>(2);
-              rowkeyRangeMap.put(SELECTION_KEY_WORD_ROWKEY_START,
-                                 selection.get(SELECTION_KEY_WORD_ROWKEY).get(SELECTION_KEY_WORD_ROWKEY_START));
-              rowkeyRangeMap.put(SELECTION_KEY_WORD_ROWKEY_END,
-                                 selection.get(SELECTION_KEY_WORD_ROWKEY).get(SELECTION_KEY_WORD_ROWKEY_END));
+
+              String srk=selection.get(SELECTION_KEY_WORD_ROWKEY).get(SELECTION_KEY_WORD_ROWKEY_START).textValue();
+              srk=LogicalPlanUtil.trimSingleQuote(srk);
+              srk=Bytes.toStringBinary(Bytes.add(Bytes.toBytesBinary(srk),new byte[]{'.',-1,0,0,0,0,0}));
+              //srk=LogicalPlanUtil.addSingleQuote(srk);
+              rowkeyRangeMap.put(SELECTION_KEY_WORD_ROWKEY_START,srk);
+              String enk=selection.get(SELECTION_KEY_WORD_ROWKEY).get(SELECTION_KEY_WORD_ROWKEY_END).textValue();
+              enk=LogicalPlanUtil.trimSingleQuote(enk);
+              enk=Bytes.toStringBinary(Bytes.add(Bytes.toBytesBinary(enk),new byte[]{-1,-1,-1,-1,-1,-1,-1}));
+
+              rowkeyRangeMap.put(SELECTION_KEY_WORD_ROWKEY_END,enk);
               map.put(SELECTION_KEY_WORD_ROWKEY, rowkeyRangeMap);
               map.put(SELECTION_KEY_WORD_PROJECTIONS, selection.get(SELECTION_KEY_WORD_PROJECTIONS));
-              map.put(SELECTION_KEY_WORD_FILTERS, selection.get(SELECTION_KEY_WORD_FILTERS));
+              if(selection.get(SELECTION_KEY_WORD_FILTERS)!=null && !(selection.get(SELECTION_KEY_WORD_FILTERS) instanceof NullNode)){
+                List<Object> filters=new ArrayList<>();
+              for(JsonNode filterNode : selection.get(SELECTION_KEY_WORD_FILTERS)){
+                 Map<String,Object> filter=new HashMap<>();
+                 String filterType=filterNode.get(SELECTION_KEY_WORD_FILTER_TYPE).textValue();
+                 if(!filterType.toLowerCase().contains("rowkey"))
+                 {
+                     filters.add(filterNode);
+                     continue;
+                 }
+                 filter.put(SELECTION_KEY_WORD_FILTER_TYPE,filterNode.get(SELECTION_KEY_WORD_FILTER_TYPE));
+                 if(filterNode.get(SELECTION_KEY_WORD_ROWKEY_EVENT_MAPPING)!=null)
+                    filter.put(SELECTION_KEY_WORD_ROWKEY_EVENT_MAPPING,filterNode.get(SELECTION_KEY_WORD_ROWKEY_EVENT_MAPPING));
+                 List<String> includeExprs=new ArrayList<>();
+                 for(JsonNode includeExprNode: filterNode.get(SELECTION_KEY_WORD_ROWKEY_INCLUDES)){
+                     String includeExpr=includeExprNode.textValue();
+                     includeExpr=LogicalPlanUtil.trimSingleQuote(includeExpr);
+                     includeExpr=Bytes.toStringBinary(Bytes.add(Bytes.toBytesBinary(includeExpr),new byte[]{'.',-1}));
+                     includeExpr=LogicalPlanUtil.addSingleQuote(includeExpr);
+                     if(!includeExprs.contains(includeExpr))
+                         includeExprs.add(includeExpr);
+                 }
+                 filter.put(SELECTION_KEY_WORD_ROWKEY_INCLUDES,includeExprs);
+                 filters.add(filter);
+              }
+
+                map.put(SELECTION_KEY_WORD_FILTERS, filters);
+              }
 
               List<Map<String, Object>> mapList = new ArrayList<Map<String, Object>>(1);
               mapList.add(map);
@@ -424,15 +463,7 @@ public class PlanMerge {
               childScan.setMemo(origScan.getMemo());
               childScans.add(childScan);
             }
-          } else {
-            operators.add(origScan);
-            List<AdjacencyList<LogicalOperator>.Node> parents = getParents(leaf, child2Parents);
-            for (AdjacencyList<LogicalOperator>.Node parent : parents) {
-              if (!nextStep.contains(parent))
-                nextStep.add(parent);
-            }
           }
-
           LogicalOperator[] splitedScans = new LogicalOperator[childScans.size()];
           int i = 0;
           for (Scan scan : childScans) {
@@ -440,60 +471,36 @@ public class PlanMerge {
           }
           if (childScans.size() > 1) {
             for (int j = 0; j < splitedScans.length; j++)
-              operators.add(splitedScans[j]);
+                operators.add(splitedScans[j]);
             Union union = new Union(splitedScans, false);
-            scanNodeUnionMap.put(leaf, union);
-          } else {
-            operators.add(origScan);
-            List<AdjacencyList<LogicalOperator>.Node> parents = getParents(leaf, child2Parents);
-            for (AdjacencyList<LogicalOperator>.Node parent : parents) {
-              if (!nextStep.contains(parent))
-                nextStep.add(parent);
+            scanReplaceMap.put(origScan, union);
+            for(LogicalOperator parent: LogicalPlanUtil.getParents(origScan,plan)){
+                LogicalPlanUtil.substituteInParent(origScan,union,parent);
             }
+          }else if(splitedScans.length>0){
+                scanReplaceMap.put(origScan,splitedScans[0]);
+              for(LogicalOperator parent: LogicalPlanUtil.getParents(origScan,plan)){
+                  LogicalPlanUtil.substituteInParent(origScan,splitedScans[0],parent);
+              }
           }
-        }
+          }
       }
 
-      for (Map.Entry<AdjacencyList<LogicalOperator>.Node, Union> entry : scanNodeUnionMap.entrySet()) {
-        Union union = entry.getValue();
-        AdjacencyList<LogicalOperator>.Node leaf = entry.getKey();
-        LogicalOperator origOp = leaf.getNodeValue();
-        List<Edge<AdjacencyList<LogicalOperator>.Node>> parentEdges = child2Parents.getAdjacent(leaf);
-        for (Edge<AdjacencyList<LogicalOperator>.Node> parentEdge : parentEdges) {
-          //looking for all parents of scan,
-          // substitute scan with targetScan
-          AdjacencyList<LogicalOperator>.Node parentNode = parentEdge.getTo();
-          LogicalOperator parent = parentNode.getNodeValue();
-          if (parent instanceof SingleInputOperator) {
-            ((SingleInputOperator) parent).setInput(union);
-          } else if (parent instanceof Join) {
-            if (((Join) parent).getLeft().equals(origOp))
-              ((Join) parent).setLeft(union);
-            else
-              ((Join) parent).setRight(union);
-          } else if (parent instanceof Union) {
-            for (LogicalOperator op : ((Union) parent).getInputs()) {
-              if (op.equals(origOp))
-                op = union;
-            }
-          }
-          if (!nextStep.contains(parentNode))
-            nextStep.add(parentNode);
-        }
-        operators.add(union);
-
+      for(LogicalOperator op: plan.getSortedOperators()){
+        if(scanReplaceMap.containsKey(op))
+           operators.add(scanReplaceMap.get(op));
+        else
+            operators.add(op);
       }
-
-      putParentsToGraph(nextStep, child2Parents, operators);
 
       PlanProperties head = plan.getProperties();
       Map<String, StorageEngineConfig> se = plan.getStorageEngines();
       index++;
       try {
-        LogicalPlan subsPlan = new LogicalPlan(head, se, operators);
-        splitedPlans.add(subsPlan);
-        splitedPlan2Orig.put(subsPlan, plan);
-        results.put(plan,subsPlan);
+          LogicalPlan subsPlan = new LogicalPlan(head, se, operators);
+          splitedPlans.add(subsPlan);
+          splitedPlan2Orig.put(subsPlan, plan);
+          results.put(plan,subsPlan);
       } catch (Exception e) {
         System.out.println(index + " plan has problem");
         e.printStackTrace();

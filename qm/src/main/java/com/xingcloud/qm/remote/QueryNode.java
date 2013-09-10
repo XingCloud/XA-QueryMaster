@@ -57,6 +57,10 @@ public class QueryNode {
     }
     return clients;
   }
+  
+  public static QueryNode[] getNodes(){
+    return NODES.toArray(new QueryNode[NODES.size()]);
+  }
 
   public static void init() {
   }

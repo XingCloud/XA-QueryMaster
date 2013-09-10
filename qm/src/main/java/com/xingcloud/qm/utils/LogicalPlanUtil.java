@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.xingcloud.basic.utils.Pair;
 import com.xingcloud.qm.service.LOPComparator;
+import com.xingcloud.qm.service.PlanMerge;
 import com.xingcloud.qm.service.PlanMerge.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,6 +36,19 @@ import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY_
  * To change this template use File | Settings | File Templates.
  */
 public class LogicalPlanUtil {
+    public static String trimSingleQuote(String rkStr){
+        if(rkStr.startsWith("'"))
+           rkStr=rkStr.substring(1);
+        if(rkStr.endsWith("'"))
+            rkStr=rkStr.substring(0,rkStr.length()-1);
+        return rkStr;
+    }
+
+    public static String addSingleQuote(String rkStr){
+        rkStr=rkStr.concat("'");
+        rkStr=new String("'").concat(rkStr);
+        return rkStr;
+    }
     public static List<Map<String,Object>> getSelectionMap(Scan scan){
          List<Map<String,Object>> selectionMapList=new ArrayList<>();
 
@@ -300,7 +314,7 @@ public class LogicalPlanUtil {
 
 
     public boolean isRowKeyCrossed(LogicalPlanUtil.RowKeyRange range1, LogicalPlanUtil.RowKeyRange range2){
-        if(Bytes.compareTo(range1.getStartRowKey(),range2.getEndRowKey())>0&&
+        if(Bytes.compareTo(range1.getStartRowKey(),range2.getEndRowKey())>0 ||
                 Bytes.compareTo(range1.getEndRowKey(),range2.getStartRowKey())<0)
             return false;
         return true;
@@ -416,7 +430,19 @@ public class LogicalPlanUtil {
     public static class RowKeyRangeComparator implements Comparator<RowKeyRange> {
         @Override
         public int compare(RowKeyRange o1, RowKeyRange o2) {
-            return Bytes.compareTo(o1.getStartRowKey(), o2.getEndRowKey());
+            return Bytes.compareTo(o1.getStartRowKey(), o2.getStartRowKey());
+        }
+    }
+
+    public static class ScanRkCompartor implements Comparator<ScanWithPlan>{
+
+        @Override
+        public int compare(ScanWithPlan o1, ScanWithPlan o2) {
+
+            RowKeyRange range1=getRowKeyRange(o1.scan);
+            RowKeyRange range2=getRowKeyRange(o2.scan);
+            return Bytes.compareTo(range1.getStartRowKey(),range2.getStartRowKey());
+
         }
     }
 
@@ -439,19 +465,27 @@ public class LogicalPlanUtil {
             rowkeyRangeMap.put(SELECTION_KEY_WORD_ROWKEY_END,
                     selection.get(SELECTION_KEY_WORD_ROWKEY).get(SELECTION_KEY_WORD_ROWKEY_END));
             map.put(SELECTION_KEY_WORD_ROWKEY, rowkeyRangeMap);
+            map.put(SELECTION_KEY_WORD_FILTERS, selection.get(SELECTION_KEY_WORD_FILTERS));
+            //增加uid range信息
+            Map<String, Object> uidRangeMap = new HashMap<>(2);
+            uidRangeMap.put(SELECTION_KEY_UID_RANGE_START, uidRange.getK());
+            uidRangeMap.put(SELECTION_KEY_UID_RANGE_END, uidRange.getV());
+            map.put(SELECTION_KEY_UID_RANGE, uidRangeMap);
 
           } else if (((Scan) leaf).getStorageEngine().equals(QueryMasterConstant.STORAGE_ENGINE.mysql.name())) {
-            //Mysql目前没有特殊字段
-            System.out.println("...");
+            //Mysql把uid range信息加入到filter里
+            JsonNode filter = selection.get(SELECTION_KEY_WORD_FILTER);
+            String uidRangeStr = "uid>=" + uidRange.getK() + " and uid<" + uidRange.getV();
+            if (filter != null) {
+              String filterStr = filter.asText() + " and " + uidRangeStr;
+              map.put(SELECTION_KEY_WORD_FILTER, filterStr);
+            } else {
+              map.put(SELECTION_KEY_WORD_FILTER, uidRangeStr);
+            }
+
           }
           map.put(SELECTION_KEY_WORD_TABLE, selection.get(SELECTION_KEY_WORD_TABLE));
           map.put(SELECTION_KEY_WORD_PROJECTIONS, selection.get(SELECTION_KEY_WORD_PROJECTIONS));
-          map.put(SELECTION_KEY_WORD_FILTERS, selection.get(SELECTION_KEY_WORD_FILTERS));
-          //增加uid range信息
-          Map<String, Object> uidRangeMap = new HashMap<>(2);
-          uidRangeMap.put(SELECTION_KEY_UID_RANGE_START, uidRange.getK());
-          uidRangeMap.put(SELECTION_KEY_UID_RANGE_END, uidRange.getV());
-          map.put(SELECTION_KEY_UID_RANGE, uidRangeMap);
           selectionsModel.add(map);
         }
         String s = mapper.writeValueAsString(selectionsModel);

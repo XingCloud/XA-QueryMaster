@@ -9,9 +9,9 @@
   },
   storage : { },
   query : [ {
-    op : "scan",
+    op : "unioned-scan",
     @id : 1,
-    memo : "Scan(Table=sof-dsk_deu)",
+    memo : "[deu_sof-dsk,2013-08-15,2013-08-15,visit.*, deu_sof-dsk,2013-08-15,2013-08-15,visit.*, deu_sof-dsk,2013-08-15,2013-08-15,visit.*, deu_sof-dsk,2013-08-15,2013-08-15,visit.*, deu_sof-dsk,2013-08-15,2013-08-15,visit.*]",
     storageengine : "hbase",
     selection : [ {
       projections : [ {
@@ -23,8 +23,8 @@
       } ],
       filters : null,
       rowkey : {
-        end : "20130101visit",
-        start : "20130101visit"
+        end : "20130101visit\\xFF",
+        start : "20130101visit.auto"
       },
       table : "sof-dsk_deu"
     }, {
@@ -37,41 +37,93 @@
       } ],
       filters : null,
       rowkey : {
-        end : "20130102visit",
-        start : "20130102visit"
+        end : "20130102visit.\\xFF",
+        start : "20130102visit.\\xC5\\xA1\\x08\\xED\\x87\\xA8E\\x00"
+      },
+      table : "sof-dsk_deu"
+    }, {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      filters : null,
+      rowkey : {
+        end : "20130103visit\\xFF",
+        start : "20130103visit.\\xC5\\xA1\\x08\\xED\\x87\\xA8E\\x00"
+      },
+      table : "sof-dsk_deu"
+    }, {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      filters : null,
+      rowkey : {
+        end : "20130104visit.\\xFF",
+        start : "20130104visit.\\xC5\\xA1\\x08\\xED\\x87\\xA8F"
+      },
+      table : "sof-dsk_deu"
+    }, {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      filters : null,
+      rowkey : {
+        end : "20130105visit",
+        start : "20130105visit.\\xC5\\xA1\\x08\\xED\\x87\\xA8E"
       },
       table : "sof-dsk_deu"
     } ],
     ref : "event"
   }, {
-    op : "scan",
+    op : "unioned-scan-split",
     @id : 2,
-    memo : "Scan(Table=sof-dsk.language, Prop=language, Val={EQ=en})",
-    storageengine : "mysql",
-    selection : {
-      projectoins : [ {
-        ref : "uid",
-        expr : "uid"
-      } ],
-      filter : "val='en'",
-      table : "sof-dsk.language"
-    },
-    ref : "user"
+    memo : "[1]",
+    input : 1,
+    entries : [ 1 ]
   }, {
-    op : "join",
+    op : "unioned-scan-split",
     @id : 3,
-    left : 1,
-    right : 2,
-    conditions : [ {
-      relationship : "==",
-      left : "uid",
-      right : "uid"
-    } ],
-    type : "INNER"
+    memo : "[0]",
+    input : 1,
+    entries : [ 0 ]
+  }, {
+    op : "unioned-scan-split",
+    @id : 4,
+    memo : "[2]",
+    input : 1,
+    entries : [ 2 ]
+  }, {
+    op : "unioned-scan-split",
+    @id : 5,
+    memo : "[3]",
+    input : 1,
+    entries : [ 3 ]
+  }, {
+    op : "unioned-scan-split",
+    @id : 6,
+    memo : "[4]",
+    input : 1,
+    entries : [ 4 ]
+  }, {
+    op : "union",
+    @id : 7,
+    inputs : [ 2, 3, 4, 5, 6 ],
+    distinct : false
   }, {
     op : "collapsingaggregate",
-    @id : 4,
-    input : 3,
+    @id : 8,
+    input : 7,
     within : null,
     target : null,
     carryovers : null,
@@ -87,11 +139,11 @@
     } ]
   }, {
     op : "project",
-    @id : 5,
-    input : 4,
+    @id : 9,
+    input : 8,
     projections : [ {
       ref : "query_id",
-      expr : "'2ebaf357-b6ab-464b-aad9-f3e8e02d0a6b'"
+      expr : "'COMMON,sof-dsk,2013-08-15,2013-08-15,visit.*,TOTAL_USER,VF-ALL-0-0,PERIOD'"
     }, {
       ref : "count",
       expr : "count"
@@ -104,10 +156,10 @@
     } ]
   }, {
     op : "store",
-    @id : 6,
-    input : 5,
+    @id : 10,
+    input : 9,
     target : null,
     partition : null,
-    storageEngine : "mock"
+    storageEngine : "DEFAULT-STORE"
   } ]
 }

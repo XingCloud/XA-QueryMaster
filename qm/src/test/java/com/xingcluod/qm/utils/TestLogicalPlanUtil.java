@@ -26,10 +26,10 @@ public class TestLogicalPlanUtil {
   @Test
   public void testAddUidRangeInfo() {
     try {
-      LogicalPlan plan1 = Utils.readPlan("/plans/common.day.noseg.json", conf);
+     // LogicalPlan plan1 = Utils.readPlan("/plans/common.day.noseg.json", conf);
       LogicalPlan plan2 = Utils.readPlan("/plans/common.day.withseg.json", conf);
       List<LogicalPlan> plans = new ArrayList<>();
-      plans.add(plan1);
+      //plans.add(plan1);
       plans.add(plan2);
 
       Map<LogicalPlan, LogicalPlan> mergedPlanMap = PlanMerge.sortAndMerge(plans, conf);

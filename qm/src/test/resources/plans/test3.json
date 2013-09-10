@@ -13,20 +13,67 @@
     @id : 1,
     memo : "deu_sof-dsk,2013-08-15,2013-08-15,visit.*",
     storageengine : "hbase",
-    selection : [ {
-      projections : [ {
+    selection : [
+    {
+        projections : [ {
+          ref : "uid",
+          expr : "uid"
+          }, {
+           ref : "value",
+          expr : "value"
+        } ],
+        rowkey : {
+          end : "20130102visit",
+          start : "20130102visit.\\xC5\\xA1\\x08\\xED\\x87\\xA8E"
+        },
+        table : "sof-dsk_deu"
+    },
+    {
+       projections : [ {
+       ref : "uid",
+       expr : "uid"
+       }, {
+       ref : "value",
+       expr : "value"
+       } ],
+       rowkey : {
+       end :  "20130101visit",
+       start : "20130101visit.auto"
+       },
+       table : "sof-dsk_deu"
+  },
+     {
+       projections : [
+       {
         ref : "uid",
         expr : "uid"
-      }, {
+       }, {
         ref : "value",
         expr : "value"
-      } ],
-      rowkey : {
-        end : "20130101visit",
-        start : "20130101visit.\\xC5\\xA1\\x08\\xED\\x87\\xA8E"
-      },
-      table : "sof-dsk_deu"
-    } ],
+       } ],
+       rowkey : {
+       end : "20130103visit",
+       start : "20130103visit.\\xC5\\xA1\\x08\\xED\\x87\\xA8E"
+       },
+       table : "sof-dsk_deu"
+     },
+     {
+       projections : [
+       {
+       ref : "uid",
+       expr : "uid"
+       }, {
+       ref : "value",
+       expr : "value"
+       }
+       ],
+       rowkey : {
+        end : "20130104visit",
+        start : "20130104visit.\\xC5\\xA1\\x08\\xED\\x87\\xA8E"
+       },
+       table : "sof-dsk_deu"
+     }
+     ],
     ref : "event"
   }, {
     op : "collapsingaggregate",

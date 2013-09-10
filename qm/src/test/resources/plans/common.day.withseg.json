@@ -23,8 +23,8 @@
       } ],
       filters : null,
       rowkey : {
-        end : "20130101visit.b.c",
-        start : "20130101visit"
+        end : "20130103visit",
+        start : "20130103visit.auto"
       },
       table : "sof-dsk_deu"
     }, {
@@ -37,38 +37,40 @@
       } ],
       filters : null,
       rowkey : {
-        end : "20130102visit.a.b",
-        start : "20130102visit"
+        end : "20130101visit.v",
+        start : "20130101visit.auto"
       },
       table : "sof-dsk_deu"
     } ],
     ref : "event"
   }, {
-    op : "scan",
-    @id : 2,
-    memo : "Scan(Table=sof-dsk.language, Prop=language, Val={EQ=en})",
-    storageengine : "mysql",
-    selection : [ {
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      } ],
-      filter : "val='en'",
-      table : "sof-dsk.language"
-    } ],
-    ref : "user"
-  }, {
-    op : "join",
-    @id : 3,
-    left : 1,
-    right : 2,
-    conditions : [ {
-      relationship : "==",
-      left : "uid",
-      right : "uid"
-    } ],
-    type : "INNER"
-  }, {
+        op : "scan",
+        @id : 2,
+        memo : "Scan(Table=sof-dsk.register_time, Prop=register_time, Val={EQ=2013-08-31})",
+        storageengine : "mysql",
+        selection : [{
+          projections : [ {
+            ref : "uid",
+            expr : "uid"
+          } ],
+          filter : "date(val)='2013-08-31'",
+          table : "sof-dsk.register_time"
+        }],
+        ref : "user"
+      },
+       {
+          op : "join",
+          @id : 3,
+          left : 1,
+          right : 2,
+          conditions : [ {
+            relationship : "==",
+            left : "uid",
+            right : "uid"
+          } ],
+          type : "INNER"
+        },
+  {
     op : "collapsingaggregate",
     @id : 4,
     input : 3,
