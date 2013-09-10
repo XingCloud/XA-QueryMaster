@@ -37,8 +37,8 @@ public class TestPlanMerge {
 
     List<LogicalPlan> planList=new ArrayList<>();
     for(int i=0;i<20;i++){
-        String planName="/plans/common.day.noseg.random."+i+".json";
-        //String planName="/plans/random/random-plan."+i+".json";
+        //String planName="/plans/common.day.noseg.random."+i+".json";
+        String planName="/plans/random/random-plan."+i+".json";
         LogicalPlan tmpPlan=Utils.readPlan(planName,c);
         planList.add(tmpPlan);
     }
