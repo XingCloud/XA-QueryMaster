@@ -15,4 +15,12 @@ public class QueryMasterConstant {
   public static final int SUM = 1;
   public static final int USER_NUM = 2;
   public static final int GROUP = -1;
+
+  public static final int TOTAL_BUCKET_NUM = 256;
+  public static final int[] SAMPLING_ARRAY = {1, 2, 4, 8, 16, 32, 64, 64, 65};
+  public static final int SAMPLING_THRESHOLD = 3200;
+
+  public static enum STORAGE_ENGINE {
+    mysql, hbase
+  };
 }

@@ -260,7 +260,7 @@ public class QueryMaster implements QueryListener {
               }
               PlanSubmission plan = mergedSubmissions.next();
               if (logger.isDebugEnabled()) {
-                logger.debug("PlanSubmission {} submitted: {}", plan.id, plan.originalSubmissions.toString());
+                logger.debug("PlanSubmission {} submitted: {}", plan.id, plan.queryIdToPlan.keySet().toString());
               }
               doSubmitExecution(plan);
             }
@@ -308,15 +308,17 @@ public class QueryMaster implements QueryListener {
     public void onQueryResultReceived(String queryID, QuerySubmission query) {
       if (query instanceof PlanSubmission) {
         PlanSubmission planSubmission = (PlanSubmission) query;
-        //修改scheduler计数器
-        executing.decrementAndGet();
-        getProjectCounter(planSubmission.projectID).decrementAndGet();
+        //所有sub plan查询结束，修改scheduler计数器
+        if (((PlanSubmission) query).allFinish) {
+          executing.decrementAndGet();
+          getProjectCounter(planSubmission.projectID).decrementAndGet();
+        }
 
         // 分发数据
         if (planSubmission.e != null || planSubmission.getValues() == null || planSubmission.getValues().size() == 0) {
           logger.debug("PlanSubmission: {} completed.", queryID);
           //出错处理
-          for (String basicQueryID : planSubmission.originalSubmissions) {
+          for (String basicQueryID : planSubmission.queryIdToPlan.keySet()) {
             BasicQuerySubmission basicSubmission = (BasicQuerySubmission) submitted.get(basicQueryID);
             basicSubmission.e = planSubmission.e;
             if (basicSubmission.e == null) {
@@ -328,9 +330,9 @@ public class QueryMaster implements QueryListener {
             QueryMaster.this.onQueryResultReceived(basicQueryID, basicSubmission);
           }
         } else {
-          Map<String, ResultTable> materializedRecords = planSubmission.getValues();
-          for (String basicQueryID : planSubmission.originalSubmissions) {
-            ResultTable value = materializedRecords.get(basicQueryID);
+          for (Map.Entry<String, ResultTable> entry : planSubmission.queryID2Table.entrySet()) {
+            String basicQueryID = entry.getKey();
+            ResultTable value = entry.getValue();
             BasicQuerySubmission basicSubmission = (BasicQuerySubmission) submitted.get(basicQueryID);
             basicSubmission.value = value;
             if (value == null) {

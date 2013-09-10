@@ -1,6 +1,8 @@
 package com.xingcloud.qm.utils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.NullNode;
+import com.xingcloud.basic.utils.Pair;
 import com.xingcloud.qm.service.LOPComparator;
 import com.xingcloud.qm.service.PlanMerge.*;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -382,14 +384,10 @@ public class LogicalPlanUtil {
 
     public static String getTableName(Scan scan) throws Exception {
         try {
-            String storageEngine = scan.getStorageEngine();
-            if (SE_HBASE.equals(storageEngine)) {
-                return scan.getSelection().getRoot().get(0).get("table").asText();
-            } else {
-                return scan.getSelection().getRoot().get("table").asText();
-            }
+          String storageEngine = scan.getStorageEngine();
+          return scan.getSelection().getRoot().get(0).get("table").asText();
         } catch (Exception e) {
-            throw new Exception(e);
+          throw new Exception(e);
         }
     }
 
@@ -421,4 +419,63 @@ public class LogicalPlanUtil {
             return Bytes.compareTo(o1.getStartRowKey(), o2.getEndRowKey());
         }
     }
+
+
+  public static void addUidRangeInfo(LogicalPlan mergedPlanJson, int startBucketPos, int offsetBucketLen) throws IOException {
+    DrillConfig config = DrillConfig.create();
+    Pair uidRange = getLocalSEUidOfBucket(startBucketPos, offsetBucketLen);
+    Collection<SourceOperator> leaves = mergedPlanJson.getGraph().getLeaves();
+    for (SourceOperator leaf : leaves) {
+      if (leaf instanceof Scan) {
+        JSONOptions selections = ((Scan) leaf).getSelection();
+        ObjectMapper mapper = config.getMapper();
+        List<Map<String, Object>> selectionsModel = new ArrayList<>();
+        for(JsonNode selection : selections.getRoot()) {
+          Map<String, Object> map = new HashMap<>(4);
+          if (((Scan) leaf).getStorageEngine().equals(QueryMasterConstant.STORAGE_ENGINE.hbase.name())) {
+            Map<String, Object> rowkeyRangeMap = new HashMap<>(2);
+            rowkeyRangeMap.put(SELECTION_KEY_WORD_ROWKEY_START,
+                    selection.get(SELECTION_KEY_WORD_ROWKEY).get(SELECTION_KEY_WORD_ROWKEY_START));
+            rowkeyRangeMap.put(SELECTION_KEY_WORD_ROWKEY_END,
+                    selection.get(SELECTION_KEY_WORD_ROWKEY).get(SELECTION_KEY_WORD_ROWKEY_END));
+            map.put(SELECTION_KEY_WORD_ROWKEY, rowkeyRangeMap);
+
+          } else if (((Scan) leaf).getStorageEngine().equals(QueryMasterConstant.STORAGE_ENGINE.mysql.name())) {
+            //Mysql目前没有特殊字段
+            System.out.println("...");
+          }
+          map.put(SELECTION_KEY_WORD_TABLE, selection.get(SELECTION_KEY_WORD_TABLE));
+          map.put(SELECTION_KEY_WORD_PROJECTIONS, selection.get(SELECTION_KEY_WORD_PROJECTIONS));
+          map.put(SELECTION_KEY_WORD_FILTERS, selection.get(SELECTION_KEY_WORD_FILTERS));
+          //增加uid range信息
+          Map<String, Object> uidRangeMap = new HashMap<>(2);
+          uidRangeMap.put(SELECTION_KEY_UID_RANGE_START, uidRange.getK());
+          uidRangeMap.put(SELECTION_KEY_UID_RANGE_END, uidRange.getV());
+          map.put(SELECTION_KEY_UID_RANGE, uidRangeMap);
+          selectionsModel.add(map);
+        }
+        String s = mapper.writeValueAsString(selectionsModel);
+        JSONOptions selectionWithUidRange = mapper.readValue(s, JSONOptions.class);
+        ((Scan) leaf).setSelection(selectionWithUidRange);
+      }
+    }
+  }
+
+  public static Pair getLocalSEUidOfBucket(int startBucketPos, int offsetBucketLen) {
+    long startBucket = startBucketPos;
+    startBucket = startBucket << 32;
+    long endBucket = 0;
+    if (startBucket + offsetBucketLen >= 255) {
+      endBucket = (1l << 40) - 1l;
+    } else {
+      endBucket = startBucketPos + offsetBucketLen;
+      endBucket = endBucket << 32;
+    }
+
+    return new Pair(startBucket, endBucket);
+  }
+
+
+
+
 }

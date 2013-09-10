@@ -1,9 +1,6 @@
 package com.xingcloud.qm.result;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class ResultTable implements Map<String, ResultRow> {
   
@@ -97,5 +94,29 @@ public class ResultTable implements Map<String, ResultRow> {
       out.put(key, new Number[]{row.count, row.sum, row.userNum, row.sampleRate});
     }
     return out;
+  }
+
+  public void add(ResultTable another, double sampleRate) {
+    Map<String, ResultRow> anoRl = another.resultLines;
+    for (Map.Entry<String, ResultRow> entry : anoRl.entrySet()) {
+      String key = entry.getKey();
+      ResultRow rr = entry.getValue();
+      ResultRow rrCurrent = resultLines.get(key);
+      if (rrCurrent != null) {
+        rrCurrent.add(rr);
+      } else {
+        resultLines.put(key, rr);
+      }
+    }
+
+    //更新采样率(在another里没有出现的key)
+    Set<String> currentKeys = new HashSet<>(resultLines.keySet());
+    Set<String> anotherKeys = another.resultLines.keySet();
+    currentKeys.removeAll(anotherKeys);
+    for (String key : currentKeys) {
+      ResultRow rr = resultLines.get(key);
+      rr.sampleRate += sampleRate;
+    }
+
   }
 }

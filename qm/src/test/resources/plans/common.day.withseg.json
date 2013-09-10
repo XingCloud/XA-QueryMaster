@@ -48,14 +48,14 @@
     @id : 2,
     memo : "Scan(Table=sof-dsk.language, Prop=language, Val={EQ=en})",
     storageengine : "mysql",
-    selection : {
+    selection : [ {
       projections : [ {
         ref : "uid",
         expr : "uid"
       } ],
       filter : "val='en'",
       table : "sof-dsk.language"
-    },
+    } ],
     ref : "user"
   }, {
     op : "join",
