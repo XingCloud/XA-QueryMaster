@@ -42,7 +42,21 @@
         start : "20130901pay.fee.alipay"
       },
       table : "deu_age"
-    } ],
+    },
+     {
+           projections : [ {
+             ref : "uid",
+             expr : "uid"
+           }, {
+             ref : "value",
+             expr : "value"
+           } ],
+           rowkey : {
+             end : "20130902pay",
+             start : "20130902pay.fee.alipay"
+           },
+           table : "deu_age"
+         }],
     ref : "event"
   }, {
     op : "scan",
