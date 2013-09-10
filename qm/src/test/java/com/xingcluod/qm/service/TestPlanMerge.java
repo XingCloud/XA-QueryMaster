@@ -22,8 +22,9 @@ public class TestPlanMerge {
     //for(int i=0;i<20;i++){
     LogicalPlan plan2 = Utils.readPlan("/plans/test2.json", c);
     //LogicalPlan plan = Utils.readPlan("/plans/common.day.withseg.json", c);
-      /*
+
     LogicalPlan plan1=Utils.readPlan("/plans/common.day.noseg.json", c);
+      /*
     LogicalPlan plan3=Utils.readPlan("/plans/common.day.noseg.json", c);
     LogicalPlan plan4=Utils.readPlan("/plans/groupby.prop.noseg.json",c);
     LogicalPlan plan5=Utils.readPlan("/plans/common.hour.withseg.json",c);
@@ -52,15 +53,17 @@ public class TestPlanMerge {
     }
     */
     Map<LogicalPlan, LogicalPlan> merged;
-      //merged=PlanMerge.sortAndMerge(planList,config);
-            merged=PlanMerge.sortAndMerge(Arrays.asList(plan2),config);
+      merged=PlanMerge.sortAndMerge(planList,config);
+      //      merged=PlanMerge.sortAndMerge(Arrays.asList(plan2,plan1),config);
     //
     Set<LogicalPlan> set = new HashSet<>();
     set.addAll(merged.values());
     int index=0;
     for (LogicalPlan m : set) {
       index++;
-      System.out.println(config.getMapper().writeValueAsString(m));
+        String planStr=config.getMapper().writeValueAsString(m);
+      System.out.println(planStr);
+      LogicalPlan result=LogicalPlan.parse(config,planStr);
       GraphVisualize.visualizeMX(m, "test"+index+".svg");
     }
   }

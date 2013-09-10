@@ -420,7 +420,7 @@ public class PlanMerge {
               rowkeyRangeMap.put(SELECTION_KEY_WORD_ROWKEY_START,srk);
               String enk=selection.get(SELECTION_KEY_WORD_ROWKEY).get(SELECTION_KEY_WORD_ROWKEY_END).textValue();
               enk=LogicalPlanUtil.trimSingleQuote(enk);
-              enk=Bytes.toStringBinary(Bytes.add(Bytes.toBytesBinary(enk),new byte[]{-1,-1,-1,-1,-1,-1,-1}));
+              enk=Bytes.toStringBinary(Bytes.add(Bytes.toBytesBinary(enk),new byte[]{'.',-1,-1,-1,-1,-1,-1}));
 
               rowkeyRangeMap.put(SELECTION_KEY_WORD_ROWKEY_END,enk);
               map.put(SELECTION_KEY_WORD_ROWKEY, rowkeyRangeMap);

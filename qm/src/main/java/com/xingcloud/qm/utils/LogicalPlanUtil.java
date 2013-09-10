@@ -60,8 +60,8 @@ public class LogicalPlanUtil {
             List<Object> projectionFields=new ArrayList<>();
             for(JsonNode node: projections){
                 Map<String,Object> projectionField=new HashMap<>();
-                String ref=node.get("ref").toString();
-                String expr=node.get("expr").toString();
+                String ref=node.get("ref").textValue();
+                String expr=node.get("expr").textValue();
                 projectionField.put("ref",ref);
                 projectionField.put("expr",expr);
                 projectionFields.add(projectionField);
@@ -74,18 +74,18 @@ public class LogicalPlanUtil {
                 List<Object> filterList=new ArrayList<>();
                 for(JsonNode node: filters){
                     Map<String,Object> filterFieldMap=new HashMap<>();
-                    String filterType=node.get(Selections.SELECTION_KEY_WORD_FILTER_TYPE).toString();
+                    String filterType=node.get(Selections.SELECTION_KEY_WORD_FILTER_TYPE).textValue();
                     filterFieldMap.put(Selections.SELECTION_KEY_WORD_FILTER_TYPE,filterType);
                     JsonNode includes=node.get(Selections.SELECTION_KEY_WORD_ROWKEY_INCLUDES);
                     List<Object> exprs=new ArrayList<>();
                     for(JsonNode node1: includes){
-                        exprs.add(node1.toString());
+                        exprs.add(node1.textValue());
                     }
                     filterFieldMap.put(Selections.SELECTION_KEY_WORD_ROWKEY_INCLUDES,exprs);
                     List<Object> mappingExprs=new ArrayList<>();
                     JsonNode mapping=node.get(Selections.SELECTION_KEY_WORD_ROWKEY_EVENT_MAPPING);
                     for(JsonNode node1: mapping){
-                        mappingExprs.add(node1.toString());
+                        mappingExprs.add(node1.textValue());
                     }
                     filterFieldMap.put(Selections.SELECTION_KEY_WORD_ROWKEY_EVENT_MAPPING,mappingExprs);
                     filterList.add(filterFieldMap);
@@ -120,7 +120,7 @@ public class LogicalPlanUtil {
         String storageEngine =swps.get(0).scan.getStorageEngine();
         List<Map<String,Object>> selctionMapList= LogicalPlanUtil.getSelectionMap(swps.get(0).scan);
         Map<String,Object> selectionMap=selctionMapList.get(0);
-
+        //String tableName=selectionMap.get(SELECTION_KEY_WORD_TABLE);
         Map<String,Object> rkMap=(Map<String,Object>)selectionMap.get(SELECTION_KEY_WORD_ROWKEY);
         rkMap.remove(Selections.SELECTION_KEY_WORD_ROWKEY_START);
         rkMap.remove(SELECTION_KEY_WORD_ROWKEY_END);
@@ -157,6 +157,8 @@ public class LogicalPlanUtil {
                             FieldReference ref=new FieldReference(refName,le.getPosition());
                             LogicalExpression expr=ref;
                             NamedExpression ne=new NamedExpression(expr,ref);
+                            //if(refName.contains("event"))System.out.println("jj");
+
                             if(!addePprojections.contains(ne))addePprojections.add(ne);
                         }
                     }else {
@@ -192,8 +194,8 @@ public class LogicalPlanUtil {
                     selctionNode.get(SELECTION_KEY_WORD_PROJECTIONS);
             for(NamedExpression ne: addePprojections){
                 Map<String,Object> projection=new HashMap<>();
-                projection.put("ref",config.getMapper().writeValueAsString(ne.getRef()));
-                projection.put("expr",config.getMapper().writeValueAsString(ne.getExpr()));
+                projection.put("ref",ne.getRef().getPath().toString());
+                projection.put("expr",((FieldReference)ne.getExpr()).getPath().toString());
                 projections.add(projection);
             }
         }
@@ -201,6 +203,9 @@ public class LogicalPlanUtil {
         JSONOptions selection= LogicalPlanUtil.buildJsonOptions(selctionMapList, config);
         FieldReference ref=swps.get(0).scan.getOutputReference();
         Scan scan=new Scan(storageEngine,selection,ref);
+        String tableName=swps.get(0).tableName;
+        scan.setMemo(tableName+":"+Bytes.toStringBinary(range.getStartRowKey()).substring(0,8)+", "
+                +Bytes.toStringBinary(range.getEndRowKey()).substring(0,8));
         return scan;
     }
 
@@ -223,14 +228,16 @@ public class LogicalPlanUtil {
     }
 
     public static Filter getFilter(Scan scan,DrillConfig config) throws IOException {
-        List<LogicalExpression> filterEntry=getFilterEntry(scan,config);
-        if(filterEntry==null){
+        List<LogicalExpression> filterEntry = getFilterEntry(scan, config);
+        if (filterEntry == null) {
             return null;
         }
-        ExpressionPosition position=new ExpressionPosition(null,0);
-        FunctionRegistry registry=new FunctionRegistry(config);
-        LogicalExpression filterExpr=registry.createExpression("and",position,filterEntry);
-        Filter filter=new Filter(filterExpr);
+        //ExpressionPosition position = new ExpressionPosition(null, 0);
+        FunctionRegistry registry = new FunctionRegistry(config);
+
+        LogicalExpression filterExpr = registry.createExpression("&&", ExpressionPosition.UNKNOWN, filterEntry);
+        //LogicalExpression filterExpr=registry.createExpression("and",position,filterEntry);
+        Filter filter = new Filter(filterExpr);
         return filter;
     }
 
