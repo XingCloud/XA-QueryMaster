@@ -18,12 +18,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class PlanExecutor {
 
@@ -32,11 +28,11 @@ public class PlanExecutor {
 
   //for PlanRunner. 
   private static ExecutorService planExecutor = new ThreadPoolExecutor(24, 24, 30, TimeUnit.MINUTES,
-                                                                       new ArrayBlockingQueue<Runnable>(256));
+                                                                       new ArrayBlockingQueue<Runnable>(256), new DaemonlizedFactory("PlanExec"));
 
   //for drillbitRunner.
   private static ExecutorService drillBitExecutor = new ThreadPoolExecutor(24, 24, 30, TimeUnit.MINUTES,
-                                                                           new ArrayBlockingQueue<Runnable>(256));
+                                                                           new ArrayBlockingQueue<Runnable>(256), new DaemonlizedFactory("DrillbitExec"));
 
   public static PlanExecutor getInstance() {
     return instance;
@@ -214,6 +210,24 @@ public class PlanExecutor {
         logger.info("[DrillbitCallable2] - Cannot connect to server.");
       }
       return result;
+    }
+  }
+  
+  static class DaemonlizedFactory implements ThreadFactory{
+
+    AtomicInteger n = new AtomicInteger(0);
+    
+    String prefix = null;
+
+    DaemonlizedFactory(String prefix) {
+      this.prefix = prefix;
+    }
+
+    @Override
+    public Thread newThread(Runnable r) {
+      Thread ret = new Thread(r, prefix + n.getAndIncrement());
+      ret.setDaemon(true);
+      return ret;
     }
   }
 }
