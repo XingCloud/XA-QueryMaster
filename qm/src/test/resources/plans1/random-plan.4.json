@@ -1,0 +1,177 @@
+{
+  head : {
+    type : "APACHE_DRILL_LOGICAL",
+    version : 1,
+    generator : {
+      type : "AUTO",
+      info : "age"
+    }
+  },
+  storage : { },
+  query : [ {
+    op : "scan",
+    @id : 1,
+    memo : "deu_age,2013-07-31,2013-08-08,visit.*",
+    storageengine : "hbase",
+    selection : [ {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      rowkey : {
+        end : "20130731visit",
+        start : "20130731visit.22find.hp"
+      },
+      table : "deu_age"
+    }, {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      rowkey : {
+        end : "20130801visit",
+        start : "20130801visit.22find.hp"
+      },
+      table : "deu_age"
+    }, {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      rowkey : {
+        end : "20130802visit",
+        start : "20130802visit.22find.hp"
+      },
+      table : "deu_age"
+    }, {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      rowkey : {
+        end : "20130803visit",
+        start : "20130803visit.22find.hp"
+      },
+      table : "deu_age"
+    }, {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      rowkey : {
+        end : "20130804visit",
+        start : "20130804visit.22find.hp"
+      },
+      table : "deu_age"
+    }, {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      rowkey : {
+        end : "20130805visit",
+        start : "20130805visit.22find.hp"
+      },
+      table : "deu_age"
+    }, {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      rowkey : {
+        end : "20130806visit",
+        start : "20130806visit.22find.hp"
+      },
+      table : "deu_age"
+    }, {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      rowkey : {
+        end : "20130807visit",
+        start : "20130807visit.22find.hp"
+      },
+      table : "deu_age"
+    }, {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      rowkey : {
+        end : "20130808visit",
+        start : "20130808visit.22find.hp"
+      },
+      table : "deu_age"
+    } ],
+    ref : "event"
+  }, {
+    op : "collapsingaggregate",
+    @id : 2,
+    input : 1,
+    within : null,
+    target : null,
+    carryovers : null,
+    aggregations : [ {
+      ref : "count",
+      expr : "count(uid) "
+    }, {
+      ref : "user_num",
+      expr : "count_distinct(uid) "
+    }, {
+      ref : "sum",
+      expr : "sum(value) "
+    } ]
+  }, {
+    op : "project",
+    @id : 3,
+    input : 2,
+    projections : [ {
+      ref : "query_id",
+      expr : "'COMMON,age,2013-07-31,2013-08-08,visit.*,TOTAL_USER,VF-ALL-0-0,PERIOD'"
+    }, {
+      ref : "count",
+      expr : "count"
+    }, {
+      ref : "user_num",
+      expr : "user_num"
+    }, {
+      ref : "sum",
+      expr : "sum"
+    } ]
+  }, {
+    op : "store",
+    @id : 4,
+    input : 3,
+    target : null,
+    partition : null,
+    storageEngine : "DEFAULT-STORE"
+  } ]
+}

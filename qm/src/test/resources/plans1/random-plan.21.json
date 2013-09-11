@@ -1,0 +1,88 @@
+{
+  head : {
+    type : "APACHE_DRILL_LOGICAL",
+    version : 1,
+    generator : {
+      type : "AUTO",
+      info : "age"
+    }
+  },
+  storage : { },
+  query : [ {
+    op : "scan",
+    @id : 1,
+    memo : "deu_age,2013-08-20,2013-08-20,pay.*",
+    storageengine : "hbase",
+    selection : [ {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      }, {
+        ref : "timestamp",
+        expr : "timestamp"
+      } ],
+      rowkey : {
+        end : "20130820visit",
+        start : "20130820visit.22find.hp"
+      },
+      table : "deu_age"
+    } ],
+    ref : "event"
+  }, {
+    op : "segment",
+    @id : 2,
+    input : 1,
+    exprs : [ {
+      ref : "dimension",
+      expr : "hour(timestamp)"
+    } ],
+    name : "sgmt"
+  }, {
+    op : "collapsingaggregate",
+    @id : 3,
+    input : 2,
+    within : "sgmt",
+    target : null,
+    carryovers : [ "dimension" ],
+    aggregations : [ {
+      ref : "count",
+      expr : "count(uid) "
+    }, {
+      ref : "user_num",
+      expr : "count_distinct(uid) "
+    }, {
+      ref : "sum",
+      expr : "sum(value) "
+    } ]
+  }, {
+    op : "project",
+    @id : 4,
+    input : 3,
+    projections : [ {
+      ref : "query_id",
+      expr : "'COMMON,age,2013-08-20,2013-08-20,pay.*,TOTAL_USER,VF-ALL-0-0,HOUR'"
+    }, {
+      ref : "dimension",
+      expr : "dimension"
+    }, {
+      ref : "count",
+      expr : "count"
+    }, {
+      ref : "user_num",
+      expr : "user_num"
+    }, {
+      ref : "sum",
+      expr : "sum"
+    } ]
+  }, {
+    op : "store",
+    @id : 5,
+    input : 4,
+    target : null,
+    partition : null,
+    storageEngine : "DEFAULT-STORE"
+  } ]
+}

@@ -1,0 +1,114 @@
+{
+  head : {
+    type : "APACHE_DRILL_LOGICAL",
+    version : 1,
+    generator : {
+      type : "AUTO",
+      info : "age"
+    }
+  },
+  storage : { },
+  query : [ {
+    op : "scan",
+    @id : 1,
+    memo : "deu_age,2013-07-07,2013-07-08,Age.Menu.*.Success",
+    storageengine : "hbase",
+    selection : [ {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      }, {
+        ref : "timestamp",
+        expr : "timestamp"
+      } ],
+      filters : [ {
+        includes : [ "'20130707pay.fee'", "'20130707pay.fee'", "'20130707pay.fee'", "'20130707pay.fee'", "'20130707pay.fee'", "'20130707pay.fee'", "'20130707pay.fee'", "'20130707pay.fee'", "'20130707pay.fee'", "'20130707pay.fee'", "'20130707pay.fee'", "'20130707pay.fee'", "'20130707pay.fee'", "'20130707pay.fee'", "'20130707pay.fee'", "'20130707pay.fee'", "'20130707pay.fee'", "'20130707pay.fee'", "'20130707pay.gross'", "'20130707pay.gross'", "'20130707pay.gross'", "'20130707pay.gross'", "'20130707pay.gross'", "'20130707pay.gross'", "'20130707pay.gross'", "'20130707pay.gross'", "'20130707pay.gross'", "'20130707pay.gross'", "'20130707pay.gross'", "'20130707pay.gross'", "'20130707pay.gross'", "'20130707pay.gross'", "'20130707pay.gross'", "'20130707pay.gross'", "'20130707pay.gross'", "'20130707pay.gross'", "'20130707pay.gross'", "'20130707'" ],
+        type : "ROWKEY",
+        mapping : [ " (event3)  == ('Success') ", " (event0)  == ('Age') ", " (event1)  == ('Menu') " ]
+      } ],
+      rowkey : {
+        end : "20130707pay",
+        start : "20130707pay.fee.alipay"
+      },
+      table : "deu_age"
+    }, {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      }, {
+        ref : "timestamp",
+        expr : "timestamp"
+      } ],
+      filters : [ {
+        includes : [ "'20130708pay.fee'", "'20130708pay.fee'", "'20130708pay.fee'", "'20130708pay.fee'", "'20130708pay.fee'", "'20130708pay.fee'", "'20130708pay.fee'", "'20130708pay.fee'", "'20130708pay.fee'", "'20130708pay.fee'", "'20130708pay.fee'", "'20130708pay.fee'", "'20130708pay.fee'", "'20130708pay.fee'", "'20130708pay.fee'", "'20130708pay.fee'", "'20130708pay.fee'", "'20130708pay.fee'", "'20130708pay.gross'", "'20130708pay.gross'", "'20130708pay.gross'", "'20130708pay.gross'", "'20130708pay.gross'", "'20130708pay.gross'", "'20130708pay.gross'", "'20130708pay.gross'", "'20130708pay.gross'", "'20130708pay.gross'", "'20130708pay.gross'", "'20130708pay.gross'", "'20130708pay.gross'", "'20130708pay.gross'", "'20130708pay.gross'", "'20130708pay.gross'", "'20130708pay.gross'", "'20130708pay.gross'", "'20130708pay.gross'", "'20130708'" ],
+        type : "ROWKEY",
+        mapping : [ " (event3)  == ('Success') ", " (event0)  == ('Age') ", " (event1)  == ('Menu') " ]
+      } ],
+      rowkey : {
+        end : "20130708pay",
+        start : "20130708pay.fee.alipay"
+      },
+      table : "deu_age"
+    } ],
+    ref : "event"
+  }, {
+    op : "segment",
+    @id : 2,
+    input : 1,
+    exprs : [ {
+      ref : "dimension",
+      expr : "hour(timestamp)"
+    } ],
+    name : "sgmt"
+  }, {
+    op : "collapsingaggregate",
+    @id : 3,
+    input : 2,
+    within : "sgmt",
+    target : null,
+    carryovers : [ "dimension" ],
+    aggregations : [ {
+      ref : "count",
+      expr : "count(uid) "
+    }, {
+      ref : "user_num",
+      expr : "count_distinct(uid) "
+    }, {
+      ref : "sum",
+      expr : "sum(value) "
+    } ]
+  }, {
+    op : "project",
+    @id : 4,
+    input : 3,
+    projections : [ {
+      ref : "query_id",
+      expr : "'COMMON,age,2013-07-07,2013-07-08,Age.Menu.*.Success,TOTAL_USER,VF-ALL-0-0,HOUR'"
+    }, {
+      ref : "dimension",
+      expr : "dimension"
+    }, {
+      ref : "count",
+      expr : "count"
+    }, {
+      ref : "user_num",
+      expr : "user_num"
+    }, {
+      ref : "sum",
+      expr : "sum"
+    } ]
+  }, {
+    op : "store",
+    @id : 5,
+    input : 4,
+    target : null,
+    partition : null,
+    storageEngine : "DEFAULT-STORE"
+  } ]
+}

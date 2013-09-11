@@ -1,0 +1,113 @@
+{
+  head : {
+    type : "APACHE_DRILL_LOGICAL",
+    version : 1,
+    generator : {
+      type : "AUTO",
+      info : "age"
+    }
+  },
+  storage : { },
+  query : [ {
+    op : "scan",
+    @id : 1,
+    memo : "deu_age,2013-08-20,2013-08-20,visit.*",
+    storageengine : "hbase",
+    selection : [ {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      }, {
+        ref : "timestamp",
+        expr : "timestamp"
+      } ],
+      rowkey : {
+        end : "20130820visit",
+        start : "20130820visit.22find.hp"
+      },
+      table : "deu_age"
+    } ],
+    ref : "event"
+  }, {
+    op : "scan",
+    @id : 2,
+    memo : "Scan(Table=age.abflag, Prop=abflag, Val={EQ=NewUIBarrack_NewNewbie_HeroHeadZoom_TroopAddConfig_B})",
+    storageengine : "mysql",
+    selection : {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      } ],
+      filter : "val='NewUIBarrack_NewNewbie_HeroHeadZoom_TroopAddConfig_B'",
+      table : "age.abflag"
+    },
+    ref : "user"
+  }, {
+    op : "join",
+    @id : 3,
+    left : 1,
+    right : 2,
+    conditions : [ {
+      relationship : "==",
+      left : "uid",
+      right : "uid"
+    } ],
+    type : "INNER"
+  }, {
+    op : "segment",
+    @id : 4,
+    input : 3,
+    exprs : [ {
+      ref : "dimension",
+      expr : "hour(timestamp)"
+    } ],
+    name : "sgmt"
+  }, {
+    op : "collapsingaggregate",
+    @id : 5,
+    input : 4,
+    within : "sgmt",
+    target : null,
+    carryovers : [ "dimension" ],
+    aggregations : [ {
+      ref : "count",
+      expr : "count(uid) "
+    }, {
+      ref : "user_num",
+      expr : "count_distinct(uid) "
+    }, {
+      ref : "sum",
+      expr : "sum(value) "
+    } ]
+  }, {
+    op : "project",
+    @id : 6,
+    input : 5,
+    projections : [ {
+      ref : "query_id",
+      expr : "'COMMON,age,2013-08-20,2013-08-20,visit.*,{\"abflag\":\"NewUIBarrack_NewNewbie_HeroHeadZoom_TroopAddConfig_B\"},VF-ALL-0-0,HOUR'"
+    }, {
+      ref : "dimension",
+      expr : "dimension"
+    }, {
+      ref : "count",
+      expr : "count"
+    }, {
+      ref : "user_num",
+      expr : "user_num"
+    }, {
+      ref : "sum",
+      expr : "sum"
+    } ]
+  }, {
+    op : "store",
+    @id : 7,
+    input : 6,
+    target : null,
+    partition : null,
+    storageEngine : "DEFAULT-STORE"
+  } ]
+}

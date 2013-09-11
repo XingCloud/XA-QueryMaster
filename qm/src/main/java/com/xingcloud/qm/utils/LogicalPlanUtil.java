@@ -117,6 +117,7 @@ public class LogicalPlanUtil {
     public static Scan getBaseScan(RowKeyRange range,List<ScanWithPlan> swps,DrillConfig config) throws IOException {
         String storageEngine =swps.get(0).scan.getStorageEngine();
         List<Map<String,Object>> selctionMapList= LogicalPlanUtil.getSelectionMap(swps.get(0).scan);
+
         Map<String,Object> selectionMap=selctionMapList.get(0);
         //String tableName=selectionMap.get(SELECTION_KEY_WORD_TABLE);
         Map<String,Object> rkMap=(Map<String,Object>)selectionMap.get(SELECTION_KEY_WORD_ROWKEY);
@@ -124,17 +125,55 @@ public class LogicalPlanUtil {
         rkMap.remove(SELECTION_KEY_WORD_ROWKEY_END);
         rkMap.put(SELECTION_KEY_WORD_ROWKEY_START, ByteUtils.toStringBinary(range.getStartRowKey()));
         rkMap.put(SELECTION_KEY_WORD_ROWKEY_END,ByteUtils.toStringBinary(range.getEndRowKey()));
+        /*
+        if(Bytes.toStringBinary(range.getStartRowKey()).contains("20130814pay"))
+        {
+            System.out.println("test");
+            for(ScanWithPlan swp: swps){
+                System.out.println("--------");
+                for(NamedExpression ne: LogicalPlanUtil.getProjectionEntry(swp.scan,config)){
+                    System.out.println(config.getMapper().writeValueAsString(ne));
+                }
+            }
+            System.out.println("hhh");
+        }
+        */
         List<Map<String,Object>> baseFilters=new ArrayList<>();
         List<NamedExpression> addePprojections=new ArrayList<>();
+        Map<String,Object> selctionNode=selctionMapList.get(0);
+        List<Map<String,Object>> projections=(List<Map<String,Object>>)
+                selctionNode.get(SELECTION_KEY_WORD_PROJECTIONS);
+        List<String> projectionExprNames=new ArrayList<>();
+        List<String> projectionRefNames=new ArrayList<>();
         if(swps.size()!=1){
             boolean needFilter=true;
             List<String> patterns=new ArrayList<>();
-
+            for(Map<String,Object> projection: projections){
+                projectionExprNames.add((String)projection.get("expr"));
+                projectionRefNames.add((String)projection.get("ref"));
+            }
 
             for(int i=0;i<swps.size();i++){
                 JSONOptions selection=swps.get(i).scan.getSelection();
                 JsonNode selectionNode=selection.getRoot().get(0);
+
                 JsonNode filters=selectionNode.get(SELECTION_KEY_WORD_FILTERS);
+                if(i!=0){
+                    JsonNode  projectionsNode= selectionNode.get(SELECTION_KEY_WORD_PROJECTIONS);
+                    for(JsonNode projectionNode : projectionsNode){
+                        String expr=projectionNode.get("expr").textValue();
+                        String ref=projectionNode.get("ref").textValue();
+                        if(projectionExprNames.contains(expr)&&projectionRefNames.contains(ref)){
+                            continue;
+                        }
+                        projectionExprNames.add(expr);
+                        projectionRefNames.add(ref);
+                        Map<String,Object> projectionMap=new HashMap<>();
+                        projectionMap.put("expr",expr);
+                        projectionMap.put("ref",ref);
+                        projections.add(projectionMap);
+                    }
+                }
                 if(filters instanceof NullNode || filters==null){
                     needFilter=false;
                     continue;
@@ -174,6 +213,7 @@ public class LogicalPlanUtil {
                 }
                 //JsonNode patternFilter=filters.get(0);
 
+
             }
             if(needFilter){
                 List<Map<String,Object>> filterList=(List<Map<String,Object>>)
@@ -187,9 +227,7 @@ public class LogicalPlanUtil {
         }
 
         if(addePprojections.size()>0){
-            Map<String,Object> selctionNode=selctionMapList.get(0);
-            List<Map<String,Object>> projections=(List<Map<String,Object>>)
-                    selctionNode.get(SELECTION_KEY_WORD_PROJECTIONS);
+
             for(NamedExpression ne: addePprojections){
                 Map<String,Object> projection=new HashMap<>();
                 projection.put("ref",ne.getRef().getPath().toString());

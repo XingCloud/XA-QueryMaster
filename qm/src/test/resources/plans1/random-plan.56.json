@@ -1,0 +1,241 @@
+{
+  head : {
+    type : "APACHE_DRILL_LOGICAL",
+    version : 1,
+    generator : {
+      type : "AUTO",
+      info : "age"
+    }
+  },
+  storage : { },
+  query : [ {
+    op : "scan",
+    @id : 1,
+    memo : "Table=age.ref",
+    storageengine : "mysql",
+    selection : {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "ref",
+        expr : "val"
+      } ],
+      table : "age.ref"
+    },
+    ref : "user"
+  }, {
+    op : "scan",
+    @id : 2,
+    memo : "deu_age,2013-07-14,2013-07-22,visit.*",
+    storageengine : "hbase",
+    selection : [ {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      rowkey : {
+        end : "20130714pay",
+        start : "20130714pay.fee.alipay"
+      },
+      table : "deu_age"
+    }, {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      rowkey : {
+        end : "20130715pay",
+        start : "20130715pay.fee.alipay"
+      },
+      table : "deu_age"
+    }, {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      rowkey : {
+        end : "20130716pay",
+        start : "20130716pay.fee.alipay"
+      },
+      table : "deu_age"
+    }, {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      rowkey : {
+        end : "20130717pay",
+        start : "20130717pay.fee.alipay"
+      },
+      table : "deu_age"
+    }, {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      rowkey : {
+        end : "20130718pay",
+        start : "20130718pay.fee.alipay"
+      },
+      table : "deu_age"
+    }, {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      rowkey : {
+        end : "20130719pay",
+        start : "20130719pay.fee.alipay"
+      },
+      table : "deu_age"
+    }, {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      rowkey : {
+        end : "20130720pay",
+        start : "20130720pay.fee.alipay"
+      },
+      table : "deu_age"
+    }, {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      rowkey : {
+        end : "20130721pay",
+        start : "20130721pay.fee.alipay"
+      },
+      table : "deu_age"
+    }, {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      rowkey : {
+        end : "20130722pay",
+        start : "20130722pay.fee.alipay"
+      },
+      table : "deu_age"
+    } ],
+    ref : "event"
+  }, {
+    op : "scan",
+    @id : 3,
+    memo : "Scan(Table=age.abflag, Prop=abflag, Val={EQ=NewUIBarrack_NewNewbie_HeroHeadZoom_TroopAddConfig_B})",
+    storageengine : "mysql",
+    selection : {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      } ],
+      filter : "val='NewUIBarrack_NewNewbie_HeroHeadZoom_TroopAddConfig_B'",
+      table : "age.abflag"
+    },
+    ref : "user"
+  }, {
+    op : "join",
+    @id : 4,
+    left : 2,
+    right : 3,
+    conditions : [ {
+      relationship : "==",
+      left : "uid",
+      right : "uid"
+    } ],
+    type : "INNER"
+  }, {
+    op : "join",
+    @id : 5,
+    left : 1,
+    right : 4,
+    conditions : [ {
+      relationship : "==",
+      left : "uid",
+      right : "uid"
+    } ],
+    type : "RIGHT"
+  }, {
+    op : "segment",
+    @id : 6,
+    input : 5,
+    exprs : [ {
+      ref : "dimension",
+      expr : "ref"
+    } ],
+    name : "sgmt"
+  }, {
+    op : "collapsingaggregate",
+    @id : 7,
+    input : 6,
+    within : "sgmt",
+    target : null,
+    carryovers : [ "dimension" ],
+    aggregations : [ {
+      ref : "count",
+      expr : "count(uid) "
+    }, {
+      ref : "user_num",
+      expr : "count_distinct(uid) "
+    }, {
+      ref : "sum",
+      expr : "sum(value) "
+    } ]
+  }, {
+    op : "project",
+    @id : 8,
+    input : 7,
+    projections : [ {
+      ref : "query_id",
+      expr : "'GROUP,age,2013-07-14,2013-07-22,visit.*,{\"abflag\":\"NewUIBarrack_NewNewbie_HeroHeadZoom_TroopAddConfig_B\"},VF-ALL-0-0,USER_PROPERTIES,ref'"
+    }, {
+      ref : "dimension",
+      expr : "dimension"
+    }, {
+      ref : "count",
+      expr : "count"
+    }, {
+      ref : "user_num",
+      expr : "user_num"
+    }, {
+      ref : "sum",
+      expr : "sum"
+    } ]
+  }, {
+    op : "store",
+    @id : 9,
+    input : 8,
+    target : null,
+    partition : null,
+    storageEngine : "DEFAULT-STORE"
+  } ]
+}

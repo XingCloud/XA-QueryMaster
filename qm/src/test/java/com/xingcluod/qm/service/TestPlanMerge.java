@@ -20,10 +20,10 @@ public class TestPlanMerge {
   @Test
   public void testPlan8() throws Exception{
     //for(int i=0;i<20;i++){
-    LogicalPlan plan2 = Utils.readPlan("/plans/test2.json", c);
+    LogicalPlan plan2 = Utils.readPlan("/plans/test1.json", c);
     //LogicalPlan plan = Utils.readPlan("/plans/common.day.withseg.json", c);
 
-    LogicalPlan plan1=Utils.readPlan("/plans/common.day.noseg.json", c);
+    LogicalPlan plan1=Utils.readPlan("/plans/test2.json", c);
       /*
     LogicalPlan plan3=Utils.readPlan("/plans/common.day.noseg.json", c);
     LogicalPlan plan4=Utils.readPlan("/plans/groupby.prop.noseg.json",c);
@@ -36,9 +36,10 @@ public class TestPlanMerge {
     */
 
     List<LogicalPlan> planList=new ArrayList<>();
-    for(int i=0;i<20;i++){
-        //String planName="/plans/common.day.noseg.random."+i+".json";
-        String planName="/plans/random/random-plan."+i+".json";
+    for(int i=0;i<10;i++){
+        String planName="/plans/common.hour.noseg.random."+i+".json";
+        //String planName="/plans/random/random-plan."+i+".json";
+        //String planName="/plans1/random-plan."+i+".json";
         LogicalPlan tmpPlan=Utils.readPlan(planName,c);
         planList.add(tmpPlan);
     }
