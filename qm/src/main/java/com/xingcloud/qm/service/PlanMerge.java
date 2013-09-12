@@ -679,10 +679,12 @@ public class PlanMerge {
    * 如果两个scan完全一样，就合并。 如果两个scan，其中一个的scan被另一个包含，就给他加一个filter，然后合并。 非叶子节点：如果完全一样（子节点也一样），就合并。
    */
   private LogicalPlan doMergePlan(Set<LogicalPlan> plans, ProjectMergeContext projectCtx) {
-    if (plans.size() == 1) {
+   /*
+   if (plans.size() == 1) {
       //no need to run merge; should not run merge
       return plans.iterator().next();
     }
+    */
     PlanProperties head = null;
     Map<String, StorageEngineConfig> se = null;
     PlanMergeContext planCtx = new PlanMergeContext();

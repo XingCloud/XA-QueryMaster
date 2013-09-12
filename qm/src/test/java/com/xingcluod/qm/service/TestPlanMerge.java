@@ -36,10 +36,10 @@ public class TestPlanMerge {
     */
 
     List<LogicalPlan> planList=new ArrayList<>();
-    for(int i=0;i<10;i++){
-        String planName="/plans/common.hour.noseg.random."+i+".json";
+    for(int i=0;i<100;i++){
+        //String planName="/plans/common.hour.noseg.random."+i+".json";
         //String planName="/plans/random/random-plan."+i+".json";
-        //String planName="/plans1/random-plan."+i+".json";
+        String planName="/plans1/random-plan."+i+".json";
         LogicalPlan tmpPlan=Utils.readPlan(planName,c);
         planList.add(tmpPlan);
     }
@@ -54,8 +54,8 @@ public class TestPlanMerge {
     }
     */
     Map<LogicalPlan, LogicalPlan> merged;
-      merged=PlanMerge.sortAndMerge(planList,config);
-      //      merged=PlanMerge.sortAndMerge(Arrays.asList(plan2,plan1),config);
+      //merged=PlanMerge.sortAndMerge(planList,config);
+            merged=PlanMerge.sortAndMerge(Arrays.asList(plan2),config);
     //
     Set<LogicalPlan> set = new HashSet<>();
     set.addAll(merged.values());

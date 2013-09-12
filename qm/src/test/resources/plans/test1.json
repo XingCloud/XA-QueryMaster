@@ -11,9 +11,13 @@
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "deu_age,2013-09-01,2013-09-01,pay.*",
+    memo : "[deu_age:20130910, 20130911, deu_age:20130911, 20130911, deu_age:20130911, 20130911, deu_age:20130911, 20130912]",
     storageengine : "hbase",
     selection : [ {
+      rowkey : {
+        start : "20130910\\x00",
+        end : "20130911\\x00"
+      },
       projections : [ {
         ref : "uid",
         expr : "uid"
@@ -21,23 +25,35 @@
         ref : "value",
         expr : "value"
       }, {
-        ref : "timestamp",
-        expr : "timestamp"
+        ref : "0",
+        expr : "0"
       } ],
+      table : "deu_age"
+    },  {
       rowkey : {
-        end : "20130901pay",
-        start : "20130901pay.fee.alipay"
+        start : "20130911\\x00",
+        end : "20130912\\x00"
       },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      }, {
+        ref : "0",
+        expr : "0"
+      } ],
       table : "deu_age"
     } ],
     ref : "event"
-  }, {
+  },  {
     op : "segment",
     @id : 2,
     input : 1,
     exprs : [ {
       ref : "dimension",
-      expr : "hour(timestamp)"
+      expr : "0"
     } ],
     name : "sgmt"
   }, {
@@ -63,7 +79,7 @@
     input : 3,
     projections : [ {
       ref : "query_id",
-      expr : "'COMMON,age,2013-09-01,2013-09-01,pay.*,TOTAL_USER,VF-ALL-0-0,HOUR'"
+      expr : "'GROUP,age,2013-09-10,2013-09-11,*.*,TOTAL_USER,VF-ALL-0-0,EVENT,0'"
     }, {
       ref : "dimension",
       expr : "dimension"
