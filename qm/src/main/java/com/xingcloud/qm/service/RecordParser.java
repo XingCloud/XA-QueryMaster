@@ -107,6 +107,10 @@ public class RecordParser {
         currentValue.put(demesionKey,new ResultRow(count,sum,user_num));
       }
 
+      for(ValueVector v : batchLoader){
+        v.close();
+      }
+
     }//for records
     if (currentQueryID != null) {
       //output previous queryID
