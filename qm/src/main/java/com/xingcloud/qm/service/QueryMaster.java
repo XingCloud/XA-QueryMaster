@@ -64,7 +64,7 @@ public class QueryMaster implements QueryListener {
 
   //public Map<String,QuerySubmission> executingPlans
 
-  private Scheduler scheduler = new Scheduler("QueryMaster-Scheduler",DrillConfig.create());
+  private Scheduler scheduler = new Scheduler("QueryMaster-Scheduler", DrillConfig.create());
 
   public static QueryMaster getInstance() {
     return instance;
@@ -140,21 +140,38 @@ public class QueryMaster implements QueryListener {
       String key = queryID;
       if (basicQuery.e != null) {
         logger.warn("execution failed!", basicQuery.e);
+        if (USING_CACHE) {
+          try {
+            XCacheOperator cacheOperator = RedisXCacheOperator.getInstance();
+            cacheOperator.putExceptionCache(queryID);
+            logger.info("[X-CACHE] - Exception placeholder of {} has been added to main cache.", key);
+          } catch (XCacheException e) {
+            e.printStackTrace();
+          }
+        }
       } else {
         logger.info("basicQuery Result");
-        for (Map.Entry<String, ResultRow> entry : ((BasicQuerySubmission) query).value.entrySet()) {
-          //String queryId=entry.getKey();
-          ResultRow result = entry.getValue();
+        MapXCache xCache = null;
+        if (((BasicQuerySubmission) query).value.isEmpty()) {
+          logger.info("[X-CACHE] - Result of {} is empty", key);
+        } else {
+          for (Map.Entry<String, ResultRow> entry : ((BasicQuerySubmission) query).value.entrySet()) {
+            //String queryId=entry.getKey();
+            ResultRow result = entry.getValue();
 
-          logger.info("[RESULT-INFO] - " + queryID + " - key - " + entry
-            .getKey() + " - ResultTuple[" + result.count + "#" + result.sum + "#" +
-                        result.userNum + "@" + result.sampleRate + "]");
+            logger.info("[RESULT-INFO] - " + queryID + " - key - " + entry
+              .getKey() + " - ResultTuple[" + result.count + "#" + result.sum + "#" +
+                          result.userNum + "@" + result.sampleRate + "]");
+          }
+          try {
+            xCache = MapXCache.buildMapXCache(key, basicQuery.value.toCacheValue());
+          } catch (XCacheException e) {
+            e.printStackTrace();
+          }
         }
         if (USING_CACHE) {
           try {
-            MapXCache xCache = MapXCache.buildMapXCache(key, basicQuery.value.toCacheValue());
-            XCacheOperator cacheOperator = RedisXCacheOperator.getInstance();
-            cacheOperator.putMapCache(xCache);
+            RedisXCacheOperator.getInstance().putMapCache(xCache);
             logger.info("[X-CACHE] - Result of {} has been added to main cache.", key);
           } catch (XCacheException e) {
             e.printStackTrace();
@@ -183,9 +200,9 @@ public class QueryMaster implements QueryListener {
 
     private DrillConfig config;
 
-    Scheduler(String name,DrillConfig config) {
+    Scheduler(String name, DrillConfig config) {
       super(name);
-      this.config=config;
+      this.config = config;
     }
 
     @Override
@@ -226,7 +243,7 @@ public class QueryMaster implements QueryListener {
           }
           Map<LogicalPlan, LogicalPlan> origin2Merged = null;
           try {
-            origin2Merged = PlanMerge.sortAndMerge(pickedPlans,config);
+            origin2Merged = PlanMerge.sortAndMerge(pickedPlans, config);
             int executed = 0;
 
             //建立合并后的plan和原始用户提交的BasicQuerySubmission之间的对应关系
