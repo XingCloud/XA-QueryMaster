@@ -154,6 +154,11 @@ public class QueryMaster implements QueryListener {
         MapXCache xCache = null;
         if (((BasicQuerySubmission) query).value.isEmpty()) {
           logger.info("[X-CACHE] - Result of {} is empty", key);
+          try {
+            xCache = MapXCache.buildMapXCache(key,null);
+          } catch (XCacheException e) {
+            e.printStackTrace();
+          }
         } else {
           for (Map.Entry<String, ResultRow> entry : ((BasicQuerySubmission) query).value.entrySet()) {
             //String queryId=entry.getKey();
