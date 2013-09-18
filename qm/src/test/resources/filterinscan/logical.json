@@ -4,14 +4,14 @@
     version : 1,
     generator : {
       type : "AUTO",
-      info : "sof-dsk"
+      info : "age"
     }
   },
   storage : { },
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "Scan(Table=sof-dsk_deu)",
+    memo : "Scan(Table=age_deu)",
     storageengine : "hbase",
     selection : [ {
       projections : [ {
@@ -21,10 +21,8 @@
         ref : "value",
         expr : "value"
       } ],
-      filter : {
-        expr: "date='20130101' && event0='visit' && event2='b' && uid>'a' && uid <'c'"
-      },
-      table : "sof-dsk_deu"
+      filter : "( ( ( (date)  == ('20130912') )  && ( (event3)  == ('Success') ) )  && ( (event0)  == ('Age') ) )  && ( (event1)  == ('Menu') )",
+      table : "age_deu"
     }, {
       projections : [ {
         ref : "uid",
@@ -33,10 +31,8 @@
         ref : "value",
         expr : "value"
       } ],
-      filter : {
-        expr: "date='20130102' && event0='visit' && event2='b' && uid>'a' && uid <'c'"
-      },
-      table : "sof-dsk_deu"
+      filter : "( ( ( (date)  == ('20130913') )  && ( (event3)  == ('Success') ) )  && ( (event0)  == ('Age') ) )  && ( (event1)  == ('Menu') )",
+      table : "age_deu"
     } ],
     ref : "event"
   }, {

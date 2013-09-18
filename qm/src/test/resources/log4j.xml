@@ -10,7 +10,7 @@
     </layout>
   </appender>
 
-  <logger name="com.xingcloud.qm">
+  <logger name="com.xingcloud">
     <level value="debug" />
     <appender-ref ref="CONSOLE" />
   </logger>
