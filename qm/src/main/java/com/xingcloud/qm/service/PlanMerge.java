@@ -1034,6 +1034,10 @@ public class PlanMerge {
         result.put(orig,mergeToTableScanResultPlan);
     }
     logger.info("merge after ------------------------");
+    sourcewriter.flush();
+    sourcewriter.close();
+    targetWriter.flush();
+    targetWriter.close();
     return result;
     //return planMerge.getMerged();
   }
