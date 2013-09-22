@@ -29,7 +29,10 @@ import org.jgrapht.graph.SimpleGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.*;
 
 public class PlanMerge {
@@ -982,11 +985,19 @@ public class PlanMerge {
    *         没有和别的plan合并，则在返回的map中，key和value都是这个plan。
    */
   public static Map<LogicalPlan, LogicalPlan> sortAndMerge(List<LogicalPlan> plans,DrillConfig config) throws Exception {
+    long t=System.currentTimeMillis();
+    File sourcefile=new File("/home/hadoop/yangbo/planMerges/"+t+"_source.log");
+    File targetFile=new File("/home/hadoop/yangbo/planMerges/"+t+"_target.log");
     logger.info("before merge !!!!!!!!!!!");
+    Writer sourcewriter=new FileWriter(sourcefile);
+    sourcewriter.write("before merge !!!!!!!!!!!\n\r");
     for(LogicalPlan plan : plans){
-        logger.info("-------------------");
-        logger.info(config.getMapper().writeValueAsString(plan));
+        //logger.info("-------------------");
+        sourcewriter.write("------------------\n\r");
+        //logger.info(config.getMapper().writeValueAsString(plan));
+        sourcewriter.write(config.getMapper().writeValueAsString(plan)+"\n\r");
     }
+    sourcewriter.write("merge before !!!!!!!!!!!!\n\r");
     logger.info("merge before !!!!!!!!!!!!");
     PlanMerge planMerge = new PlanMerge(plans);
     Map<LogicalPlan,LogicalPlan> splitBigPlanMap=planMerge.splitBigScan(plans,config);
@@ -1008,6 +1019,8 @@ public class PlanMerge {
     }
     Map<LogicalPlan,LogicalPlan> mergeToTalbeScanMap=planMerge.mergeToBigScan(scanMergedPlans,config);
     Map<LogicalPlan,LogicalPlan> result=new HashMap<>();
+    Writer targetWriter=new FileWriter(targetFile);
+
     logger.info("after merge ------------------------");
     for(Map.Entry<LogicalPlan,LogicalPlan> entry: splitBigPlanMap.entrySet()){
         LogicalPlan orig=entry.getKey();
@@ -1015,7 +1028,9 @@ public class PlanMerge {
         LogicalPlan splitRkResultPlan=splitRkPlanMap.get(splitBigScanResultPlan);
         LogicalPlan mergePlanResultPlan=mergePlanMap.get(splitRkResultPlan);
         LogicalPlan mergeToTableScanResultPlan=mergeToTalbeScanMap.get(mergePlanResultPlan);
-        logger.info(config.getMapper().writeValueAsString(mergeToTableScanResultPlan));
+        //logger.info(config.getMapper().writeValueAsString(mergeToTableScanResultPlan));
+        targetWriter.write("--------------------------------------\n\r");
+        targetWriter.write(config.getMapper().writeValueAsString(mergeToTableScanResultPlan)+"\n\r");
         result.put(orig,mergeToTableScanResultPlan);
     }
     logger.info("merge after ------------------------");
