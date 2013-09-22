@@ -33,6 +33,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class PlanMerge {
@@ -986,8 +987,11 @@ public class PlanMerge {
    */
   public static Map<LogicalPlan, LogicalPlan> sortAndMerge(List<LogicalPlan> plans,DrillConfig config) throws Exception {
     long t=System.currentTimeMillis();
-    File sourcefile=new File("/home/hadoop/yangbo/planMerges/"+t+"_source.log");
-    File targetFile=new File("/home/hadoop/yangbo/planMerges/"+t+"_target.log");
+      SimpleDateFormat format=new SimpleDateFormat("ssmmhh-yyyyMMdd");
+    File dir =new File("/home/hadoop/yangbo/planMerges/"+format.format(new Date(t)));
+    dir.mkdir();
+    File sourcefile=new File(dir.getAbsolutePath()+"/source.log");
+    File targetFile=new File(dir.getAbsolutePath()+"/target.log");
     logger.info("before merge !!!!!!!!!!!");
     Writer sourcewriter=new FileWriter(sourcefile);
     sourcewriter.write("before merge !!!!!!!!!!!\n\r");
@@ -1031,7 +1035,7 @@ public class PlanMerge {
         //logger.info(config.getMapper().writeValueAsString(mergeToTableScanResultPlan));
         targetWriter.write("--------------------------------------\n\r");
         targetWriter.write(config.getMapper().writeValueAsString(mergeToTableScanResultPlan)+"\n\r");
-        result.put(orig,mergeToTableScanResultPlan);
+        result.put(orig, mergeToTableScanResultPlan);
     }
     logger.info("merge after ------------------------");
     sourcewriter.flush();
