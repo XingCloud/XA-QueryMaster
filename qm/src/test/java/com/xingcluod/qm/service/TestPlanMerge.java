@@ -53,6 +53,7 @@ public class TestPlanMerge {
   }
   @Test
   public void testTransferPlan() throws Exception {
+      /*
       LogicalPlan plan = Utils.readPlan("/filterinscan/logical.json", c);
       for(LogicalOperator lo: plan.getSortedOperators()){
           if(lo instanceof  Scan){
@@ -61,14 +62,24 @@ public class TestPlanMerge {
               System.out.println(le.toString());
           }
       }
+      */
+      List<LogicalPlan> plans=new ArrayList<>();
+      for(int i=1;i<3;i++){
+          LogicalPlan plan=Utils.readPlan("/filterinscan/logical_"+i+".json",c);
+          plans.add(plan);
+      }
       XEventRange range = XEventOperation.getInstance().getEventRange("sof-dsk", "visit.*");
       System.out.println("connect success");
 
-      Map<LogicalPlan, LogicalPlan> transfered = PlanMerge.transferPlan(Arrays.asList(plan), c);
+      Map<LogicalPlan, LogicalPlan> transfered = PlanMerge.transferPlan(plans, c);
       System.out.println(transfered.values().size());
+
       for (LogicalPlan ret : transfered.values()) {
           System.out.println(c.getMapper().writeValueAsString(ret));
       }
+
+      System.out.println("-------------------------------------------------" +
+              "\n------------------------------------------------------------");
       Map<LogicalPlan,LogicalPlan> merged=PlanMerge.sortAndMerge(new ArrayList<LogicalPlan>(transfered.values()),c);
       for (LogicalPlan ret : merged.values()) {
           System.out.println(c.getMapper().writeValueAsString(ret));

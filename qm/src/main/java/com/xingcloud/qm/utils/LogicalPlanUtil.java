@@ -100,7 +100,15 @@ public class LogicalPlanUtil {
                 selectionMap.put(Selections.SELECTION_KEY_WORD_FILTERS, filterList);
             }
             */
-            selectionMap.put(SELECTION_KEY_WORD_FILTER, selectionRoot.get(SELECTION_KEY_WORD_FILTER));
+            JsonNode filter = selectionRoot.get(Selections.SELECTION_KEY_WORD_FILTER);
+
+            if (filter != null && !(filter instanceof NullNode)) {
+                Map<String,Object> filterMap=new HashMap<>();
+                filterMap.put("type",filter.get("type").asText());
+                filterMap.put("expression",filter.get("expression"));
+                selectionMap.put(Selections.SELECTION_KEY_WORD_FILTER, filterMap);
+            }
+            //selectionMap.put(SELECTION_KEY_WORD_FILTER, selectionRoot.get(SELECTION_KEY_WORD_FILTER));
             //rowkey
             JsonNode rowkeyRange = selectionRoot.get(Selections.SELECTION_KEY_WORD_ROWKEY);
             Map<String, Object> rkMap = new HashMap<>();
@@ -109,6 +117,14 @@ public class LogicalPlanUtil {
             rkMap.put(Selections.SELECTION_KEY_WORD_ROWKEY_END,
                     rowkeyRange.get(Selections.SELECTION_KEY_WORD_ROWKEY_END).toString());
             selectionMap.put(Selections.SELECTION_KEY_WORD_ROWKEY, rkMap);
+            //tail
+            JsonNode tailRange= selectionRoot.get(SELECTION_KEY_ROWKEY_TAIL_RANGE);
+            if(tailRange!=null && !(tailRange instanceof NullNode)){
+                Map<String,Object> tailRangeMap=new HashMap<>();
+                tailRangeMap.put(SELECTION_KEY_ROWKEY_TAIL_START,tailRange.get(SELECTION_KEY_ROWKEY_TAIL_START).toString());
+                tailRangeMap.put(SELECTION_KEY_ROWKEY_TAIL_END,tailRange.get(SELECTION_KEY_ROWKEY_TAIL_END).toString());
+                selectionMap.put(SELECTION_KEY_ROWKEY_TAIL_RANGE,tailRangeMap);
+            }
             //table
             selectionMap.put(Selections.SELECTION_KEY_WORD_TABLE,
                     selectionRoot.get(Selections.SELECTION_KEY_WORD_TABLE));
@@ -145,6 +161,7 @@ public class LogicalPlanUtil {
         List<String> projectionExprNames = new ArrayList<>();
         List<String> projectionRefNames = new ArrayList<>();
         boolean needFilter = true;
+        String filterType=null;
         for (Map<String, Object> selection : selectionMapList) {
             List<Map<String, Object>> selectionProjections =
                     (List<Map<String, Object>>) selection.get(SELECTION_KEY_WORD_PROJECTIONS);
@@ -158,12 +175,13 @@ public class LogicalPlanUtil {
                 projections.add(projection);
             }
 
-            JsonNode filterExpr = (JsonNode) selection.get(SELECTION_KEY_WORD_FILTER);
-            if (filterExpr == null) {
+            Map<String,Object> filterMap = (Map<String,Object>) selection.get(SELECTION_KEY_WORD_FILTER);
+            if (filterMap == null) {
                 needFilter = false;
                 continue;
             }
-            Map<String, UnitFunc> filterFuncMap = parseFilterExpr(filterExpr, config);
+            filterType=(String)filterMap.get("type");
+            Map<String, UnitFunc> filterFuncMap = parseFilterExpr((JsonNode)filterMap.get("expression"), config);
             filterFuncMaps.add(filterFuncMap);
         }
 
@@ -185,7 +203,10 @@ public class LogicalPlanUtil {
             if (args.size() > 1) {
                 FunctionRegistry registry = new FunctionRegistry(config);
                 LogicalExpression filterExpr = registry.createExpression("&&", ExpressionPosition.UNKNOWN, args);
-                selectionMap.put(SELECTION_KEY_WORD_FILTER, config.getMapper().writeValueAsString(filterExpr));
+                Map<String,Object> filter=new HashMap<>();
+                filter.put("type",filterType);
+                filter.put("expression",config.getMapper().writeValueAsString(filterExpr));
+                selectionMap.put(SELECTION_KEY_WORD_FILTER, filter);
             }
         }
         for (Map<String, UnitFunc> filterFuncMap : filterFuncMaps) {
@@ -251,10 +272,11 @@ public class LogicalPlanUtil {
     }
 
     public static List<LogicalExpression> getFilterEntry(Scan baseScan, Scan scan, DrillConfig config) throws IOException {
-        JsonNode baseFilterExpr = baseScan.getSelection().getRoot().get(SELECTION_KEY_WORD_FILTER);
-        JsonNode fitlerExpr = scan.getSelection().getRoot().get(SELECTION_KEY_WORD_FILTER);
-        Map<String, UnitFunc> baseFilterFuncMap = parseFilterExpr(baseFilterExpr, config);
+        JsonNode baseFilterExpr = baseScan.getSelection().getRoot().get(0).get(SELECTION_KEY_WORD_FILTER).get("expression");
+        JsonNode fitlerExpr = scan.getSelection().getRoot().get(0).get(SELECTION_KEY_WORD_FILTER).get("expression");
+
         Map<String, UnitFunc> filterFuncMap = parseFilterExpr(fitlerExpr, config);
+        Map<String, UnitFunc> baseFilterFuncMap = parseFilterExpr(baseFilterExpr, config);
         List<LogicalExpression> exprs = new ArrayList<>();
         for (Map.Entry<String, UnitFunc> entry : baseFilterFuncMap.entrySet()) {
             if (filterFuncMap.containsKey(entry.getKey()))
@@ -433,12 +455,8 @@ public class LogicalPlanUtil {
 
     public static String getTableName(Scan scan) throws Exception {
         try {
-            String storageEngine = scan.getStorageEngine();
-            if (SE_HBASE.equals(storageEngine)) {
-                return scan.getSelection().getRoot().get(0).get("table").asText();
-            } else {
-                return scan.getSelection().getRoot().get("table").asText();
-            }
+            return scan.getSelection().getRoot().get(0).get("table").asText();
+
         } catch (Exception e) {
             throw new Exception(e);
         }
@@ -455,6 +473,13 @@ public class LogicalPlanUtil {
                 rkRangeMap.put(SELECTION_KEY_WORD_ROWKEY_START, Bytes.toStringBinary(range.getStartRowKey()));
                 rkRangeMap.put(SELECTION_KEY_WORD_ROWKEY_END, Bytes.toStringBinary(range.getEndRowKey()));
                 selection.put(SELECTION_KEY_WORD_ROWKEY, rkRangeMap);
+                RowKeyRange tailRange= getRkTailRangeFromFilter(selection,tableName,config);
+                if(tailRange==null)
+                    continue;
+                Map<String,Object> tailRangeMap=new HashMap<>();
+                tailRangeMap.put(SELECTION_KEY_ROWKEY_TAIL_START,Bytes.toStringBinary(tailRange.getStartRowKey()));
+                tailRangeMap.put(SELECTION_KEY_ROWKEY_TAIL_END,Bytes.toStringBinary(tailRange.getEndRowKey()));
+                selection.put(SELECTION_KEY_ROWKEY_TAIL_RANGE,tailRangeMap);
             }
             JSONOptions options = buildJsonOptions(selections, config);
             Scan scan1 = new Scan(storageEngine, options, scan.getOutputReference());
@@ -464,8 +489,32 @@ public class LogicalPlanUtil {
         return scan;
     }
 
+    public static RowKeyRange getRkTailRangeFromFilter(Map<String,Object> selection,String tableName,DrillConfig config) throws IOException {
+        Map<String,Object> filterMap=(Map<String,Object>)selection.get(SELECTION_KEY_WORD_FILTER);
+        return getRkTailRange((JsonNode)filterMap.get("expression"),tableName,config);
+    }
+
+    private static RowKeyRange getRkTailRange(JsonNode filterNode, String tableName, DrillConfig config) throws IOException {
+        Map<String,UnitFunc> fieldFunc=parseFilterExpr(filterNode,config);
+        UnitFunc tailFunc=fieldFunc.get("uid");
+        if(tailFunc==null)
+            return null;
+        FunctionCall call=tailFunc.getFunc();
+        byte[] srt=null,end=null;
+        List<UnitFunc> funcs=parseToUnit(call,config);
+        for(UnitFunc func : funcs){
+            String funcName=func.getOp();
+            if(funcName.contains("greater")){
+               srt=Bytes.tail(Bytes.toBytes(Long.parseLong(func.getValue())), 5);
+            }else if(funcName.contains("less")){
+               end=Bytes.tail(Bytes.toBytes(Long.parseLong(func.getValue())),5);
+            }
+        }
+        return new RowKeyRange(Bytes.toStringBinary(srt),Bytes.toStringBinary(end));
+    }
+
     public static RowKeyRange getRowKeyRangeFromFilter(Map<String, Object> selection, String tableName, DrillConfig config) throws Exception {
-         JsonNode filterNode=(JsonNode)selection.get(SELECTION_KEY_WORD_FILTER);
+         JsonNode filterNode=(JsonNode)((Map<String,Object>)selection.get(SELECTION_KEY_WORD_FILTER)).get("expression");
          return getRkRange(tableName,filterNode,config);
     }
 
@@ -513,6 +562,8 @@ public class LogicalPlanUtil {
             }
             workKps = Arrays.asList(toWorkKps.toArray(new KeyPart[toWorkKps.size()]));
         }
+        if(event.endsWith("."))
+            event=event.substring(0,event.length()-1);
         String projectId = null;
         if (tableName.contains("_deu"))
             projectId = tableName.replaceAll("_deu", "");
@@ -541,7 +592,7 @@ public class LogicalPlanUtil {
     public static Map<String, UnitFunc> parseFilterExpr(JsonNode origExpr, DrillConfig config) throws IOException {
         Map<String, UnitFunc> resultMap = new HashMap<>();
         LogicalExpression func = config.getMapper().readValue(origExpr.traverse(), LogicalExpression.class);
-        return parseFunctionCall((FunctionCall) func);
+        return parseFunctionCall((FunctionCall) func,config);
         /*
         String[] exprs = origExpr.split("&&");
         for (String expr : exprs) {
@@ -565,13 +616,22 @@ public class LogicalPlanUtil {
         //return resultMap;
     }
 
-    public static Map<String, UnitFunc> parseFunctionCall(FunctionCall func) {
+    public static Map<String, UnitFunc> parseFunctionCall(FunctionCall func,DrillConfig config) {
         Map<String, UnitFunc> result = new HashMap<>();
         String field = null;
         UnitFunc value = null;
         for (LogicalExpression le : func) {
             if (le instanceof FunctionCall) {
-                result.putAll(parseFunctionCall((FunctionCall) le));
+                for(Map.Entry<String,UnitFunc> entry: parseFunctionCall(((FunctionCall) le),config).entrySet()){
+                      if(result.containsKey(entry.getKey())){
+                          LogicalExpression old=result.get(field).getFunc();
+                          FunctionRegistry registry=new FunctionRegistry(config);
+                          FunctionCall call=(FunctionCall)registry.createExpression("&&",ExpressionPosition.UNKNOWN,Arrays.asList(old, entry.getValue().getFunc()));
+                          UnitFunc resultFunc=new UnitFunc(call);
+                          result.put(field,resultFunc);
+                      }else
+                          result.put(entry.getKey(),entry.getValue());
+                }
             } else if (le instanceof SchemaPath) {
                 field = ((SchemaPath) le).getPath().toString();
             } else if (le instanceof ValueExpressions.QuotedString) {
@@ -579,7 +639,27 @@ public class LogicalPlanUtil {
             }
         }
         if (field != null && value != null) {
-            result.put(field, value);
+            if(result.containsKey(field)){
+                LogicalExpression old=result.get(field).getFunc();
+                FunctionRegistry registry=new FunctionRegistry(config);
+                FunctionCall call=(FunctionCall)registry.createExpression("&&",ExpressionPosition.UNKNOWN,Arrays.asList(old,value.getFunc()));
+                UnitFunc resultFunc=new UnitFunc(call);
+                result.put(field,resultFunc);
+            }
+            else
+                result.put(field, value);
+        }
+        return result;
+    }
+
+    public static List<UnitFunc> parseToUnit(FunctionCall call,DrillConfig config){
+        List<UnitFunc> result=new ArrayList<>();
+        for(LogicalExpression le : call){
+            if(le instanceof  FunctionCall){
+                result.addAll(parseToUnit((FunctionCall)le,config));
+            }else{
+                result.add(new UnitFunc(call));
+            }
         }
         return result;
     }
@@ -650,8 +730,12 @@ public class LogicalPlanUtil {
 
             //filter
             JsonNode filter = selectionRoot.get(Selections.SELECTION_KEY_WORD_FILTER);
+
             if (filter != null && !(filter instanceof NullNode)) {
-                selectionMap.put(Selections.SELECTION_KEY_WORD_FILTER, filter);
+                Map<String,Object> filterMap=new HashMap<>();
+                filterMap.put("type",filter.get("type").asText());
+                filterMap.put("expression",filter.get("expression"));
+                selectionMap.put(Selections.SELECTION_KEY_WORD_FILTER, filterMap);
             }
             //table
             selectionMap.put(Selections.SELECTION_KEY_WORD_TABLE,
