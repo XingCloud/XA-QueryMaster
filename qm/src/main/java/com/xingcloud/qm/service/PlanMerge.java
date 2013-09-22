@@ -982,6 +982,12 @@ public class PlanMerge {
    *         没有和别的plan合并，则在返回的map中，key和value都是这个plan。
    */
   public static Map<LogicalPlan, LogicalPlan> sortAndMerge(List<LogicalPlan> plans,DrillConfig config) throws Exception {
+    logger.info("before merge !!!!!!!!!!!");
+    for(LogicalPlan plan : plans){
+        logger.info("-------------------");
+        logger.info(config.getMapper().writeValueAsString(plan));
+    }
+    logger.info("merge before !!!!!!!!!!!!");
     PlanMerge planMerge = new PlanMerge(plans);
     Map<LogicalPlan,LogicalPlan> splitBigPlanMap=planMerge.splitBigScan(plans,config);
     List<LogicalPlan> bigPlanSplitedPlans=new ArrayList(splitBigPlanMap.values());
@@ -1002,14 +1008,17 @@ public class PlanMerge {
     }
     Map<LogicalPlan,LogicalPlan> mergeToTalbeScanMap=planMerge.mergeToBigScan(scanMergedPlans,config);
     Map<LogicalPlan,LogicalPlan> result=new HashMap<>();
+    logger.info("after merge ------------------------");
     for(Map.Entry<LogicalPlan,LogicalPlan> entry: splitBigPlanMap.entrySet()){
         LogicalPlan orig=entry.getKey();
         LogicalPlan splitBigScanResultPlan=splitBigPlanMap.get(entry.getKey());
         LogicalPlan splitRkResultPlan=splitRkPlanMap.get(splitBigScanResultPlan);
         LogicalPlan mergePlanResultPlan=mergePlanMap.get(splitRkResultPlan);
         LogicalPlan mergeToTableScanResultPlan=mergeToTalbeScanMap.get(mergePlanResultPlan);
+        logger.info(config.getMapper().writeValueAsString(mergeToTableScanResultPlan));
         result.put(orig,mergeToTableScanResultPlan);
     }
+    logger.info("merge after ------------------------");
     return result;
     //return planMerge.getMerged();
   }
