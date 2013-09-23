@@ -114,6 +114,14 @@ public class LogicalPlanUtil {
         return options;
     }
 
+  /**
+   * each row key range correspond to a base scan
+   * @param range
+   * @param swps
+   * @param config
+   * @return
+   * @throws IOException
+   */
     public static Scan getBaseScan(RowKeyRange range,List<ScanWithPlan> swps,DrillConfig config) throws IOException {
         String storageEngine =swps.get(0).scan.getStorageEngine();
         List<Map<String,Object>> selctionMapList= LogicalPlanUtil.getSelectionMap(swps.get(0).scan);
@@ -147,7 +155,7 @@ public class LogicalPlanUtil {
         List<String> projectionRefNames=new ArrayList<>();
         if(swps.size()!=1){
             boolean needFilter=true;
-            List<String> patterns=new ArrayList<>();
+            List<String> patterns=new ArrayList<>(); // collect all the includes of the scans that contain this range
             for(Map<String,Object> projection: projections){
                 projectionExprNames.add((String)projection.get("expr"));
                 projectionRefNames.add((String)projection.get("ref"));

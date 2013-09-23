@@ -80,7 +80,7 @@ public class PlanMerge {
   /**
    * Collect all the scans that belong to the same project to get a global row key range list, 
    * then slice each scan into one or more smaller scans according to the row key range list. 
-   * @param origPlans the logical plan that has been sliced
+   * @param origPlans the logical plan that original scan has been sliced by its selections(each day a selection)
    * @param config
    * @return plan with the most smallest granularity Scan
    * @throws Exception
@@ -155,7 +155,7 @@ public class PlanMerge {
                   // get union--->List(project-->filter--->scan)
                   for(RowKeyRange range: rangeList){
                       List<ScanWithPlan> swpList=crosses.get(range);
-                      Scan baseScan= LogicalPlanUtil.getBaseScan(range, swpList, config); //
+                      Scan baseScan= LogicalPlanUtil.getBaseScan(range, swpList, config); // base scan: each row key range => base scan, todo: we only need to construct once for each range
                       if(swpList.size()==1){
                           unionInputs.add(baseScan);
                           operators.add(baseScan);
