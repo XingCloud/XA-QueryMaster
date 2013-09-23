@@ -113,7 +113,9 @@ public class QueryMaster implements QueryListener {
         logger.info("Reject " + cacheKey + " because it is already in queue.");
       }
     }
-    putProjectQueue(submissions, pID);
+    if (submissions.size() > 0) {
+      putProjectQueue(submissions, pID);
+    }
     return submissions.size() > 0 ? true : false;
   }
 
