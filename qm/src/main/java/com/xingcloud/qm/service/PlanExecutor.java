@@ -86,6 +86,7 @@ public class PlanExecutor {
         //在有drillbit计算失败的情况下，使用剩下的结果作为估计值
         int succeeded = 0;
         Exception failedCause = null;
+        long serverStart = System.currentTimeMillis() ;
         for (Future<List<QueryResultBatch>> future : futures) {
           try {
             List<QueryResultBatch> batches = future.get();
@@ -97,6 +98,7 @@ public class PlanExecutor {
             failedCause = e;
           }
         }
+        logger.info("[Receive result] time use - {}",(System.currentTimeMillis() - serverStart));
 
         if (succeeded == 0) {
           submission.e = failedCause;
