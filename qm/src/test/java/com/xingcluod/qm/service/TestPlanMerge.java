@@ -15,7 +15,7 @@ public class TestPlanMerge {
   DrillConfig c = DrillConfig.create();
 
   public static Logger logger= LoggerFactory.getLogger(TestPlanMerge.class);
-  
+
 
   @Test
   public void testPlan8() throws Exception{
@@ -81,23 +81,23 @@ public class TestPlanMerge {
     set.addAll(merged.values());
     int i=0;
     for (LogicalPlan m : set) {
-      GraphVisualize.visualizeMX(m, "test"+(i++)+".svg");      
-    }    
+      GraphVisualize.visualizeMX(m, "test"+(i++)+".svg");
+    }
   }
-  
+
   @Test
   public void testIdenticalPlan() throws Exception{
     doTestMerge("/plans/common.day.noseg.json", "/plans/common.day.noseg.json");
   }
-  
+
   @Test
   public void testPlan0() throws Exception{
     doTestMerge("/plans/common.day.noseg.json", "/plans/common.day.withseg.json");
   }
-  
+
   @Test
   public void testPlan6() throws Exception{
-    doTestMerge("/plans/common.day.noseg.json", 
+    doTestMerge("/plans/common.day.noseg.json",
       "/plans/common.day.withseg.json",
       "/plans/common.hour.noseg.json",
       "/plans/common.hour.withseg.json",

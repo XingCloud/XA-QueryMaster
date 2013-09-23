@@ -31,7 +31,7 @@
   <!-- Building config -->
   <build>
     <defaultGoal>package</defaultGoal>
-    <finalName>libqm.${project.version}</finalName>
+    <finalName>${project.artifactId}</finalName>
     <!-- Resources of app -->
     <resources>
       <resource>
@@ -53,6 +53,14 @@
           <configuration>
             <source>1.7</source>
             <target>1.7</target>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-war-plugin</artifactId>
+          <version>2.1.1</version>
+          <configuration>
+            <packagingExcludes>WEB-INF/web.xml</packagingExcludes>
           </configuration>
         </plugin>
       </plugins>
@@ -118,6 +126,11 @@
       <version>5.13.0.0</version>
     </dependency>
     <dependency>
+        <groupId>org.tinyjee.jgraphx</groupId>
+        <artifactId>jgraphx</artifactId>
+        <version>2.0.0.1</version>
+    </dependency>
+    <dependency>
       <groupId>commons-collections</groupId>
       <artifactId>commons-collections</artifactId>
       <version>3.2.1</version>
@@ -157,25 +170,28 @@
       <artifactId>log4j</artifactId>
       <version>1.2.17</version>
     </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.11</version>
+    </dependency>
+
+    <!-- XA -->
     <dependency>
       <groupId>com.xingcloud.xa</groupId>
       <artifactId>confutil</artifactId>
       <version>1.1</version>
     </dependency>
     <dependency>
+      <groupId>com.xingcloud.xa</groupId>
+      <artifactId>main-cache-service</artifactId>
+      <version>1.0</version>
+    </dependency>
+    <dependency>
       <groupId>com.xingcloud</groupId>
       <artifactId>basis</artifactId>
       <version>0.0.5</version>
-    </dependency>
-    <dependency>
-      <groupId>com.xingcloud</groupId>
-      <artifactId>cache</artifactId>
-      <version>0.0.5</version>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.11</version>
     </dependency>
 
     <!-- Drill -->

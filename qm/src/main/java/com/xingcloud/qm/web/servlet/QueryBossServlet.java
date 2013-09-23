@@ -9,6 +9,8 @@ import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class QueryBossServlet extends HessianServlet implements Submit {
 
@@ -35,6 +37,31 @@ public class QueryBossServlet extends HessianServlet implements Submit {
         } catch (IOException e) {
           throw new XRemoteQueryException(e);
         }
+      default:
+        return false;
+    }
+  }
+
+  @Override
+  public boolean submitBatch(Map<String, String> batch, SubmitQueryType type) throws XRemoteQueryException {
+    switch (type) {
+      case SQL:
+        LOGGER.info("[WS-SUBMIT] Current type(" + type + ") of operation is not supported.");
+        return false;
+      case PLAN:
+        Map<String, LogicalPlan> batchPlan = new HashMap<String, LogicalPlan>();
+        for (Map.Entry<String, String> entry : batch.entrySet()) {
+          String cacheId = entry.getKey();
+          String planString = entry.getValue();
+
+          try {
+            LogicalPlan plan = DrillConfig.create().getMapper().readValue(planString, LogicalPlan.class);
+            batchPlan.put(cacheId, plan);
+          } catch (IOException e) {
+            throw new XRemoteQueryException(e);
+          }
+        }
+        return QueryMaster.getInstance().submit(batchPlan);
       default:
         return false;
     }
