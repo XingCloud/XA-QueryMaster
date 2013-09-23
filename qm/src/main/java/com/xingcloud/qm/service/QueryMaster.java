@@ -113,7 +113,9 @@ public class QueryMaster implements QueryListener {
         logger.info("Reject " + cacheKey + " because it is already in queue.");
       }
     }
-    putProjectQueue(submissions, pID);
+    if (submissions.size() > 0) {
+      putProjectQueue(submissions, pID);
+    }
     return submissions.size() > 0 ? true : false;
   }
 
@@ -145,7 +147,7 @@ public class QueryMaster implements QueryListener {
     getProjectQueue(projectID).addAll(submissions);
   }
 
-  private Deque<QuerySubmission> getProjectQueue(String projectID) {
+  private synchronized Deque<QuerySubmission> getProjectQueue(String projectID) {
     Deque<QuerySubmission> projectPlans = perProjectSubmitted.get(projectID);
     if (projectPlans == null) {
       projectPlans = new ArrayDeque<>();

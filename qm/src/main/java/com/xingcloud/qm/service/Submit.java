@@ -12,5 +12,5 @@ public interface Submit {
 
   public boolean submit(String cacheKey, String content, SubmitQueryType type) throws XRemoteQueryException;
 
-  public boolean submit(Map<String, String> batch, SubmitQueryType type) throws XRemoteQueryException;
+  public boolean submitBatch(Map<String, String> batch, SubmitQueryType type) throws XRemoteQueryException;
 }
