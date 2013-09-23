@@ -204,7 +204,7 @@ public class PlanExecutor {
           throw e;
         }
         t2 = System.currentTimeMillis();
-        logger.info("[PlanExec] - Single node[{}] submit query at {},receive result at {} ,cost {} . ",t1,t2,(t2 - t1));
+        logger.info("[PlanExec] - Single node[{}] submit query at {},receive result at {} ,cost {} . ",node.getId(),t1,t2,(t2 - t1));
       } else {
         logger.info("[DrillbitCallable2] - Cannot connect to server.");
       }
