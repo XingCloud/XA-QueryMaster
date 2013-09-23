@@ -95,6 +95,28 @@ public class QueryMaster implements QueryListener {
     return false;
   }
 
+  public synchronized boolean submit(Map<String, LogicalPlan> batch) {
+    List<QuerySubmission> submissions = new ArrayList<>();
+    String pID = null;
+    for (Map.Entry<String, LogicalPlan> entry : batch.entrySet()) {
+      String cacheKey = entry.getKey();
+      if (!submitted.containsKey(cacheKey)) {
+        logger.info("Add " + cacheKey + " to queue.");
+        LogicalPlan plan = entry.getValue();
+        if (pID == null) {
+          pID = PlanMerge.getProjectID(plan);
+        }
+        QuerySubmission submission = new BasicQuerySubmission(plan, cacheKey);
+        submitted.put(cacheKey, submission);
+        submissions.add(submission);
+      } else {
+        logger.info("Reject " + cacheKey + " because it is already in queue.");
+      }
+    }
+    putProjectQueue(submissions, pID);
+    return submissions.size() > 0 ? true : false;
+  }
+
   public Set<LogicalPlan> getQueuePlans() {
     Set<LogicalPlan> rets = new HashSet<>();
     for (Map.Entry<String, QuerySubmission> entry : submitted.entrySet()) {
@@ -116,6 +138,11 @@ public class QueryMaster implements QueryListener {
 
   private void putProjectQueue(QuerySubmission submittion, String projectID, String id) {
     getProjectQueue(projectID).add(submittion);
+  }
+
+  private void putProjectQueue(List<QuerySubmission> submissions, String projectID) {
+    logger.info("Submit " + submissions.size() + " to queue of " + projectID);
+    getProjectQueue(projectID).addAll(submissions);
   }
 
   private Deque<QuerySubmission> getProjectQueue(String projectID) {
