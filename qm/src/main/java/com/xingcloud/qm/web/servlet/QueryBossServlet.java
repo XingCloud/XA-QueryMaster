@@ -43,7 +43,7 @@ public class QueryBossServlet extends HessianServlet implements Submit {
   }
 
   @Override
-  public boolean submit(Map<String, String> batch, SubmitQueryType type) throws XRemoteQueryException {
+  public boolean submitBatch(Map<String, String> batch, SubmitQueryType type) throws XRemoteQueryException {
     switch (type) {
       case SQL:
         LOGGER.info("[WS-SUBMIT] Current type(" + type + ") of operation is not supported.");
