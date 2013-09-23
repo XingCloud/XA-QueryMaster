@@ -34,7 +34,7 @@
       table : "deu_age",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130912') )  && ( (event0)  == ('visit') ) "
+        expression : " ( (date)  == ('20130912') )  && ( (event0)  == ('Age') ) "
       },
       projections : [ {
         ref : "uid",

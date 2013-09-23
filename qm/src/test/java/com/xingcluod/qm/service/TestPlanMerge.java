@@ -80,8 +80,8 @@ public class TestPlanMerge {
 
       System.out.println("-------------------------------------------------" +
               "\n------------------------------------------------------------");
-      Map<LogicalPlan,LogicalPlan> merged=PlanMerge.sortAndMerge(new ArrayList<LogicalPlan>(transfered.values()),c);
-      for (LogicalPlan ret : merged.values()) {
+      Map<LogicalPlan,LogicalPlan> merged=PlanMerge.sortAndMerge(new ArrayList<LogicalPlan>(transfered.values()), c);
+      for (LogicalPlan ret : new HashSet<>(merged.values())) {
           System.out.println(c.getMapper().writeValueAsString(ret));
       }
   }

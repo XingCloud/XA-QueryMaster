@@ -8,6 +8,7 @@ import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
 import com.xingcloud.meta.TableInfo;
 import com.xingcloud.qm.enums.Operator;
+import com.xingcloud.qm.result.ResultTable;
 import com.xingcloud.qm.service.LOPComparator;
 import com.xingcloud.qm.service.PlanMerge;
 import com.xingcloud.qm.service.PlanMerge.*;
@@ -156,7 +157,8 @@ public class LogicalPlanUtil {
         selectionMap.put(SELECTION_KEY_WORD_ROWKEY, rkMap);
 
         List<Map<String, UnitFunc>> filterFuncMaps = new ArrayList<>();
-        Map<String, UnitFunc> baseFilterFuncMap = new HashMap<>();
+        List<LogicalExpression> baseFilterExprs=new ArrayList<>();
+        Map<String,UnitFunc> baseFilterFuncMap=new HashMap<>();
         List<Map<String, Object>> projections = new ArrayList<>();
         List<String> projectionExprNames = new ArrayList<>();
         List<String> projectionRefNames = new ArrayList<>();
@@ -181,11 +183,20 @@ public class LogicalPlanUtil {
                 continue;
             }
             filterType=(String)filterMap.get("type");
+            baseFilterExprs.add(config.getMapper().readValue(((JsonNode)filterMap.get("expression")).traverse(),LogicalExpression.class));
             Map<String, UnitFunc> filterFuncMap = parseFilterExpr((JsonNode)filterMap.get("expression"), config);
             filterFuncMaps.add(filterFuncMap);
         }
 
+
         if (needFilter) {
+           FunctionRegistry registry=new FunctionRegistry(config);
+           LogicalExpression filterExpr=registry.createExpression("or",ExpressionPosition.UNKNOWN,baseFilterExprs);
+           Map<String,Object> filter=new HashMap<>();
+           filter.put("type",filterType);
+           filter.put("expression",filterExpr);
+           selectionMap.put(SELECTION_KEY_WORD_FILTER,filter);
+
             baseFilterFuncMap.putAll(filterFuncMaps.get(0));
             for (int i = 1; i < filterFuncMaps.size(); i++) {
                 for (Map.Entry<String, UnitFunc> filterFunc : baseFilterFuncMap.entrySet()) {
@@ -195,19 +206,7 @@ public class LogicalPlanUtil {
                 baseFilterFuncMap.clear();
                 baseFilterFuncMap.putAll(filterFuncMaps.get(0));
             }
-            //String filterExpr="";
-            List<LogicalExpression> args = new ArrayList<>();
-            for (Map.Entry<String, UnitFunc> fitlerFunc : baseFilterFuncMap.entrySet()) {
-                args.add(fitlerFunc.getValue().getFunc());
-            }
-            if (args.size() > 1) {
-                FunctionRegistry registry = new FunctionRegistry(config);
-                LogicalExpression filterExpr = registry.createExpression("&&", ExpressionPosition.UNKNOWN, args);
-                Map<String,Object> filter=new HashMap<>();
-                filter.put("type",filterType);
-                filter.put("expression",config.getMapper().writeValueAsString(filterExpr));
-                selectionMap.put(SELECTION_KEY_WORD_FILTER, filter);
-            }
+
         }
         for (Map<String, UnitFunc> filterFuncMap : filterFuncMaps) {
             for (Map.Entry<String, UnitFunc> filterFunc : filterFuncMap.entrySet()) {
@@ -624,7 +623,7 @@ public class LogicalPlanUtil {
             if (le instanceof FunctionCall) {
                 for(Map.Entry<String,UnitFunc> entry: parseFunctionCall(((FunctionCall) le),config).entrySet()){
                       if(result.containsKey(entry.getKey())){
-                          LogicalExpression old=result.get(field).getFunc();
+                          LogicalExpression old=result.get(entry.getKey()).getFunc();
                           FunctionRegistry registry=new FunctionRegistry(config);
                           FunctionCall call=(FunctionCall)registry.createExpression("&&",ExpressionPosition.UNKNOWN,Arrays.asList(old, entry.getValue().getFunc()));
                           UnitFunc resultFunc=new UnitFunc(call);
