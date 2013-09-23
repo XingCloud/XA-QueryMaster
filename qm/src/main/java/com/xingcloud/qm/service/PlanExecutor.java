@@ -75,9 +75,11 @@ public class PlanExecutor {
       }
       //logger.debug("[PlanString]\n{}", planString);
 
+      logger.info("Plan submit @{}",System.currentTimeMillis());
       for (int i = 0; i < nodes.length; i++) {
         futures.add(drillBitExecutor.submit(new DrillbitCallable2(planString, nodes[i])));
       }
+      logger.info("Plan submit finished @{}",System.currentTimeMillis());
       logger.info("[PLAN-SUBMISSION] - All client submit their queries.");
 
       try {
@@ -98,6 +100,7 @@ public class PlanExecutor {
             failedCause = e;
           }
         }
+        logger.info("All result received @{}",System.currentTimeMillis());
         logger.info("[Receive result] time use - {}",(System.currentTimeMillis() - serverStart));
 
         if (succeeded == 0) {
