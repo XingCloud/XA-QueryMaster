@@ -145,7 +145,7 @@ public class QueryMaster implements QueryListener {
     getProjectQueue(projectID).addAll(submissions);
   }
 
-  private Deque<QuerySubmission> getProjectQueue(String projectID) {
+  private synchronized Deque<QuerySubmission> getProjectQueue(String projectID) {
     Deque<QuerySubmission> projectPlans = perProjectSubmitted.get(projectID);
     if (projectPlans == null) {
       projectPlans = new ArrayDeque<>();
