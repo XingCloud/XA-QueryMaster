@@ -27,7 +27,6 @@
   </logger>
   <logger name="com.xingcloud.qm.service.PlanMerge">
       <level value="debug" />
-      <appender-ref ref="CONSOLE" />
       <appender-ref ref="PLANMERGE" />
   </logger>
   <logger name="com.xingcloud.qm.service.PlanExecutor">
