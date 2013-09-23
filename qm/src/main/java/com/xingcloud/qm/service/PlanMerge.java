@@ -1031,7 +1031,7 @@ public class PlanMerge {
    */
   public static Map<LogicalPlan, LogicalPlan> sortAndMerge(List<LogicalPlan> plans,DrillConfig config) throws Exception {
     long t=System.currentTimeMillis();
-      SimpleDateFormat format=new SimpleDateFormat("ssmmhh-yyyyMMdd");
+      SimpleDateFormat format=new SimpleDateFormat("mmsshh-yyyyMMdd");
     File dir =new File("/home/hadoop/yangbo/planMerges/"+format.format(new Date(t)));
     dir.mkdir();
     File sourcefile=new File(dir.getAbsolutePath()+"/source.log");
@@ -1058,8 +1058,8 @@ public class PlanMerge {
         //GraphVisualize.visualize(pl,"test-rkSplited"+(index++)+".png");
     }
     Map<LogicalPlan,LogicalPlan> mergePlanMap=planMerge.sortAndMergePlans(rkSplitedPlans,config);
-    Set<LogicalPlan> scanMergedPlanSet=new HashSet<>(mergePlanMap.values());
-    List<LogicalPlan> scanMergedPlans=new ArrayList<>(scanMergedPlanSet);
+    Set<LogicalPlan> scanMergedPlanSet=new HashSet<LogicalPlan>(mergePlanMap.values());
+    List<LogicalPlan> scanMergedPlans=new ArrayList<LogicalPlan>(scanMergedPlanSet);
     index=0;
     for(LogicalPlan pl: scanMergedPlans){
 
@@ -1077,9 +1077,12 @@ public class PlanMerge {
         LogicalPlan mergePlanResultPlan=mergePlanMap.get(splitRkResultPlan);
         LogicalPlan mergeToTableScanResultPlan=mergeToTalbeScanMap.get(mergePlanResultPlan);
         //logger.info(config.getMapper().writeValueAsString(mergeToTableScanResultPlan));
-        targetWriter.write("--------------------------------------\n\r");
-        targetWriter.write(config.getMapper().writeValueAsString(mergeToTableScanResultPlan)+"\n\r");
+
         result.put(orig, mergeToTableScanResultPlan);
+    }
+    for(LogicalPlan resultPlan :new HashSet<LogicalPlan>(mergeToTalbeScanMap.values())){
+        targetWriter.write("--------------------------------------\n\r");
+        targetWriter.write(config.getMapper().writeValueAsString(resultPlan)+"\n\r");
     }
     logger.info("merge after ------------------------");
     sourcewriter.flush();

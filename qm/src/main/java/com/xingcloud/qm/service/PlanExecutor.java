@@ -73,7 +73,7 @@ public class PlanExecutor {
         e.printStackTrace();
         return;
       }
-      logger.debug("[PlanString]\n{}", planString);
+      //logger.debug("[PlanString]\n{}", planString);
 
       for (int i = 0; i < nodes.length; i++) {
         futures.add(drillBitExecutor.submit(new DrillbitCallable2(planString, nodes[i])));
