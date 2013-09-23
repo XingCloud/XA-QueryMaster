@@ -992,17 +992,20 @@ public class PlanMerge {
     dir.mkdir();
     File sourcefile=new File(dir.getAbsolutePath()+"/source.log");
     File targetFile=new File(dir.getAbsolutePath()+"/target.log");
-    logger.info("before merge !!!!!!!!!!!");
+    //logger.info("before merge !!!!!!!!!!!");
     Writer sourcewriter=new FileWriter(sourcefile);
-    sourcewriter.write("before merge !!!!!!!!!!!\n\r");
+    long sourceT1=System.currentTimeMillis();
+    sourcewriter.write("MERGE BEFORE\n\r");
     for(LogicalPlan plan : plans){
         //logger.info("-------------------");
         sourcewriter.write("------------------\n\r");
         //logger.info(config.getMapper().writeValueAsString(plan));
         sourcewriter.write(config.getMapper().writeValueAsString(plan)+"\n\r");
     }
-    sourcewriter.write("merge before !!!!!!!!!!!!\n\r");
-    logger.info("merge before !!!!!!!!!!!!");
+    sourcewriter.write("BEFORE MERGE \n\r");
+    long sourceT2=System.currentTimeMillis();
+    logger.info("BEFORE MERGE "+" write source plan to file using "+(sourceT2-sourceT1)+" ms ");
+    long t1=System.currentTimeMillis();
     PlanMerge planMerge = new PlanMerge(plans);
     Map<LogicalPlan,LogicalPlan> splitBigPlanMap=planMerge.splitBigScan(plans,config);
     List<LogicalPlan> bigPlanSplitedPlans=new ArrayList(splitBigPlanMap.values());
@@ -1024,8 +1027,9 @@ public class PlanMerge {
     Map<LogicalPlan,LogicalPlan> mergeToTalbeScanMap=planMerge.mergeToBigScan(scanMergedPlans,config);
     Map<LogicalPlan,LogicalPlan> result=new HashMap<>();
     Writer targetWriter=new FileWriter(targetFile);
+    long t2=System.currentTimeMillis();
 
-    logger.info("after merge ------------------------");
+    logger.info("AFTER MERGE "+" merge using "+(t2-t1)+ " ms ");
     for(Map.Entry<LogicalPlan,LogicalPlan> entry: splitBigPlanMap.entrySet()){
         LogicalPlan orig=entry.getKey();
         LogicalPlan splitBigScanResultPlan=splitBigPlanMap.get(entry.getKey());
@@ -1036,11 +1040,13 @@ public class PlanMerge {
 
         result.put(orig, mergeToTableScanResultPlan);
     }
+    long targetT1= System.currentTimeMillis();
     for(LogicalPlan resultPlan :new HashSet<LogicalPlan>(mergeToTalbeScanMap.values())){
         targetWriter.write("--------------------------------------\n\r");
         targetWriter.write(config.getMapper().writeValueAsString(resultPlan)+"\n\r");
     }
-    logger.info("merge after ------------------------");
+    long targetT2= System.currentTimeMillis();
+    logger.info("write target plans to file. using time "+(targetT2-targetT1)+" ms");
     sourcewriter.flush();
     sourcewriter.close();
     targetWriter.flush();
