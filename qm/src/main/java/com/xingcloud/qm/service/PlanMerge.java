@@ -987,7 +987,7 @@ public class PlanMerge {
    */
   public static Map<LogicalPlan, LogicalPlan> sortAndMerge(List<LogicalPlan> plans,DrillConfig config) throws Exception {
     long t=System.currentTimeMillis();
-      SimpleDateFormat format=new SimpleDateFormat("ssmmhh-yyyyMMdd");
+      SimpleDateFormat format=new SimpleDateFormat("mmsshh-yyyyMMdd");
     File dir =new File("/home/hadoop/yangbo/planMerges/"+format.format(new Date(t)));
     dir.mkdir();
     File sourcefile=new File(dir.getAbsolutePath()+"/source.log");
