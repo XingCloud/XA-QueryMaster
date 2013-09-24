@@ -1,7 +1,9 @@
 package com.xingcloud.qm.utils;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.NullNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.xingcloud.events.XEventOperation;
 import com.xingcloud.events.XEventRange;
 import com.xingcloud.meta.HBaseFieldInfo;
@@ -25,6 +27,7 @@ import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.common.logical.data.*;
 import org.apache.drill.common.util.Selections;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.*;
@@ -42,6 +45,7 @@ import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY_
  * To change this template use File | Settings | File Templates.
  */
 public class LogicalPlanUtil {
+    public static Logger logger=Logger.getLogger(LogicalPlanUtil.class);
     public static String trimSingleQuote(String rkStr) {
         if (rkStr.startsWith("'"))
             rkStr = rkStr.substring(1);
@@ -114,9 +118,9 @@ public class LogicalPlanUtil {
             JsonNode rowkeyRange = selectionRoot.get(Selections.SELECTION_KEY_WORD_ROWKEY);
             Map<String, Object> rkMap = new HashMap<>();
             rkMap.put(Selections.SELECTION_KEY_WORD_ROWKEY_START,
-                    rowkeyRange.get(Selections.SELECTION_KEY_WORD_ROWKEY_START).toString());
+                    rowkeyRange.get(Selections.SELECTION_KEY_WORD_ROWKEY_START).textValue());
             rkMap.put(Selections.SELECTION_KEY_WORD_ROWKEY_END,
-                    rowkeyRange.get(Selections.SELECTION_KEY_WORD_ROWKEY_END).toString());
+                    rowkeyRange.get(Selections.SELECTION_KEY_WORD_ROWKEY_END).textValue());
             selectionMap.put(Selections.SELECTION_KEY_WORD_ROWKEY, rkMap);
             //tail
             JsonNode tailRange= selectionRoot.get(SELECTION_KEY_ROWKEY_TAIL_RANGE);
@@ -157,7 +161,8 @@ public class LogicalPlanUtil {
         selectionMap.put(SELECTION_KEY_WORD_ROWKEY, rkMap);
 
         List<Map<String, UnitFunc>> filterFuncMaps = new ArrayList<>();
-        List<LogicalExpression> baseFilterExprs=new ArrayList<>();
+        List<LogicalExpression> baseFilterExprs;
+        Set<LogicalExpression> baseFilterExprSet=new HashSet<>();
         Map<String,UnitFunc> baseFilterFuncMap=new HashMap<>();
         List<Map<String, Object>> projections = new ArrayList<>();
         List<String> projectionExprNames = new ArrayList<>();
@@ -183,7 +188,7 @@ public class LogicalPlanUtil {
                 continue;
             }
             filterType=(String)filterMap.get("type");
-            baseFilterExprs.add(config.getMapper().readValue(((JsonNode)filterMap.get("expression")).traverse(),LogicalExpression.class));
+            baseFilterExprSet.add(config.getMapper().readValue(((JsonNode)filterMap.get("expression")).traverse(),LogicalExpression.class));
             Map<String, UnitFunc> filterFuncMap = parseFilterExpr((JsonNode)filterMap.get("expression"), config);
             filterFuncMaps.add(filterFuncMap);
         }
@@ -191,7 +196,8 @@ public class LogicalPlanUtil {
 
         if (needFilter) {
            FunctionRegistry registry=new FunctionRegistry(config);
-           LogicalExpression filterExpr=registry.createExpression("or",ExpressionPosition.UNKNOWN,baseFilterExprs);
+           baseFilterExprs=new ArrayList<>(baseFilterExprSet);
+           LogicalExpression filterExpr=baseFilterExprs.size()>1?registry.createExpression("or",ExpressionPosition.UNKNOWN,baseFilterExprs):baseFilterExprs.get(0);
            Map<String,Object> filter=new HashMap<>();
            filter.put("type",filterType);
            filter.put("expression",filterExpr);
@@ -454,8 +460,11 @@ public class LogicalPlanUtil {
 
     public static String getTableName(Scan scan) throws Exception {
         try {
-            return scan.getSelection().getRoot().get(0).get("table").asText();
-
+            if(scan.getSelection().getRoot() instanceof ArrayNode){
+                return scan.getSelection().getRoot().get(0).get(SELECTION_KEY_WORD_TABLE).asText();
+            }else {
+                return scan.getSelection().getRoot().get(SELECTION_KEY_WORD_TABLE).asText();
+            }
         } catch (Exception e) {
             throw new Exception(e);
         }
@@ -465,25 +474,13 @@ public class LogicalPlanUtil {
         String storageEngine = scan.getStorageEngine();
         String tableName = getTableName(scan);
         if (SE_HBASE.equals(storageEngine)) {
-            List<Map<String, Object>> selections = getOrigSelectionMap(scan);
-            for (Map<String, Object> selection : selections) {
-                RowKeyRange range = getRowKeyRangeFromFilter(selection, tableName, config);
-                Map<String, Object> rkRangeMap = new HashMap<>();
-                rkRangeMap.put(SELECTION_KEY_WORD_ROWKEY_START, Bytes.toStringBinary(range.getStartRowKey()));
-                rkRangeMap.put(SELECTION_KEY_WORD_ROWKEY_END, Bytes.toStringBinary(range.getEndRowKey()));
-                selection.put(SELECTION_KEY_WORD_ROWKEY, rkRangeMap);
-                RowKeyRange tailRange= getRkTailRangeFromFilter(selection,tableName,config);
-                if(tailRange==null)
-                    continue;
-                Map<String,Object> tailRangeMap=new HashMap<>();
-                tailRangeMap.put(SELECTION_KEY_ROWKEY_TAIL_START,Bytes.toStringBinary(tailRange.getStartRowKey()));
-                tailRangeMap.put(SELECTION_KEY_ROWKEY_TAIL_END,Bytes.toStringBinary(tailRange.getEndRowKey()));
-                selection.put(SELECTION_KEY_ROWKEY_TAIL_RANGE,tailRangeMap);
+            for(JsonNode selectionNode : scan.getSelection().getRoot()){
+                RowKeyRange range =getRowKeyRangeFromFilter(selectionNode,tableName,config);
+                ObjectNode rkRangeNode=new ObjectNode(JsonNodeFactory.instance);
+                rkRangeNode.put(SELECTION_KEY_WORD_ROWKEY_START,range.getStartRkStr());
+                rkRangeNode.put(SELECTION_KEY_WORD_ROWKEY_END,range.getEndRkStr());
+                ((ObjectNode)selectionNode).put(SELECTION_KEY_WORD_ROWKEY,rkRangeNode);
             }
-            JSONOptions options = buildJsonOptions(selections, config);
-            Scan scan1 = new Scan(storageEngine, options, scan.getOutputReference());
-            scan1.setMemo(scan.getMemo());
-            return scan1;
         }
         return scan;
     }
@@ -512,8 +509,8 @@ public class LogicalPlanUtil {
         return new RowKeyRange(Bytes.toStringBinary(srt),Bytes.toStringBinary(end));
     }
 
-    public static RowKeyRange getRowKeyRangeFromFilter(Map<String, Object> selection, String tableName, DrillConfig config) throws Exception {
-         JsonNode filterNode=(JsonNode)((Map<String,Object>)selection.get(SELECTION_KEY_WORD_FILTER)).get("expression");
+    public static RowKeyRange getRowKeyRangeFromFilter(JsonNode selectionNode, String tableName, DrillConfig config) throws Exception {
+         JsonNode filterNode=selectionNode.get(SELECTION_KEY_WORD_FILTER).get("expression");
          return getRkRange(tableName,filterNode,config);
     }
 
@@ -568,7 +565,10 @@ public class LogicalPlanUtil {
             projectId = tableName.replaceAll("_deu", "");
         else if (tableName.contains("deu_"))
             projectId = tableName.replace("deu_", "");
+        long t1=System.currentTimeMillis(),t2;
         XEventRange range = XEventOperation.getInstance().getEventRange(projectId, event);
+        t2=System.currentTimeMillis();
+        logger.info("get event "+event+" using "+(t2-t1)+" ms");
         String eventFrom = "";
         for (int i = 0; i < range.getFrom().getEventArray().length; i++) {
             String levelEvent = range.getFrom().getEventArray()[i];
@@ -751,10 +751,12 @@ public class LogicalPlanUtil {
 
     public static class RowKeyRange {
         byte[] startRowKey, endRowKey;
-
+        String startRkStr,endRkStr;
         public RowKeyRange(String srk, String enk) {
             this.startRowKey = ByteUtils.toBytesBinary(srk);
             this.endRowKey = ByteUtils.toBytesBinary(enk);
+            this.startRkStr=srk;
+            this.endRkStr=enk;
         }
 
         public byte[] getStartRowKey() {
@@ -763,6 +765,13 @@ public class LogicalPlanUtil {
 
         public byte[] getEndRowKey() {
             return endRowKey;
+        }
+
+        public String getStartRkStr(){
+           return startRkStr;
+        }
+        public String getEndRkStr(){
+            return endRkStr;
         }
 
         public String toString() {
