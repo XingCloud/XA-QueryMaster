@@ -102,6 +102,7 @@ public class PlanMerge {
 
     private Map<LogicalPlan, LogicalPlan> splitScanByRowKey(List<LogicalPlan> origPlans, DrillConfig config) throws Exception {
         sortPlanByProjectId(origPlans);
+        logger.info("enter split Scan by Rk");
         Map<String, ProjectMergeContext> projectCtxMap = splitByTableName();
         List<LogicalPlan> resultPlans = new ArrayList<>();
         Map<LogicalPlan, LogicalPlan> resultPlanMap = new HashMap<>();
@@ -109,7 +110,7 @@ public class PlanMerge {
             @Override
             public int compare(String o1, String o2) {
                 if (o1 == null || o2 == null)
-                    System.out.println("null!!!!!!!");
+                    logger.debug("null!!!!!!!");
                 byte[] rk1 = ByteUtils.toBytesBinary(o1);
                 byte[] rk2 = ByteUtils.toBytesBinary(o2);
                 return Bytes.compareTo(rk1, rk2);
@@ -120,6 +121,7 @@ public class PlanMerge {
             ProjectMergeContext ctx = entry.getValue();
             Map<String, Set<ScanWithPlan>> tableName2Scans = ctx.tableName2Plans;
             Map<ScanWithPlan, List<LogicalOperator>> scan2Los = new HashMap<>();
+            long srt=System.currentTimeMillis(),t1=System.currentTimeMillis(),t2;
             for (Map.Entry<String, Set<ScanWithPlan>> entry1 : tableName2Scans.entrySet()) {
                 String tableName = entry1.getKey();
                 if (!tableName.contains("deu")) continue;
@@ -135,6 +137,7 @@ public class PlanMerge {
                     rkPoints[i * 2 + 1] = ByteUtils.toStringBinary(range.getEndRowKey());
                 }
                 Arrays.sort(rkPoints, rkComprator);
+                t1=System.currentTimeMillis();
                 for (int i = 0; i < rkPoints.length - 1; i++) {
                     RowKeyRange range = new RowKeyRange(rkPoints[i], rkPoints[i + 1]);
                     if (rkPoints[i].equals(rkPoints[i + 1])) continue;
@@ -155,7 +158,9 @@ public class PlanMerge {
                         }
                     }
                 }
-
+                t2=System.currentTimeMillis();
+                logger.info("rkPoint sort using "+(t2-t1)+" ms");
+                t1=System.currentTimeMillis();
                 for (Map.Entry<ScanWithPlan, List<RowKeyRange>> entry2 : scanSplits.entrySet()) {
                     ScanWithPlan swp = entry2.getKey();
                     List<RowKeyRange> rangeList = entry2.getValue();
@@ -211,7 +216,11 @@ public class PlanMerge {
 
                     scan2Los.put(swp, operators);
                 }
+                t2=System.currentTimeMillis();
+                logger.info("produce subs lp using "+(t2-t1)+" ms");
             }
+            long endTime=System.currentTimeMillis();
+            logger.info("sort rkPoints and produce subsitute lp  using "+(endTime-srt)+" ms");
             for (LogicalPlan plan : sortedByProjectID.get(projectId)) {
                 List<LogicalOperator> operators = plan.getSortedOperators();
                 Set<ScanWithPlan> swps = ctx.plan2Swps.get(plan);
@@ -426,19 +435,6 @@ public class PlanMerge {
                     Scan origScan = (Scan) leaf;
                     List<Scan> childScans = new ArrayList<>();
                     if (origScan.getStorageEngine().contains("hbase")) {
-                        /*
-                            List<Map<String,Object>> origMapList=LogicalPlanUtil.getSelectionMap(origScan);
-                            for(Map<String,Object> map: origMapList){
-                                List<Map<String, Object>> mapList = new ArrayList<Map<String, Object>>(1);
-                                mapList.add(map);
-                                ObjectMapper mapper = config.getMapper();
-                                String s = mapper.writeValueAsString(mapList);
-                                JSONOptions childSelection = mapper.readValue(s, JSONOptions.class);
-                                Scan childScan = new Scan(origScan.getStorageEngine(), childSelection, origScan.getOutputReference());
-                                childScan.setMemo(origScan.getMemo());
-                                childScans.add(childScan);
-                            }
-                        */
                         int selectionSize=origScan.getSelection().getRoot().size();
                         if(selectionSize<2)continue;
                         for(JsonNode selectionNode : origScan.getSelection().getRoot()){
@@ -452,24 +448,13 @@ public class PlanMerge {
                         }
                     }
                     if(childScans.size()<2)continue;
-                    LogicalOperator[] splitedScans = new LogicalOperator[childScans.size()];
-                    int i = 0;
-                    for (Scan scan : childScans) {
-                        splitedScans[i++] = scan;
+                    for(LogicalOperator childScan : childScans){
+                        operators.add(childScan);
                     }
-                    if (childScans.size() > 1) {
-                        for (int j = 0; j < splitedScans.length; j++)
-                            operators.add(splitedScans[j]);
-                        Union union = new Union(splitedScans, false);
-                        scanReplaceMap.put(origScan, union);
-                        for (LogicalOperator parent : LogicalPlanUtil.getParents(origScan, plan)) {
-                            LogicalPlanUtil.substituteInParent(origScan, union, parent);
-                        }
-                    } else if (splitedScans.length > 0) {
-                        scanReplaceMap.put(origScan, splitedScans[0]);
-                        for (LogicalOperator parent : LogicalPlanUtil.getParents(origScan, plan)) {
-                            LogicalPlanUtil.substituteInParent(origScan, splitedScans[0], parent);
-                        }
+                    Union union = new Union(childScans.toArray(new LogicalOperator[childScans.size()]), false);
+                    scanReplaceMap.put(origScan, union);
+                    for (LogicalOperator parent : LogicalPlanUtil.getParents(origScan, plan)) {
+                        LogicalPlanUtil.substituteInParent(origScan, union, parent);
                     }
                 }
             }
@@ -965,7 +950,7 @@ public class PlanMerge {
         t2=System.currentTimeMillis();
         logger.info("split big scan "+" using "+(t2-t1)+" ms");
         for(LogicalPlan plan : new HashSet<>(splitBigPlanMap.values())){
-            logger.info("------------");
+            //logger.info("------------");
             //logger.info(config.getMapper().writeValueAsString(plan));
         }
         List<LogicalPlan> bigPlanSplitedPlans = new ArrayList(splitBigPlanMap.values());
@@ -983,16 +968,21 @@ public class PlanMerge {
         for (LogicalPlan pl : rkSplitedPlans) {
             //GraphVisualize.visualize(pl,"test-rkSplited"+(index++)+".png");
         }
+        t1=System.currentTimeMillis();
         Map<LogicalPlan, LogicalPlan> mergePlanMap = planMerge.sortAndMergePlans(rkSplitedPlans, config);
+        t2=System.currentTimeMillis();
         Set<LogicalPlan> scanMergedPlanSet = new HashSet<>(mergePlanMap.values());
         List<LogicalPlan> scanMergedPlans = new ArrayList<>(scanMergedPlanSet);
         index = 0;
-        logger.info("merge plan ");
+        logger.info("merge plan using "+(t2-t1)+" ms");
         for (LogicalPlan plan : scanMergedPlans) {
             //logger.info("------------");
             //logger.info(config.getMapper().writeValueAsString(plan));
         }
+        t1=System.currentTimeMillis();
         Map<LogicalPlan, LogicalPlan> mergeToTableScanMap = planMerge.mergeToBigScan(scanMergedPlans, config);
+        t2=System.currentTimeMillis();
+        logger.info("merge to big scan using "+(t2-t1)+" ms");
         Map<LogicalPlan, LogicalPlan> result = new HashMap<>();
         for (Map.Entry<LogicalPlan, LogicalPlan> entry : splitBigPlanMap.entrySet()) {
             LogicalPlan orig = entry.getKey();

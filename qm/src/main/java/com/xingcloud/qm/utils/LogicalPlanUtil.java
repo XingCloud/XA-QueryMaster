@@ -148,16 +148,18 @@ public class LogicalPlanUtil {
 
     public static Scan getBaseScan(RowKeyRange range, List<ScanWithPlan> swps, DrillConfig config) throws IOException {
 
-        List<Map<String, Object>> selectionMapList = new ArrayList<>();
+        List<JsonNode> selectionNodeList = new ArrayList<>();
         for (ScanWithPlan swp : swps) {
-            selectionMapList.addAll(getSelectionMap(swp.scan));
+            for(JsonNode selectionNode : swp.scan.getSelection().getRoot()){
+                selectionNodeList.add(selectionNode);
+            }
         }
         Map<String, Object> selectionMap = new HashMap<>();
-        selectionMap.put(SELECTION_KEY_WORD_TABLE, selectionMapList.get(0).get(SELECTION_KEY_WORD_TABLE));
+        selectionMap.put(SELECTION_KEY_WORD_TABLE, selectionNodeList.get(0).get(SELECTION_KEY_WORD_TABLE).textValue());
         //RowKey range
         Map<String, Object> rkMap = new HashMap<>();
-        rkMap.put(SELECTION_KEY_WORD_ROWKEY_START, ByteUtils.toStringBinary(range.getStartRowKey()));
-        rkMap.put(SELECTION_KEY_WORD_ROWKEY_END, ByteUtils.toStringBinary(range.getEndRowKey()));
+        rkMap.put(SELECTION_KEY_WORD_ROWKEY_START, range.getStartRkStr());
+        rkMap.put(SELECTION_KEY_WORD_ROWKEY_END, range.getEndRkStr());
         selectionMap.put(SELECTION_KEY_WORD_ROWKEY, rkMap);
 
         List<Map<String, UnitFunc>> filterFuncMaps = new ArrayList<>();
@@ -169,27 +171,30 @@ public class LogicalPlanUtil {
         List<String> projectionRefNames = new ArrayList<>();
         boolean needFilter = true;
         String filterType=null;
-        for (Map<String, Object> selection : selectionMapList) {
-            List<Map<String, Object>> selectionProjections =
-                    (List<Map<String, Object>>) selection.get(SELECTION_KEY_WORD_PROJECTIONS);
-            for (Map<String, Object> projection : selectionProjections) {
-                String exprName = (String) projection.get("expr");
-                String refName = (String) projection.get("ref");
+        for (JsonNode selectionNode : selectionNodeList) {
+            JsonNode ProjectionsNode =
+                     selectionNode.get(SELECTION_KEY_WORD_PROJECTIONS);
+            for ( JsonNode projection : ProjectionsNode) {
+                String exprName = projection.get("expr").textValue();
+                String refName = projection.get("ref").textValue();
                 if (projectionExprNames.contains(exprName) && projectionRefNames.contains(refName))
                     continue;
                 projectionExprNames.add(exprName);
                 projectionRefNames.add(refName);
-                projections.add(projection);
+                Map<String,Object> projectionEntryMap=new HashMap<>();
+                projectionEntryMap.put("expr",exprName);
+                projectionEntryMap.put("ref",refName);
+                projections.add(projectionEntryMap);
             }
 
-            Map<String,Object> filterMap = (Map<String,Object>) selection.get(SELECTION_KEY_WORD_FILTER);
-            if (filterMap == null) {
+            JsonNode filterNode = selectionNode.get(SELECTION_KEY_WORD_FILTER);
+            if (filterNode == null || filterNode instanceof NullNode) {
                 needFilter = false;
                 continue;
             }
-            filterType=(String)filterMap.get("type");
-            baseFilterExprSet.add(config.getMapper().readValue(((JsonNode)filterMap.get("expression")).traverse(),LogicalExpression.class));
-            Map<String, UnitFunc> filterFuncMap = parseFilterExpr((JsonNode)filterMap.get("expression"), config);
+            filterType=filterNode.get("type").textValue();
+            baseFilterExprSet.add(config.getMapper().readValue((filterNode.get("expression")).traverse(),LogicalExpression.class));
+            Map<String, UnitFunc> filterFuncMap = parseFilterExpr(filterNode.get("expression"), config);
             filterFuncMaps.add(filterFuncMap);
         }
 
@@ -515,7 +520,7 @@ public class LogicalPlanUtil {
     }
 
     public static RowKeyRange getRkRange(String tableName,JsonNode filter,DrillConfig config) throws Exception {
-        List<KeyPart> kps = TableInfo.getRowKey(tableName, null);
+        List<KeyPart> kps = MetaUtil.getInstance().getTableRkKps(tableName);
         String srkHead = "", enkHead = "";
         String event = "";
         Map<String, UnitFunc> fieldFunc = parseFilterExpr(filter, config);

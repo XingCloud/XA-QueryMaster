@@ -82,7 +82,7 @@ public class TestPlanMerge {
       t1=System.currentTimeMillis();
       Map<LogicalPlan,LogicalPlan> merged=PlanMerge.sortAndMerge(new ArrayList<LogicalPlan>(transfered.values()), c);
       t2=System.currentTimeMillis();
-      logger.info("transfer using "+(t2-t1)+ " ms");
+      logger.info("merge using "+(t2-t1)+ " ms");
       int index=0;
       logger.info("final result");
       for (LogicalPlan ret : new HashSet<>(merged.values())) {
