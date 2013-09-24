@@ -433,13 +433,13 @@ public class PlanMerge {
                 List<Object> filters=new ArrayList<>();
               for(JsonNode filterNode : selection.get(SELECTION_KEY_WORD_FILTERS)){
                  Map<String,Object> filter=new HashMap<>();
-                 String filterType=filterNode.get(SELECTION_KEY_WORD_FILTER_TYPE).textValue();
-                 if(!filterType.toLowerCase().contains("rowkey"))
-                 {
-                     filters.add(filterNode);
-                     continue;
-                 }
-                 filter.put(SELECTION_KEY_WORD_FILTER_TYPE,filterNode.get(SELECTION_KEY_WORD_FILTER_TYPE));
+//                 String filterType=filterNode.get(SELECTION_KEY_WORD_FILTER_TYPE).textValue();
+//                 if(!filterType.toLowerCase().contains("rowkey"))
+//                 {
+//                     filters.add(filterNode);
+//                     continue;
+//                 }
+//                 filter.put(SELECTION_KEY_WORD_FILTER_TYPE,filterNode.get(SELECTION_KEY_WORD_FILTER_TYPE));
                  if(filterNode.get(SELECTION_KEY_WORD_ROWKEY_EVENT_MAPPING)!=null)
                     filter.put(SELECTION_KEY_WORD_ROWKEY_EVENT_MAPPING,filterNode.get(SELECTION_KEY_WORD_ROWKEY_EVENT_MAPPING));
                  List<String> includeExprs=new ArrayList<>();
