@@ -156,6 +156,7 @@ public class LogicalPlanUtil {
             for(int i=0;i<swps.size();i++){
                 JSONOptions selection=swps.get(i).scan.getSelection();
                 JsonNode selectionNode=selection.getRoot().get(0);
+                String se = swps.get(i).scan.getStorageEngine();
 
                 JsonNode filters=selectionNode.get(SELECTION_KEY_WORD_FILTERS);
                 if(i!=0){
@@ -179,8 +180,8 @@ public class LogicalPlanUtil {
                     continue;
                 }
                 for(JsonNode filter : filters){
-                    String type=filter.get(SELECTION_KEY_WORD_FILTER_TYPE).toString();
-                    if(type.contains("ROWKEY")){
+                    //String type=filter.get(SELECTION_KEY_WORD_FILTER_TYPE).toString();
+                    if(se.contains("hbase")) {
                         JsonNode patternIncludes=filter.get(Selections.SELECTION_KEY_WORD_ROWKEY_INCLUDES);
                         for(JsonNode pattern: patternIncludes){
                             if(!patterns.contains(pattern.textValue()))
@@ -198,7 +199,7 @@ public class LogicalPlanUtil {
 
                             if(!addePprojections.contains(ne))addePprojections.add(ne);
                         }
-                    }else {
+                    } else {
                         JsonNode includes=filter.get(SELECTION_KEY_WORD_ROWKEY_INCLUDES);
                         for(JsonNode filterExpr : includes){
                             LogicalExpression le=config.getMapper().readValue(filterExpr.toString(),LogicalExpression.class);
@@ -211,8 +212,6 @@ public class LogicalPlanUtil {
                         }
                     }
                 }
-                //JsonNode patternFilter=filters.get(0);
-
 
             }
             if(needFilter){
