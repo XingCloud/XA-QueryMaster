@@ -447,10 +447,8 @@ public class PlanMerge {
                             childScans.add(childScan);
                         }
                     }
-                    if(childScans.size()<2)continue;
-                    for(LogicalOperator childScan : childScans){
-                        operators.add(childScan);
-                    }
+                    if(childScans.size()<2) continue;
+                    operators.addAll(childScans);
                     Union union = new Union(childScans.toArray(new LogicalOperator[childScans.size()]), false);
                     scanReplaceMap.put(origScan, union);
                     for (LogicalOperator parent : LogicalPlanUtil.getParents(origScan, plan)) {
@@ -460,9 +458,8 @@ public class PlanMerge {
             }
 
             for (LogicalOperator op : plan.getSortedOperators()) {
-                if (scanReplaceMap.containsKey(op))
-                    operators.add(scanReplaceMap.get(op));
-                else
+                LogicalOperator subs=scanReplaceMap.get(op);
+                if(subs!=null)
                     operators.add(op);
             }
 
