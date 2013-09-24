@@ -460,6 +460,8 @@ public class PlanMerge {
             for (LogicalOperator op : plan.getSortedOperators()) {
                 LogicalOperator subs=scanReplaceMap.get(op);
                 if(subs!=null)
+                    operators.add(subs);
+                else
                     operators.add(op);
             }
 

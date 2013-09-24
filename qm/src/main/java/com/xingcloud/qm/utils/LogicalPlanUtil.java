@@ -162,13 +162,13 @@ public class LogicalPlanUtil {
         rkMap.put(SELECTION_KEY_WORD_ROWKEY_END, range.getEndRkStr());
         selectionMap.put(SELECTION_KEY_WORD_ROWKEY, rkMap);
 
-        List<Map<String, UnitFunc>> filterFuncMaps = new ArrayList<>();
+        List<List<String>> filterFields = new ArrayList<>();
         List<LogicalExpression> baseFilterExprs;
         Set<LogicalExpression> baseFilterExprSet=new HashSet<>();
-        Map<String,UnitFunc> baseFilterFuncMap=new HashMap<>();
-        List<Map<String, Object>> projections = new ArrayList<>();
-        List<String> projectionExprNames = new ArrayList<>();
-        List<String> projectionRefNames = new ArrayList<>();
+        List<String> baseFilterFields=new ArrayList<>();
+        List<Object> projections = new ArrayList<>();
+        List<String> projectionExprNames = new ArrayList<>(),projectionRefNames = new ArrayList<>();
+
         boolean needFilter = true;
         String filterType=null;
         for (JsonNode selectionNode : selectionNodeList) {
@@ -181,10 +181,7 @@ public class LogicalPlanUtil {
                     continue;
                 projectionExprNames.add(exprName);
                 projectionRefNames.add(refName);
-                Map<String,Object> projectionEntryMap=new HashMap<>();
-                projectionEntryMap.put("expr",exprName);
-                projectionEntryMap.put("ref",refName);
-                projections.add(projectionEntryMap);
+                projections.add(projection);
             }
 
             JsonNode filterNode = selectionNode.get(SELECTION_KEY_WORD_FILTER);
@@ -195,40 +192,40 @@ public class LogicalPlanUtil {
             filterType=filterNode.get("type").textValue();
             baseFilterExprSet.add(config.getMapper().readValue((filterNode.get("expression")).traverse(),LogicalExpression.class));
             Map<String, UnitFunc> filterFuncMap = parseFilterExpr(filterNode.get("expression"), config);
-            filterFuncMaps.add(filterFuncMap);
+            filterFields.add(new ArrayList<>(filterFuncMap.keySet()));
         }
 
 
         if (needFilter) {
-           FunctionRegistry registry=new FunctionRegistry(config);
-           baseFilterExprs=new ArrayList<>(baseFilterExprSet);
-           LogicalExpression filterExpr=baseFilterExprs.size()>1?registry.createExpression("or",ExpressionPosition.UNKNOWN,baseFilterExprs):baseFilterExprs.get(0);
-           Map<String,Object> filter=new HashMap<>();
-           filter.put("type",filterType);
-           filter.put("expression",filterExpr);
-           selectionMap.put(SELECTION_KEY_WORD_FILTER,filter);
+            FunctionRegistry registry = new FunctionRegistry(config);
+            baseFilterExprs = new ArrayList<>(baseFilterExprSet);
+            LogicalExpression filterExpr = baseFilterExprs.size() > 1 ? registry.createExpression("or", ExpressionPosition.UNKNOWN, baseFilterExprs) : baseFilterExprs.get(0);
+            Map<String, Object> filter = new HashMap<>();
+            filter.put("type", filterType);
+            filter.put("expression", filterExpr);
+            selectionMap.put(SELECTION_KEY_WORD_FILTER, filter);
 
-            baseFilterFuncMap.putAll(filterFuncMaps.get(0));
-            for (int i = 1; i < filterFuncMaps.size(); i++) {
-                for (Map.Entry<String, UnitFunc> filterFunc : baseFilterFuncMap.entrySet()) {
-                    if (!filterFuncMaps.get(i).containsKey(filterFunc.getKey()))
-                        filterFuncMaps.get(0).remove(filterFunc.getKey());
+            baseFilterFields.addAll(filterFields.get(0));
+            for (int i = 1; i < filterFields.size(); i++) {
+                for (String field : baseFilterFields) {
+                    if (!filterFields.get(i).contains(field))
+                        filterFields.get(0).remove(field);
                 }
-                baseFilterFuncMap.clear();
-                baseFilterFuncMap.putAll(filterFuncMaps.get(0));
+                baseFilterFields.clear();
+                baseFilterFields.addAll(filterFields.get(0));
             }
 
         }
-        for (Map<String, UnitFunc> filterFuncMap : filterFuncMaps) {
-            for (Map.Entry<String, UnitFunc> filterFunc : filterFuncMap.entrySet()) {
-                if (!baseFilterFuncMap.containsKey(filterFunc.getKey())) {
-                    if (projectionExprNames.contains(filterFunc.getKey()) && projectionRefNames.contains(filterFunc.getKey()))
+        for (List<String> fields : filterFields) {
+            for (String field : fields) {
+                if (!baseFilterFields.contains(field)) {
+                    if (projectionExprNames.contains(field) && projectionRefNames.contains(field))
                         continue;
                     Map<String, Object> projectionMap = new HashMap<>();
                     projections.add(projectionMap);
-                    projectionMap.put(filterFunc.getKey(), filterFunc.getKey());
-                    projectionExprNames.add(filterFunc.getKey());
-                    projectionRefNames.add(filterFunc.getKey());
+                    projectionMap.put(field, field);
+                    projectionExprNames.add(field);
+                    projectionRefNames.add(field);
                 }
             }
         }
