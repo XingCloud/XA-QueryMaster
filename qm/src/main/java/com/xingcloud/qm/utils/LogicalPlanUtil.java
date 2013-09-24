@@ -72,8 +72,8 @@ public class LogicalPlanUtil {
                 List<Object> filterList=new ArrayList<>();
                 for(JsonNode node: filters){
                     Map<String,Object> filterFieldMap=new HashMap<>();
-                    String filterType=node.get(Selections.SELECTION_KEY_WORD_FILTER_TYPE).textValue();
-                    filterFieldMap.put(Selections.SELECTION_KEY_WORD_FILTER_TYPE,filterType);
+//                    String filterType=node.get(Selections.SELECTION_KEY_WORD_FILTER_TYPE).textValue();
+//                    filterFieldMap.put(Selections.SELECTION_KEY_WORD_FILTER_TYPE,filterType);
                     JsonNode includes=node.get(Selections.SELECTION_KEY_WORD_ROWKEY_INCLUDES);
                     List<Object> exprs=new ArrayList<>();
                     for(JsonNode node1: includes){
