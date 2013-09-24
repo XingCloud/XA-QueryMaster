@@ -167,7 +167,6 @@ public class QueryMaster implements QueryListener {
       if (!submitted.containsKey(queryID)) {
         throw new IllegalArgumentException("queryID:" + queryID + " not in submitted pool!");
       }
-      submitted.remove(queryID);
       String key = queryID;
       if (basicQuery.e != null) {
         logger.warn("execution failed!", basicQuery.e);
@@ -214,6 +213,7 @@ public class QueryMaster implements QueryListener {
           }
         }
       }
+      submitted.remove(queryID);
     }
   }
 
