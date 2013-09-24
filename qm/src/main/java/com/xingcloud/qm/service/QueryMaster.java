@@ -1,5 +1,7 @@
 package com.xingcloud.qm.service;
 
+import static com.xingcloud.qm.remote.QueryNode.LOCAL_DEFAULT_DRILL_CONFIG;
+
 import com.xingcloud.maincache.MapXCache;
 import com.xingcloud.maincache.XCacheException;
 import com.xingcloud.maincache.XCacheOperator;
@@ -64,7 +66,7 @@ public class QueryMaster implements QueryListener {
 
   //public Map<String,QuerySubmission> executingPlans
 
-  private Scheduler scheduler = new Scheduler("QueryMaster-Scheduler", DrillConfig.create());
+  private Scheduler scheduler = new Scheduler("QueryMaster-Scheduler", LOCAL_DEFAULT_DRILL_CONFIG);
 
   public static QueryMaster getInstance() {
     return instance;
@@ -184,7 +186,7 @@ public class QueryMaster implements QueryListener {
         if (((BasicQuerySubmission) query).value.isEmpty()) {
           logger.info("[X-CACHE] - Result of {} is empty", key);
           try {
-            xCache = MapXCache.buildMapXCache(key,null);
+            xCache = MapXCache.buildMapXCache(key, null);
           } catch (XCacheException e) {
             e.printStackTrace();
           }

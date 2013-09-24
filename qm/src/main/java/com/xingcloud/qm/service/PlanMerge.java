@@ -1051,29 +1051,34 @@ public class PlanMerge {
     logger.info("BEFORE MERGE "+" write source plan to file using "+(sourceT2-sourceT1)+" ms ");
     long t1=System.currentTimeMillis();
     PlanMerge planMerge = new PlanMerge(plans);
+    long splitBigTime1=System.currentTimeMillis();
     Map<LogicalPlan,LogicalPlan> splitBigPlanMap=planMerge.splitBigScan(plans,config);
+    long splitBigTime2=System.currentTimeMillis();
+    logger.info("split Big Scan using "+(splitBigTime2-splitBigTime1)+" ms");
     List<LogicalPlan> bigPlanSplitedPlans=new ArrayList(splitBigPlanMap.values());
+    long splitRkTime1=System.currentTimeMillis();
     Map<LogicalPlan,LogicalPlan> splitRkPlanMap=
             planMerge.splitScanByRowKey(bigPlanSplitedPlans,config);
+    long splitRkTime2=System.currentTimeMillis();
+    logger.info("split Rk using "+(splitRkTime1-splitRkTime2)+" ms");
     List<LogicalPlan> rkSplitedPlans=new ArrayList<>(splitRkPlanMap.values());
-    int index=0;
-    for(LogicalPlan pl: rkSplitedPlans){
-        //GraphVisualize.visualize(pl,"test-rkSplited"+(index++)+".png");
-    }
+    long mergeTime1=System.currentTimeMillis();
     Map<LogicalPlan,LogicalPlan> mergePlanMap=planMerge.sortAndMergePlans(rkSplitedPlans,config);
+    long mergeTime2=System.currentTimeMillis();
+    logger.info("merge using "+(mergeTime2-mergeTime1)+" ms");
     Set<LogicalPlan> scanMergedPlanSet=new HashSet<LogicalPlan>(mergePlanMap.values());
     List<LogicalPlan> scanMergedPlans=new ArrayList<LogicalPlan>(scanMergedPlanSet);
-    index=0;
-    for(LogicalPlan pl: scanMergedPlans){
-
-          //GraphVisualize.visualize(pl,"test-scanMerged"+(index++)+".png");
-    }
+    long mergeToUnitScanTime1=System.currentTimeMillis();
     Map<LogicalPlan,LogicalPlan> mergeToTalbeScanMap=planMerge.mergeToBigScan(scanMergedPlans,config);
+    long mergeToUnitScanTime2=System.currentTimeMillis();
+    logger.info("merge to Unit Scan using "+(mergeToUnitScanTime2-mergeToUnitScanTime1)+" ms");
+    long t2=System.currentTimeMillis();
+    logger.info("AFTER MERGE "+" merge using "+(t2-t1)+ " ms "+ "output to "+dir.getCanonicalPath());
     Map<LogicalPlan,LogicalPlan> result=new HashMap<>();
     Writer targetWriter=new FileWriter(targetFile);
-    long t2=System.currentTimeMillis();
 
-    logger.info("AFTER MERGE "+" merge using "+(t2-t1)+ " ms ");
+
+
     for(Map.Entry<LogicalPlan,LogicalPlan> entry: splitBigPlanMap.entrySet()){
         LogicalPlan orig=entry.getKey();
         LogicalPlan splitBigScanResultPlan=splitBigPlanMap.get(entry.getKey());

@@ -1,10 +1,11 @@
 package com.xingcloud.qm.web.servlet;
 
+import static com.xingcloud.qm.remote.QueryNode.LOCAL_DEFAULT_DRILL_CONFIG;
+
 import com.caucho.hessian.server.HessianServlet;
 import com.xingcloud.qm.exceptions.XRemoteQueryException;
 import com.xingcloud.qm.service.QueryMaster;
 import com.xingcloud.qm.service.Submit;
-import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.log4j.Logger;
 
@@ -26,7 +27,7 @@ public class QueryBossServlet extends HessianServlet implements Submit {
         return false;
       case PLAN:
         try {
-          LogicalPlan plan = DrillConfig.create().getMapper().readValue(content, LogicalPlan.class);
+          LogicalPlan plan = LOCAL_DEFAULT_DRILL_CONFIG.getMapper().readValue(content, LogicalPlan.class);
           if (QueryMaster.getInstance().submit(cacheKey, plan)) {
             LOGGER.info("[WS-SUBMIT] Logical plan is submitted - " + cacheKey);
             return true;
@@ -55,7 +56,7 @@ public class QueryBossServlet extends HessianServlet implements Submit {
           String planString = entry.getValue();
 
           try {
-            LogicalPlan plan = DrillConfig.create().getMapper().readValue(planString, LogicalPlan.class);
+            LogicalPlan plan = LOCAL_DEFAULT_DRILL_CONFIG.getMapper().readValue(planString, LogicalPlan.class);
             batchPlan.put(cacheId, plan);
           } catch (IOException e) {
             throw new XRemoteQueryException(e);

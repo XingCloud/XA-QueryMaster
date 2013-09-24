@@ -86,7 +86,6 @@ public class PlanExecutor {
         //在有drillbit计算失败的情况下，使用剩下的结果作为估计值
         int succeeded = 0;
         Exception failedCause = null;
-        long serverStart = System.currentTimeMillis() ;
         for (Future<List<QueryResultBatch>> future : futures) {
           try {
             List<QueryResultBatch> batches = future.get();
@@ -98,8 +97,6 @@ public class PlanExecutor {
             failedCause = e;
           }
         }
-        logger.info("[Receive result] time use - {}",(System.currentTimeMillis() - serverStart));
-
         if (succeeded == 0) {
           submission.e = failedCause;
           submission.queryID2Table = null;
@@ -199,15 +196,15 @@ public class PlanExecutor {
       List<QueryResultBatch> result = null;
       DrillClient client = node.getDrillClient();
       if (client.reconnect()) {
-        long t1 = System.nanoTime(), t2;
+        long t1 = System.currentTimeMillis(), t2;
         try {
           result = client
             .runQuery(UserProtos.QueryType.LOGICAL, plan, QMConfig.conf().getLong(QMConfig.DRILL_EXEC_TIMEOUT));
         } catch (Exception e) {
           throw e;
         }
-        t2 = System.nanoTime();
-        logger.info("[PlanExec] - Single node["+node.getId()+"] future get use " + (t2 - t1) / 1000000 + " milliseconds.");
+        t2 = System.currentTimeMillis();
+        logger.info("[PlanExec] - Single node[{}] submit query at {},receive result at {} ,cost {} . ",node.getId(),t1,t2,(t2 - t1));
       } else {
         logger.info("[DrillbitCallable2] - Cannot connect to server.");
       }
