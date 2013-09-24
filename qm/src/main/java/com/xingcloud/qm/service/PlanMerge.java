@@ -433,7 +433,7 @@ public class PlanMerge {
                 List<Object> filters=new ArrayList<>();
               for(JsonNode filterNode : selection.get(SELECTION_KEY_WORD_FILTERS)){
                  Map<String,Object> filter=new HashMap<>();
-                 String filterType=filterNode.get(SELECTION_KEY_WORD_FILTER_TYPE).textValue();
+//                 String filterType=filterNode.get(SELECTION_KEY_WORD_FILTER_TYPE).textValue();
 //                 if(!filterType.toLowerCase().contains("rowkey"))
 //                 {
 //                     filters.add(filterNode);
