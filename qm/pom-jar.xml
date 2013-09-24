@@ -31,7 +31,7 @@
   <!-- Building config -->
   <build>
     <defaultGoal>package</defaultGoal>
-    <finalName>${project.artifactId}</finalName>
+    <finalName>${project.artifactId}.${project.version}</finalName>
     <!-- Resources of app -->
     <resources>
       <resource>
