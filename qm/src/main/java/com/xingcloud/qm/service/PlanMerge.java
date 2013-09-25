@@ -1005,6 +1005,8 @@ public class PlanMerge {
     sourcewriter.write("BEFORE MERGE \n\r");
     long sourceT2=System.currentTimeMillis();
     logger.info("BEFORE MERGE "+" write source plan to file using "+(sourceT2-sourceT1)+" ms ");
+    sourcewriter.flush();
+    sourcewriter.close();
     long t1=System.currentTimeMillis();
     PlanMerge planMerge = new PlanMerge(plans);
     long splitBigTime1=System.currentTimeMillis();
@@ -1052,8 +1054,7 @@ public class PlanMerge {
     }
     long targetT2= System.currentTimeMillis();
     logger.info("write target plans to file. using time "+(targetT2-targetT1)+" ms");
-    sourcewriter.flush();
-    sourcewriter.close();
+
     targetWriter.flush();
     targetWriter.close();
     return result;
