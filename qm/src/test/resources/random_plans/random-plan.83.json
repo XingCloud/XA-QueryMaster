@@ -4,14 +4,14 @@
     version : 1,
     generator : {
       type : "AUTO",
-      info : "age"
+      info : "xaa"
     }
   },
   storage : { },
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "Table=age.ref",
+    memo : "Table=xaa.ref",
     storageengine : "mysql",
     selection : {
       projections : [ {
@@ -21,19 +21,19 @@
         ref : "ref",
         expr : "val"
       } ],
-      table : "age.ref"
+      table : "xaa.ref"
     },
     ref : "user"
   }, {
     op : "scan",
     @id : 2,
-    memo : "deu_age,2013-08-13,2013-08-21,pay.*",
+    memo : "deu_xaa,2013-08-11,2013-08-18,tomcat.descriptor.build.*",
     storageengine : "hbase",
     selection : [ {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130813') )  && ( (event0)  == ('pay') ) "
+        expression : " ( ( ( (event2)  == ('build') )  && ( (date)  == ('20130811') ) )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('descriptor') ) "
       },
       projections : [ {
         ref : "uid",
@@ -43,10 +43,10 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130814') )  && ( (event0)  == ('pay') ) "
+        expression : " ( ( ( (event2)  == ('build') )  && ( (date)  == ('20130812') ) )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('descriptor') ) "
       },
       projections : [ {
         ref : "uid",
@@ -56,10 +56,10 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130815') )  && ( (event0)  == ('pay') ) "
+        expression : " ( ( ( (event2)  == ('build') )  && ( (date)  == ('20130813') ) )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('descriptor') ) "
       },
       projections : [ {
         ref : "uid",
@@ -69,10 +69,10 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130816') )  && ( (event0)  == ('pay') ) "
+        expression : " ( ( ( (event2)  == ('build') )  && ( (date)  == ('20130814') ) )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('descriptor') ) "
       },
       projections : [ {
         ref : "uid",
@@ -82,10 +82,10 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130817') )  && ( (event0)  == ('pay') ) "
+        expression : " ( ( ( (event2)  == ('build') )  && ( (date)  == ('20130815') ) )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('descriptor') ) "
       },
       projections : [ {
         ref : "uid",
@@ -95,10 +95,10 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130818') )  && ( (event0)  == ('pay') ) "
+        expression : " ( ( ( (event2)  == ('build') )  && ( (date)  == ('20130816') ) )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('descriptor') ) "
       },
       projections : [ {
         ref : "uid",
@@ -108,10 +108,10 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130819') )  && ( (event0)  == ('pay') ) "
+        expression : " ( ( ( (event2)  == ('build') )  && ( (date)  == ('20130817') ) )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('descriptor') ) "
       },
       projections : [ {
         ref : "uid",
@@ -121,23 +121,10 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130820') )  && ( (event0)  == ('pay') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130821') )  && ( (event0)  == ('pay') ) "
+        expression : " ( ( ( (event2)  == ('build') )  && ( (date)  == ('20130818') ) )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('descriptor') ) "
       },
       projections : [ {
         ref : "uid",
@@ -191,7 +178,7 @@
     input : 5,
     projections : [ {
       ref : "query_id",
-      expr : "'GROUP,age,2013-08-13,2013-08-21,pay.*,TOTAL_USER,VF-ALL-0-0,USER_PROPERTIES,ref'"
+      expr : "'GROUP,xaa,2013-08-11,2013-08-18,tomcat.descriptor.build.*,TOTAL_USER,VF-ALL-0-0,USER_PROPERTIES,ref'"
     }, {
       ref : "dimension",
       expr : "dimension"

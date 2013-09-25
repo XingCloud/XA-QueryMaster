@@ -11,6 +11,9 @@ import org.apache.drill.common.logical.LogicalPlan;
 import org.junit.Test;
 import org.apache.log4j.Logger;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.Writer;
 import java.util.*;
 
 public class TestPlanMerge {
@@ -59,6 +62,7 @@ public class TestPlanMerge {
           }
       }
       */
+      for(int j=0;j<3;j++){
       logger.info("test logger");
       List<LogicalPlan> plans=new ArrayList<>();
       for(int i=0;i<100;i++){
@@ -85,9 +89,19 @@ public class TestPlanMerge {
       logger.info("merge using "+(t2-t1)+ " ms");
       int index=0;
       logger.info("final result");
+      File dir=new File("/home/yb/workspace/gitdata/incubator-drill/sandbox/prototype/exec/java-exec/src/test/resources/qmplans");
+      dir.mkdir();
       for (LogicalPlan ret : new HashSet<>(merged.values())) {
-          //System.out.println(c.getMapper().writeValueAsString(ret));
+          String planStr=c.getMapper().writeValueAsString(ret);
+          LogicalPlan result=c.getMapper().readValue(planStr,LogicalPlan.class);
+          //logger.info(planStr);
+          File targetFile=new File(dir.getAbsolutePath()+"/"+(++index)+".json");
+          Writer writer=new FileWriter(targetFile);
+          writer.write(planStr);
+          writer.flush();
+          writer.close();
           GraphVisualize.visualizeMX(ret, "test"+(++index)+".svg");
+      }
       }
   }
 

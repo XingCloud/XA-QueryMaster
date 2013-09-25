@@ -4,20 +4,20 @@
     version : 1,
     generator : {
       type : "AUTO",
-      info : "age"
+      info : "xaa"
     }
   },
   storage : { },
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "deu_age,2013-08-03,2013-08-03,pay.*",
+    memo : "deu_xaa,2013-07-27,2013-07-27,response.*.*.*.error",
     storageengine : "hbase",
     selection : [ {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130803') )  && ( (event0)  == ('pay') ) "
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130727') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -63,7 +63,7 @@
     input : 3,
     projections : [ {
       ref : "query_id",
-      expr : "'COMMON,age,2013-08-03,2013-08-03,pay.*,TOTAL_USER,VF-ALL-0-0,HOUR'"
+      expr : "'COMMON,xaa,2013-07-27,2013-07-27,response.*.*.*.error,TOTAL_USER,VF-ALL-0-0,HOUR'"
     }, {
       ref : "dimension",
       expr : "hour(dimension)"

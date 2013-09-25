@@ -4,36 +4,20 @@
     version : 1,
     generator : {
       type : "AUTO",
-      info : "age"
+      info : "xaa"
     }
   },
   storage : { },
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "Table=age.ref",
-    storageengine : "mysql",
-    selection : {
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "ref",
-        expr : "val"
-      } ],
-      table : "age.ref"
-    },
-    ref : "user"
-  }, {
-    op : "scan",
-    @id : 2,
-    memo : "Scan(Table=age.register_time, Prop=register_time, Val={LTE=2013-07-01, GTE=2013-07-01})",
+    memo : "Scan(Table=xaa.identifier, Prop=identifier, Val={EQ=android.global.s77})",
     storageengine : "mysql",
     selection : [ {
-      table : "age.register_time",
+      table : "xaa.identifier",
       filter : {
         type : "VAL",
-        expression : " ( (val)  <= (20130701235959) )  && ( (val)  >= (20130701000000) ) "
+        expression : " (val)  == ('android.global.s77') "
       },
       projections : [ {
         ref : "uid",
@@ -43,14 +27,14 @@
     ref : "user"
   }, {
     op : "scan",
-    @id : 3,
-    memo : "deu_age,2013-08-17,2013-08-26,visit.*",
+    @id : 2,
+    memo : "deu_xaa,2013-08-06,2013-08-09,tomcat.exception.*",
     storageengine : "hbase",
     selection : [ {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130817') )  && ( (event0)  == ('visit') ) "
+        expression : " ( ( (date)  == ('20130806') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('exception') ) "
       },
       projections : [ {
         ref : "uid",
@@ -60,10 +44,10 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130818') )  && ( (event0)  == ('visit') ) "
+        expression : " ( ( (date)  == ('20130807') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('exception') ) "
       },
       projections : [ {
         ref : "uid",
@@ -73,10 +57,10 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130819') )  && ( (event0)  == ('visit') ) "
+        expression : " ( ( (date)  == ('20130808') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('exception') ) "
       },
       projections : [ {
         ref : "uid",
@@ -86,88 +70,10 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130820') )  && ( (event0)  == ('visit') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130821') )  && ( (event0)  == ('visit') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130822') )  && ( (event0)  == ('visit') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130823') )  && ( (event0)  == ('visit') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130824') )  && ( (event0)  == ('visit') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130825') )  && ( (event0)  == ('visit') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130826') )  && ( (event0)  == ('visit') ) "
+        expression : " ( ( (date)  == ('20130809') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('exception') ) "
       },
       projections : [ {
         ref : "uid",
@@ -180,9 +86,9 @@
     ref : "event"
   }, {
     op : "join",
-    @id : 4,
-    left : 2,
-    right : 3,
+    @id : 3,
+    left : 1,
+    right : 2,
     conditions : [ {
       relationship : "==",
       left : "uid",
@@ -190,32 +96,12 @@
     } ],
     type : "INNER"
   }, {
-    op : "join",
-    @id : 5,
-    left : 1,
-    right : 4,
-    conditions : [ {
-      relationship : "==",
-      left : "uid",
-      right : "uid"
-    } ],
-    type : "RIGHT"
-  }, {
-    op : "segment",
-    @id : 6,
-    input : 5,
-    exprs : [ {
-      ref : "dimension",
-      expr : "ref"
-    } ],
-    name : "sgmt"
-  }, {
     op : "collapsingaggregate",
-    @id : 7,
-    input : 6,
-    within : "sgmt",
+    @id : 4,
+    input : 3,
+    within : null,
     target : null,
-    carryovers : [ "dimension" ],
+    carryovers : null,
     aggregations : [ {
       ref : "count",
       expr : "count(uid) "
@@ -228,14 +114,11 @@
     } ]
   }, {
     op : "project",
-    @id : 8,
-    input : 7,
+    @id : 5,
+    input : 4,
     projections : [ {
       ref : "query_id",
-      expr : "'GROUP,age,2013-08-17,2013-08-26,visit.*,{\"register_time\":\"2013-07-01\"},VF-ALL-0-0,USER_PROPERTIES,ref'"
-    }, {
-      ref : "dimension",
-      expr : "dimension"
+      expr : "'COMMON,xaa,2013-08-06,2013-08-09,tomcat.exception.*,{\"identifier\":\"android.global.s77\"},VF-ALL-0-0,PERIOD'"
     }, {
       ref : "count",
       expr : "count"
@@ -248,8 +131,8 @@
     } ]
   }, {
     op : "store",
-    @id : 9,
-    input : 8,
+    @id : 6,
+    input : 5,
     target : null,
     partition : null,
     storageEngine : "DEFAULT-STORE"

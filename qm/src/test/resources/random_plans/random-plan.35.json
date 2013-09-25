@@ -4,36 +4,20 @@
     version : 1,
     generator : {
       type : "AUTO",
-      info : "age"
+      info : "xaa"
     }
   },
   storage : { },
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "Table=age.ref",
-    storageengine : "mysql",
-    selection : {
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "ref",
-        expr : "val"
-      } ],
-      table : "age.ref"
-    },
-    ref : "user"
-  }, {
-    op : "scan",
-    @id : 2,
-    memo : "Scan(Table=age.register_time, Prop=register_time, Val={LTE=2013-07-01, GTE=2013-07-01})",
+    memo : "Scan(Table=xaa.identifier, Prop=identifier, Val={EQ=android.global.s77})",
     storageengine : "mysql",
     selection : [ {
-      table : "age.register_time",
+      table : "xaa.identifier",
       filter : {
         type : "VAL",
-        expression : " ( (val)  <= (20130701235959) )  && ( (val)  >= (20130701000000) ) "
+        expression : " (val)  == ('android.global.s77') "
       },
       projections : [ {
         ref : "uid",
@@ -43,14 +27,14 @@
     ref : "user"
   }, {
     op : "scan",
-    @id : 3,
-    memo : "deu_age,2013-08-14,2013-08-23,pay.*",
+    @id : 2,
+    memo : "deu_xaa,2013-07-14,2013-07-20,response.*.*.*.pend",
     storageengine : "hbase",
     selection : [ {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130814') )  && ( (event0)  == ('pay') ) "
+        expression : " ( ( (event4)  == ('pend') )  && ( (date)  == ('20130714') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -60,10 +44,10 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130815') )  && ( (event0)  == ('pay') ) "
+        expression : " ( ( (event4)  == ('pend') )  && ( (date)  == ('20130715') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -73,10 +57,10 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130816') )  && ( (event0)  == ('pay') ) "
+        expression : " ( ( (event4)  == ('pend') )  && ( (date)  == ('20130716') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -86,10 +70,10 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130817') )  && ( (event0)  == ('pay') ) "
+        expression : " ( ( (event4)  == ('pend') )  && ( (date)  == ('20130717') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -99,10 +83,10 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130818') )  && ( (event0)  == ('pay') ) "
+        expression : " ( ( (event4)  == ('pend') )  && ( (date)  == ('20130718') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -112,10 +96,10 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130819') )  && ( (event0)  == ('pay') ) "
+        expression : " ( ( (event4)  == ('pend') )  && ( (date)  == ('20130719') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -125,49 +109,10 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130820') )  && ( (event0)  == ('pay') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130821') )  && ( (event0)  == ('pay') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130822') )  && ( (event0)  == ('pay') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130823') )  && ( (event0)  == ('pay') ) "
+        expression : " ( ( (event4)  == ('pend') )  && ( (date)  == ('20130720') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -180,9 +125,9 @@
     ref : "event"
   }, {
     op : "join",
-    @id : 4,
-    left : 2,
-    right : 3,
+    @id : 3,
+    left : 1,
+    right : 2,
     conditions : [ {
       relationship : "==",
       left : "uid",
@@ -190,32 +135,12 @@
     } ],
     type : "INNER"
   }, {
-    op : "join",
-    @id : 5,
-    left : 1,
-    right : 4,
-    conditions : [ {
-      relationship : "==",
-      left : "uid",
-      right : "uid"
-    } ],
-    type : "RIGHT"
-  }, {
-    op : "segment",
-    @id : 6,
-    input : 5,
-    exprs : [ {
-      ref : "dimension",
-      expr : "ref"
-    } ],
-    name : "sgmt"
-  }, {
     op : "collapsingaggregate",
-    @id : 7,
-    input : 6,
-    within : "sgmt",
+    @id : 4,
+    input : 3,
+    within : null,
     target : null,
-    carryovers : [ "dimension" ],
+    carryovers : null,
     aggregations : [ {
       ref : "count",
       expr : "count(uid) "
@@ -228,14 +153,11 @@
     } ]
   }, {
     op : "project",
-    @id : 8,
-    input : 7,
+    @id : 5,
+    input : 4,
     projections : [ {
       ref : "query_id",
-      expr : "'GROUP,age,2013-08-14,2013-08-23,pay.*,{\"register_time\":\"2013-07-01\"},VF-ALL-0-0,USER_PROPERTIES,ref'"
-    }, {
-      ref : "dimension",
-      expr : "dimension"
+      expr : "'COMMON,xaa,2013-07-14,2013-07-20,response.*.*.*.pend,{\"identifier\":\"android.global.s77\"},VF-ALL-0-0,PERIOD'"
     }, {
       ref : "count",
       expr : "count"
@@ -248,8 +170,8 @@
     } ]
   }, {
     op : "store",
-    @id : 9,
-    input : 8,
+    @id : 6,
+    input : 5,
     target : null,
     partition : null,
     storageEngine : "DEFAULT-STORE"

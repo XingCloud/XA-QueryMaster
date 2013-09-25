@@ -4,14 +4,14 @@
     version : 1,
     generator : {
       type : "AUTO",
-      info : "age"
+      info : "xaa"
     }
   },
   storage : { },
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "Table=age.ref",
+    memo : "Table=xaa.ref",
     storageengine : "mysql",
     selection : {
       projections : [ {
@@ -21,36 +21,19 @@
         ref : "ref",
         expr : "val"
       } ],
-      table : "age.ref"
+      table : "xaa.ref"
     },
     ref : "user"
   }, {
     op : "scan",
     @id : 2,
-    memo : "Scan(Table=age.abflag, Prop=abflag, Val={EQ=NewUIBarrack_NewNewbie_HeroHeadZoom_TroopAddConfig_B})",
-    storageengine : "mysql",
-    selection : [ {
-      table : "age.abflag",
-      filter : {
-        type : "VAL",
-        expression : " (val)  == ('NewUIBarrack_NewNewbie_HeroHeadZoom_TroopAddConfig_B') "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      } ]
-    } ],
-    ref : "user"
-  }, {
-    op : "scan",
-    @id : 3,
-    memo : "deu_age,2013-07-25,2013-07-29,visit.*",
+    memo : "deu_xaa,2013-08-15,2013-08-18,response.*.*.*.error",
     storageengine : "hbase",
     selection : [ {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130725') )  && ( (event0)  == ('visit') ) "
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130815') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -60,10 +43,10 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130726') )  && ( (event0)  == ('visit') ) "
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130816') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -73,10 +56,10 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130727') )  && ( (event0)  == ('visit') ) "
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130817') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -86,23 +69,10 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130728') )  && ( (event0)  == ('visit') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130729') )  && ( (event0)  == ('visit') ) "
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130818') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -115,20 +85,9 @@
     ref : "event"
   }, {
     op : "join",
-    @id : 4,
-    left : 2,
-    right : 3,
-    conditions : [ {
-      relationship : "==",
-      left : "uid",
-      right : "uid"
-    } ],
-    type : "INNER"
-  }, {
-    op : "join",
-    @id : 5,
+    @id : 3,
     left : 1,
-    right : 4,
+    right : 2,
     conditions : [ {
       relationship : "==",
       left : "uid",
@@ -137,8 +96,8 @@
     type : "RIGHT"
   }, {
     op : "segment",
-    @id : 6,
-    input : 5,
+    @id : 4,
+    input : 3,
     exprs : [ {
       ref : "dimension",
       expr : "ref"
@@ -146,8 +105,8 @@
     name : "sgmt"
   }, {
     op : "collapsingaggregate",
-    @id : 7,
-    input : 6,
+    @id : 5,
+    input : 4,
     within : "sgmt",
     target : null,
     carryovers : [ "dimension" ],
@@ -163,11 +122,11 @@
     } ]
   }, {
     op : "project",
-    @id : 8,
-    input : 7,
+    @id : 6,
+    input : 5,
     projections : [ {
       ref : "query_id",
-      expr : "'GROUP,age,2013-07-25,2013-07-29,visit.*,{\"abflag\":\"NewUIBarrack_NewNewbie_HeroHeadZoom_TroopAddConfig_B\"},VF-ALL-0-0,USER_PROPERTIES,ref'"
+      expr : "'GROUP,xaa,2013-08-15,2013-08-18,response.*.*.*.error,TOTAL_USER,VF-ALL-0-0,USER_PROPERTIES,ref'"
     }, {
       ref : "dimension",
       expr : "dimension"
@@ -183,8 +142,8 @@
     } ]
   }, {
     op : "store",
-    @id : 9,
-    input : 8,
+    @id : 7,
+    input : 6,
     target : null,
     partition : null,
     storageEngine : "DEFAULT-STORE"

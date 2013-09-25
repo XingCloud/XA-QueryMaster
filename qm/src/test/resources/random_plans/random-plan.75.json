@@ -4,14 +4,14 @@
     version : 1,
     generator : {
       type : "AUTO",
-      info : "age"
+      info : "xaa"
     }
   },
   storage : { },
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "Table=age.ref",
+    memo : "Table=xaa.ref",
     storageengine : "mysql",
     selection : {
       projections : [ {
@@ -21,19 +21,19 @@
         ref : "ref",
         expr : "val"
       } ],
-      table : "age.ref"
+      table : "xaa.ref"
     },
     ref : "user"
   }, {
     op : "scan",
     @id : 2,
-    memo : "Scan(Table=age.register_time, Prop=register_time, Val={LTE=2013-07-01, GTE=2013-07-01})",
+    memo : "Scan(Table=xaa.register_time, Prop=register_time, Val={GTE=2013-07-01, LTE=2013-07-01})",
     storageengine : "mysql",
     selection : [ {
-      table : "age.register_time",
+      table : "xaa.register_time",
       filter : {
         type : "VAL",
-        expression : " ( (val)  <= (20130701235959) )  && ( (val)  >= (20130701000000) ) "
+        expression : " ( (val)  >= (20130701000000) )  && ( (val)  <= (20130701235959) ) "
       },
       projections : [ {
         ref : "uid",
@@ -44,13 +44,13 @@
   }, {
     op : "scan",
     @id : 3,
-    memo : "deu_age,2013-08-02,2013-08-08,pay.*",
+    memo : "deu_xaa,2013-08-01,2013-08-05,response.*.*.*.error",
     storageengine : "hbase",
     selection : [ {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130802') )  && ( (event0)  == ('pay') ) "
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130801') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -60,10 +60,10 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130803') )  && ( (event0)  == ('pay') ) "
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130802') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -73,10 +73,10 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130804') )  && ( (event0)  == ('pay') ) "
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130803') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -86,10 +86,10 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130805') )  && ( (event0)  == ('pay') ) "
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130804') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -99,36 +99,10 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130806') )  && ( (event0)  == ('pay') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130807') )  && ( (event0)  == ('pay') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130808') )  && ( (event0)  == ('pay') ) "
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130805') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -193,7 +167,7 @@
     input : 7,
     projections : [ {
       ref : "query_id",
-      expr : "'GROUP,age,2013-08-02,2013-08-08,pay.*,{\"register_time\":\"2013-07-01\"},VF-ALL-0-0,USER_PROPERTIES,ref'"
+      expr : "'GROUP,xaa,2013-08-01,2013-08-05,response.*.*.*.error,{\"register_time\":\"2013-07-01\"},VF-ALL-0-0,USER_PROPERTIES,ref'"
     }, {
       ref : "dimension",
       expr : "dimension"

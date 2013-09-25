@@ -223,7 +223,8 @@ public class LogicalPlanUtil {
                         continue;
                     Map<String, Object> projectionMap = new HashMap<>();
                     projections.add(projectionMap);
-                    projectionMap.put(field, field);
+                    projectionMap.put("ref", field);
+                    projectionMap.put("expr",field);
                     projectionExprNames.add(field);
                     projectionRefNames.add(field);
                 }
@@ -281,9 +282,9 @@ public class LogicalPlanUtil {
     public static List<LogicalExpression> getFilterEntry(Scan baseScan, Scan scan, DrillConfig config) throws IOException {
         JsonNode baseFilterExpr = baseScan.getSelection().getRoot().get(0).get(SELECTION_KEY_WORD_FILTER).get("expression");
         JsonNode fitlerExpr = scan.getSelection().getRoot().get(0).get(SELECTION_KEY_WORD_FILTER).get("expression");
-
         Map<String, UnitFunc> filterFuncMap = parseFilterExpr(fitlerExpr, config);
         Map<String, UnitFunc> baseFilterFuncMap = parseFilterExpr(baseFilterExpr, config);
+        if(baseFilterFuncMap.size()>=filterFuncMap.size())return null;
         List<LogicalExpression> exprs = new ArrayList<>();
         for (Map.Entry<String, UnitFunc> entry : baseFilterFuncMap.entrySet()) {
             if (filterFuncMap.containsKey(entry.getKey()))
@@ -293,8 +294,29 @@ public class LogicalPlanUtil {
             LogicalExpression le = entry.getValue().getFunc();
             exprs.add(le);
         }
-        if (exprs.size() == 0) return null;
+        //if (exprs.size() == 0) return null;
         return exprs;
+    }
+
+    public List<String> getFields(JsonNode filterNode, DrillConfig config) throws IOException {
+        try {
+            return getFields((LogicalExpression)config.getMapper().readValues(filterNode.get("expression").traverse(),LogicalExpression.class),config);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw e;
+        }
+    }
+    public List<String> getFields(LogicalExpression filterExpr,DrillConfig config){
+        Set<String> fields=new HashSet<>();
+        if(!(filterExpr instanceof FunctionCall))
+            return null;
+        for(LogicalExpression childExpr : (FunctionCall)filterExpr){
+            if(childExpr instanceof SchemaPath){
+                fields.add(((SchemaPath)childExpr).getPath().toString());
+            }else if(childExpr instanceof FunctionCall)
+                 fields.addAll(getFields(childExpr,config));
+        }
+        return new ArrayList<>(fields);
     }
 
     public static Project getProject(Scan scan, DrillConfig config) throws IOException {
@@ -306,18 +328,22 @@ public class LogicalPlanUtil {
 
     public static List<NamedExpression> getProjectionEntry(Scan scan, DrillConfig config) {
         //JsonNode projectionNode=scan.getSelection().getRoot().get(0).get(SELECTION_KEY_WORD_PROJECTIONS);
-        List<Map<String, Object>> selectionList = getSelectionMap(scan);
+        //List<Map<String, Object>> selectionList = getSelectionMap(scan);
         List<NamedExpression> nes = new ArrayList<>();
-        for (Map<String, Object> selecitonMap : selectionList) {
-            List<Map<String, Object>> projections = (List<Map<String, Object>>)
-                    selecitonMap.get(SELECTION_KEY_WORD_PROJECTIONS);
-            for (Map<String, Object> projection : projections) {
-                FieldReference ref = new FieldReference((String) projection.get("ref"), null);
-                LogicalExpression le = new SchemaPath((String) projection.get("expr"), null);
-                NamedExpression ne = new NamedExpression(le, ref);
-                nes.add(ne);
+        try {
+            for (JsonNode selectionNode : scan.getSelection().getRoot()) {
+                JsonNode projections = selectionNode.get(SELECTION_KEY_WORD_PROJECTIONS);
+                for (JsonNode projection : projections) {
+                    FieldReference ref = new FieldReference(projection.get("ref").textValue(), null);
+                    LogicalExpression le = new SchemaPath(projection.get("expr").textValue(), null);
+                    NamedExpression ne = new NamedExpression(le, ref);
+                    nes.add(ne);
+                }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+
         return nes;
     }
 

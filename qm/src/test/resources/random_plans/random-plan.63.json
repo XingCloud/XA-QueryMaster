@@ -4,53 +4,20 @@
     version : 1,
     generator : {
       type : "AUTO",
-      info : "age"
+      info : "xaa"
     }
   },
   storage : { },
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "Table=age.ref",
-    storageengine : "mysql",
-    selection : {
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "ref",
-        expr : "val"
-      } ],
-      table : "age.ref"
-    },
-    ref : "user"
-  }, {
-    op : "scan",
-    @id : 2,
-    memo : "Scan(Table=age.register_time, Prop=register_time, Val={LTE=2013-07-01, GTE=2013-07-01})",
-    storageengine : "mysql",
-    selection : [ {
-      table : "age.register_time",
-      filter : {
-        type : "VAL",
-        expression : " ( (val)  <= (20130701235959) )  && ( (val)  >= (20130701000000) ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      } ]
-    } ],
-    ref : "user"
-  }, {
-    op : "scan",
-    @id : 3,
-    memo : "deu_age,2013-08-17,2013-08-21,pay.*",
+    memo : "deu_xaa,2013-07-23,2013-07-23,response.*.*.*.error",
     storageengine : "hbase",
     selection : [ {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130817') )  && ( (event0)  == ('pay') ) "
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130723') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -58,96 +25,25 @@
       }, {
         ref : "value",
         expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130818') )  && ( (event0)  == ('pay') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
       }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130819') )  && ( (event0)  == ('pay') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130820') )  && ( (event0)  == ('pay') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130821') )  && ( (event0)  == ('pay') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
+        ref : "timestamp",
+        expr : "timestamp"
       } ]
     } ],
     ref : "event"
   }, {
-    op : "join",
-    @id : 4,
-    left : 2,
-    right : 3,
-    conditions : [ {
-      relationship : "==",
-      left : "uid",
-      right : "uid"
-    } ],
-    type : "INNER"
-  }, {
-    op : "join",
-    @id : 5,
-    left : 1,
-    right : 4,
-    conditions : [ {
-      relationship : "==",
-      left : "uid",
-      right : "uid"
-    } ],
-    type : "RIGHT"
-  }, {
     op : "segment",
-    @id : 6,
-    input : 5,
+    @id : 2,
+    input : 1,
     exprs : [ {
       ref : "dimension",
-      expr : "ref"
+      expr : "div3600(timestamp)"
     } ],
     name : "sgmt"
   }, {
     op : "collapsingaggregate",
-    @id : 7,
-    input : 6,
+    @id : 3,
+    input : 2,
     within : "sgmt",
     target : null,
     carryovers : [ "dimension" ],
@@ -163,14 +59,14 @@
     } ]
   }, {
     op : "project",
-    @id : 8,
-    input : 7,
+    @id : 4,
+    input : 3,
     projections : [ {
       ref : "query_id",
-      expr : "'GROUP,age,2013-08-17,2013-08-21,pay.*,{\"register_time\":\"2013-07-01\"},VF-ALL-0-0,USER_PROPERTIES,ref'"
+      expr : "'COMMON,xaa,2013-07-23,2013-07-23,response.*.*.*.error,TOTAL_USER,VF-ALL-0-0,HOUR'"
     }, {
       ref : "dimension",
-      expr : "dimension"
+      expr : "hour(dimension)"
     }, {
       ref : "count",
       expr : "count"
@@ -183,8 +79,8 @@
     } ]
   }, {
     op : "store",
-    @id : 9,
-    input : 8,
+    @id : 5,
+    input : 4,
     target : null,
     partition : null,
     storageEngine : "DEFAULT-STORE"

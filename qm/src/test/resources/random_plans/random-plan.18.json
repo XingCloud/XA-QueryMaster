@@ -4,14 +4,14 @@
     version : 1,
     generator : {
       type : "AUTO",
-      info : "age"
+      info : "xaa"
     }
   },
   storage : { },
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "Table=age.ref",
+    memo : "Table=xaa.ref",
     storageengine : "mysql",
     selection : {
       projections : [ {
@@ -21,19 +21,19 @@
         ref : "ref",
         expr : "val"
       } ],
-      table : "age.ref"
+      table : "xaa.ref"
     },
     ref : "user"
   }, {
     op : "scan",
     @id : 2,
-    memo : "deu_age,2013-08-05,2013-08-13,visit.*",
+    memo : "deu_xaa,2013-07-16,2013-07-17,tomcat.descriptor.build.*",
     storageengine : "hbase",
     selection : [ {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130805') )  && ( (event0)  == ('visit') ) "
+        expression : " ( ( ( (event2)  == ('build') )  && ( (date)  == ('20130716') ) )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('descriptor') ) "
       },
       projections : [ {
         ref : "uid",
@@ -43,101 +43,10 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130806') )  && ( (event0)  == ('visit') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130807') )  && ( (event0)  == ('visit') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130808') )  && ( (event0)  == ('visit') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130809') )  && ( (event0)  == ('visit') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130810') )  && ( (event0)  == ('visit') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130811') )  && ( (event0)  == ('visit') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130812') )  && ( (event0)  == ('visit') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130813') )  && ( (event0)  == ('visit') ) "
+        expression : " ( ( ( (event2)  == ('build') )  && ( (date)  == ('20130717') ) )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('descriptor') ) "
       },
       projections : [ {
         ref : "uid",
@@ -191,7 +100,7 @@
     input : 5,
     projections : [ {
       ref : "query_id",
-      expr : "'GROUP,age,2013-08-05,2013-08-13,visit.*,TOTAL_USER,VF-ALL-0-0,USER_PROPERTIES,ref'"
+      expr : "'GROUP,xaa,2013-07-16,2013-07-17,tomcat.descriptor.build.*,TOTAL_USER,VF-ALL-0-0,USER_PROPERTIES,ref'"
     }, {
       ref : "dimension",
       expr : "dimension"

@@ -4,20 +4,20 @@
     version : 1,
     generator : {
       type : "AUTO",
-      info : "age"
+      info : "xaa"
     }
   },
   storage : { },
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "deu_age,2013-08-19,2013-08-19,visit.*",
+    memo : "deu_xaa,2013-07-22,2013-07-28,response.*.*.*.error",
     storageengine : "hbase",
     selection : [ {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130819') )  && ( (event0)  == ('visit') ) "
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130722') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -25,28 +25,94 @@
       }, {
         ref : "value",
         expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        type : "ROWKEY",
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130723') ) )  && ( (event0)  == ('response') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
       }, {
-        ref : "timestamp",
-        expr : "timestamp"
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        type : "ROWKEY",
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130724') ) )  && ( (event0)  == ('response') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        type : "ROWKEY",
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130725') ) )  && ( (event0)  == ('response') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        type : "ROWKEY",
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130726') ) )  && ( (event0)  == ('response') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        type : "ROWKEY",
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130727') ) )  && ( (event0)  == ('response') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        type : "ROWKEY",
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130728') ) )  && ( (event0)  == ('response') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
       } ]
     } ],
     ref : "event"
   }, {
-    op : "segment",
+    op : "collapsingaggregate",
     @id : 2,
     input : 1,
-    exprs : [ {
-      ref : "dimension",
-      expr : "div3600(timestamp)"
-    } ],
-    name : "sgmt"
-  }, {
-    op : "collapsingaggregate",
-    @id : 3,
-    input : 2,
-    within : "sgmt",
+    within : null,
     target : null,
-    carryovers : [ "dimension" ],
+    carryovers : null,
     aggregations : [ {
       ref : "count",
       expr : "count(uid) "
@@ -59,14 +125,11 @@
     } ]
   }, {
     op : "project",
-    @id : 4,
-    input : 3,
+    @id : 3,
+    input : 2,
     projections : [ {
       ref : "query_id",
-      expr : "'COMMON,age,2013-08-19,2013-08-19,visit.*,TOTAL_USER,VF-ALL-0-0,HOUR'"
-    }, {
-      ref : "dimension",
-      expr : "hour(dimension)"
+      expr : "'COMMON,xaa,2013-07-22,2013-07-28,response.*.*.*.error,TOTAL_USER,VF-ALL-0-0,PERIOD'"
     }, {
       ref : "count",
       expr : "count"
@@ -79,8 +142,8 @@
     } ]
   }, {
     op : "store",
-    @id : 5,
-    input : 4,
+    @id : 4,
+    input : 3,
     target : null,
     partition : null,
     storageEngine : "DEFAULT-STORE"

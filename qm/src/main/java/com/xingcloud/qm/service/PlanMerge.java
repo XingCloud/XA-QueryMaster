@@ -127,7 +127,7 @@ public class PlanMerge {
                 if (!tableName.contains("deu")) continue;
                 ScanWithPlan[] swps = new ArrayList<>(entry1.getValue()).toArray
                         (new ScanWithPlan[entry1.getValue().size()]);
-                Arrays.sort(swps, swpComparator);
+                //Arrays.sort(swps, swpComparator);
                 String[] rkPoints = new String[swps.length * 2];
                 Map<RowKeyRange, List<ScanWithPlan>> crosses = new HashMap<>();
                 Map<ScanWithPlan, List<RowKeyRange>> scanSplits = new HashMap<>();

@@ -4,14 +4,14 @@
     version : 1,
     generator : {
       type : "AUTO",
-      info : "age"
+      info : "xaa"
     }
   },
   storage : { },
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "Table=age.ref",
+    memo : "Table=xaa.ref",
     storageengine : "mysql",
     selection : {
       projections : [ {
@@ -21,19 +21,19 @@
         ref : "ref",
         expr : "val"
       } ],
-      table : "age.ref"
+      table : "xaa.ref"
     },
     ref : "user"
   }, {
     op : "scan",
     @id : 2,
-    memo : "deu_age,2013-07-30,2013-08-02,visit.*",
+    memo : "deu_xaa,2013-08-01,2013-08-05,response.*.*.*.pend",
     storageengine : "hbase",
     selection : [ {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130730') )  && ( (event0)  == ('visit') ) "
+        expression : " ( ( (event4)  == ('pend') )  && ( (date)  == ('20130801') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -43,10 +43,10 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130731') )  && ( (event0)  == ('visit') ) "
+        expression : " ( ( (event4)  == ('pend') )  && ( (date)  == ('20130802') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -56,10 +56,10 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130801') )  && ( (event0)  == ('visit') ) "
+        expression : " ( ( (event4)  == ('pend') )  && ( (date)  == ('20130803') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -69,10 +69,23 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130802') )  && ( (event0)  == ('visit') ) "
+        expression : " ( ( (event4)  == ('pend') )  && ( (date)  == ('20130804') ) )  && ( (event0)  == ('response') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        type : "ROWKEY",
+        expression : " ( ( (event4)  == ('pend') )  && ( (date)  == ('20130805') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -126,7 +139,7 @@
     input : 5,
     projections : [ {
       ref : "query_id",
-      expr : "'GROUP,age,2013-07-30,2013-08-02,visit.*,TOTAL_USER,VF-ALL-0-0,USER_PROPERTIES,ref'"
+      expr : "'GROUP,xaa,2013-08-01,2013-08-05,response.*.*.*.pend,TOTAL_USER,VF-ALL-0-0,USER_PROPERTIES,ref'"
     }, {
       ref : "dimension",
       expr : "dimension"

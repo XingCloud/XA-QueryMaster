@@ -4,37 +4,49 @@
     version : 1,
     generator : {
       type : "AUTO",
-      info : "age"
+      info : "xaa"
     }
   },
   storage : { },
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "Scan(Table=age.register_time, Prop=register_time, Val={LTE=2013-07-01, GTE=2013-07-01})",
+    memo : "Table=xaa.ref",
     storageengine : "mysql",
-    selection : [ {
-      table : "age.register_time",
-      filter : {
-        type : "VAL",
-        expression : " ( (val)  <= (20130701235959) )  && ( (val)  >= (20130701000000) ) "
-      },
+    selection : {
       projections : [ {
         ref : "uid",
         expr : "uid"
-      } ]
-    } ],
+      }, {
+        ref : "ref",
+        expr : "val"
+      } ],
+      table : "xaa.ref"
+    },
     ref : "user"
   }, {
     op : "scan",
     @id : 2,
-    memo : "deu_age,2013-08-13,2013-08-13,pay.*",
+    memo : "deu_xaa,2013-07-18,2013-07-19,tomcat.descriptor.build.*",
     storageengine : "hbase",
     selection : [ {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130813') )  && ( (event0)  == ('pay') ) "
+        expression : " ( ( ( (event2)  == ('build') )  && ( (date)  == ('20130718') ) )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('descriptor') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        type : "ROWKEY",
+        expression : " ( ( ( (event2)  == ('build') )  && ( (date)  == ('20130719') ) )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('descriptor') ) "
       },
       projections : [ {
         ref : "uid",
@@ -55,14 +67,23 @@
       left : "uid",
       right : "uid"
     } ],
-    type : "INNER"
+    type : "RIGHT"
   }, {
-    op : "collapsingaggregate",
+    op : "segment",
     @id : 4,
     input : 3,
-    within : null,
+    exprs : [ {
+      ref : "dimension",
+      expr : "ref"
+    } ],
+    name : "sgmt"
+  }, {
+    op : "collapsingaggregate",
+    @id : 5,
+    input : 4,
+    within : "sgmt",
     target : null,
-    carryovers : null,
+    carryovers : [ "dimension" ],
     aggregations : [ {
       ref : "count",
       expr : "count(uid) "
@@ -75,11 +96,14 @@
     } ]
   }, {
     op : "project",
-    @id : 5,
-    input : 4,
+    @id : 6,
+    input : 5,
     projections : [ {
       ref : "query_id",
-      expr : "'COMMON,age,2013-08-13,2013-08-13,pay.*,{\"register_time\":\"2013-07-01\"},VF-ALL-0-0,PERIOD'"
+      expr : "'GROUP,xaa,2013-07-18,2013-07-19,tomcat.descriptor.build.*,TOTAL_USER,VF-ALL-0-0,USER_PROPERTIES,ref'"
+    }, {
+      ref : "dimension",
+      expr : "dimension"
     }, {
       ref : "count",
       expr : "count"
@@ -92,8 +116,8 @@
     } ]
   }, {
     op : "store",
-    @id : 6,
-    input : 5,
+    @id : 7,
+    input : 6,
     target : null,
     partition : null,
     storageEngine : "DEFAULT-STORE"

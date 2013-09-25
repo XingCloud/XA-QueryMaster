@@ -4,89 +4,20 @@
     version : 1,
     generator : {
       type : "AUTO",
-      info : "age"
+      info : "xaa"
     }
   },
   storage : { },
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "Scan(Table=age.identifier, Prop=identifier, Val={EQ=android.global.s77})",
-    storageengine : "mysql",
-    selection : [ {
-      table : "age.identifier",
-      filter : {
-        type : "VAL",
-        expression : " (val)  == ('android.global.s77') "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      } ]
-    } ],
-    ref : "user"
-  }, {
-    op : "scan",
-    @id : 2,
-    memo : "deu_age,2013-08-01,2013-08-05,visit.*",
+    memo : "deu_xaa,2013-08-10,2013-08-10,tomcat.descriptor.build.*",
     storageengine : "hbase",
     selection : [ {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130801') )  && ( (event0)  == ('visit') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130802') )  && ( (event0)  == ('visit') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130803') )  && ( (event0)  == ('visit') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130804') )  && ( (event0)  == ('visit') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130805') )  && ( (event0)  == ('visit') ) "
+        expression : " ( ( ( (event2)  == ('build') )  && ( (date)  == ('20130810') ) )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('descriptor') ) "
       },
       projections : [ {
         ref : "uid",
@@ -98,20 +29,9 @@
     } ],
     ref : "event"
   }, {
-    op : "join",
-    @id : 3,
-    left : 1,
-    right : 2,
-    conditions : [ {
-      relationship : "==",
-      left : "uid",
-      right : "uid"
-    } ],
-    type : "INNER"
-  }, {
     op : "collapsingaggregate",
-    @id : 4,
-    input : 3,
+    @id : 2,
+    input : 1,
     within : null,
     target : null,
     carryovers : null,
@@ -127,11 +47,11 @@
     } ]
   }, {
     op : "project",
-    @id : 5,
-    input : 4,
+    @id : 3,
+    input : 2,
     projections : [ {
       ref : "query_id",
-      expr : "'COMMON,age,2013-08-01,2013-08-05,visit.*,{\"identifier\":\"android.global.s77\"},VF-ALL-0-0,PERIOD'"
+      expr : "'COMMON,xaa,2013-08-10,2013-08-10,tomcat.descriptor.build.*,TOTAL_USER,VF-ALL-0-0,PERIOD'"
     }, {
       ref : "count",
       expr : "count"
@@ -144,8 +64,8 @@
     } ]
   }, {
     op : "store",
-    @id : 6,
-    input : 5,
+    @id : 4,
+    input : 3,
     target : null,
     partition : null,
     storageEngine : "DEFAULT-STORE"

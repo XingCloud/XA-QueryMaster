@@ -4,36 +4,37 @@
     version : 1,
     generator : {
       type : "AUTO",
-      info : "age"
+      info : "xaa"
     }
   },
   storage : { },
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "Table=age.ref",
+    memo : "Scan(Table=xaa.identifier, Prop=identifier, Val={EQ=android.global.s77})",
     storageengine : "mysql",
-    selection : {
+    selection : [ {
+      table : "xaa.identifier",
+      filter : {
+        type : "VAL",
+        expression : " (val)  == ('android.global.s77') "
+      },
       projections : [ {
         ref : "uid",
         expr : "uid"
-      }, {
-        ref : "ref",
-        expr : "val"
-      } ],
-      table : "age.ref"
-    },
+      } ]
+    } ],
     ref : "user"
   }, {
     op : "scan",
     @id : 2,
-    memo : "deu_age,2013-08-19,2013-08-19,visit.*",
+    memo : "deu_xaa,2013-07-23,2013-07-23,tomcat.exception.*",
     storageengine : "hbase",
     selection : [ {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130819') )  && ( (event0)  == ('visit') ) "
+        expression : " ( ( (date)  == ('20130723') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('exception') ) "
       },
       projections : [ {
         ref : "uid",
@@ -41,6 +42,9 @@
       }, {
         ref : "value",
         expr : "value"
+      }, {
+        ref : "timestamp",
+        expr : "timestamp"
       } ]
     } ],
     ref : "event"
@@ -54,14 +58,14 @@
       left : "uid",
       right : "uid"
     } ],
-    type : "RIGHT"
+    type : "INNER"
   }, {
     op : "segment",
     @id : 4,
     input : 3,
     exprs : [ {
       ref : "dimension",
-      expr : "ref"
+      expr : "div3600(timestamp)"
     } ],
     name : "sgmt"
   }, {
@@ -87,10 +91,10 @@
     input : 5,
     projections : [ {
       ref : "query_id",
-      expr : "'GROUP,age,2013-08-19,2013-08-19,visit.*,TOTAL_USER,VF-ALL-0-0,USER_PROPERTIES,ref'"
+      expr : "'COMMON,xaa,2013-07-23,2013-07-23,tomcat.exception.*,{\"identifier\":\"android.global.s77\"},VF-ALL-0-0,HOUR'"
     }, {
       ref : "dimension",
-      expr : "dimension"
+      expr : "hour(dimension)"
     }, {
       ref : "count",
       expr : "count"

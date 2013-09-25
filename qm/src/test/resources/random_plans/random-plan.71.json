@@ -4,20 +4,20 @@
     version : 1,
     generator : {
       type : "AUTO",
-      info : "age"
+      info : "xaa"
     }
   },
   storage : { },
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "Scan(Table=age.abflag, Prop=abflag, Val={EQ=NewUIBarrack_NewNewbie_HeroHeadZoom_TroopAddConfig_B})",
+    memo : "Scan(Table=xaa.register_time, Prop=register_time, Val={GTE=2013-07-01, LTE=2013-07-01})",
     storageengine : "mysql",
     selection : [ {
-      table : "age.abflag",
+      table : "xaa.register_time",
       filter : {
         type : "VAL",
-        expression : " (val)  == ('NewUIBarrack_NewNewbie_HeroHeadZoom_TroopAddConfig_B') "
+        expression : " ( (val)  >= (20130701000000) )  && ( (val)  <= (20130701235959) ) "
       },
       projections : [ {
         ref : "uid",
@@ -28,13 +28,13 @@
   }, {
     op : "scan",
     @id : 2,
-    memo : "deu_age,2013-07-20,2013-07-27,visit.*",
+    memo : "deu_xaa,2013-08-12,2013-08-15,tomcat.query_enter.*",
     storageengine : "hbase",
     selection : [ {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130720') )  && ( (event0)  == ('visit') ) "
+        expression : " ( ( (date)  == ('20130812') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('query_enter') ) "
       },
       projections : [ {
         ref : "uid",
@@ -44,10 +44,10 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130721') )  && ( (event0)  == ('visit') ) "
+        expression : " ( ( (date)  == ('20130813') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('query_enter') ) "
       },
       projections : [ {
         ref : "uid",
@@ -57,10 +57,10 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130722') )  && ( (event0)  == ('visit') ) "
+        expression : " ( ( (date)  == ('20130814') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('query_enter') ) "
       },
       projections : [ {
         ref : "uid",
@@ -70,62 +70,10 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130723') )  && ( (event0)  == ('visit') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130724') )  && ( (event0)  == ('visit') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130725') )  && ( (event0)  == ('visit') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130726') )  && ( (event0)  == ('visit') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130727') )  && ( (event0)  == ('visit') ) "
+        expression : " ( ( (date)  == ('20130815') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('query_enter') ) "
       },
       projections : [ {
         ref : "uid",
@@ -170,7 +118,7 @@
     input : 4,
     projections : [ {
       ref : "query_id",
-      expr : "'COMMON,age,2013-07-20,2013-07-27,visit.*,{\"abflag\":\"NewUIBarrack_NewNewbie_HeroHeadZoom_TroopAddConfig_B\"},VF-ALL-0-0,PERIOD'"
+      expr : "'COMMON,xaa,2013-08-12,2013-08-15,tomcat.query_enter.*,{\"register_time\":\"2013-07-01\"},VF-ALL-0-0,PERIOD'"
     }, {
       ref : "count",
       expr : "count"

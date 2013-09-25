@@ -4,20 +4,20 @@
     version : 1,
     generator : {
       type : "AUTO",
-      info : "age"
+      info : "xaa"
     }
   },
   storage : { },
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "Scan(Table=age.register_time, Prop=register_time, Val={LTE=2013-07-01, GTE=2013-07-01})",
+    memo : "Scan(Table=xaa.register_time, Prop=register_time, Val={GTE=2013-07-01, LTE=2013-07-01})",
     storageengine : "mysql",
     selection : [ {
-      table : "age.register_time",
+      table : "xaa.register_time",
       filter : {
         type : "VAL",
-        expression : " ( (val)  <= (20130701235959) )  && ( (val)  >= (20130701000000) ) "
+        expression : " ( (val)  >= (20130701000000) )  && ( (val)  <= (20130701235959) ) "
       },
       projections : [ {
         ref : "uid",
@@ -28,13 +28,13 @@
   }, {
     op : "scan",
     @id : 2,
-    memo : "deu_age,2013-07-19,2013-07-19,visit.*",
+    memo : "deu_xaa,2013-07-15,2013-07-15,tomcat.exception.*",
     storageengine : "hbase",
     selection : [ {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130719') )  && ( (event0)  == ('visit') ) "
+        expression : " ( ( (date)  == ('20130715') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('exception') ) "
       },
       projections : [ {
         ref : "uid",
@@ -91,7 +91,7 @@
     input : 5,
     projections : [ {
       ref : "query_id",
-      expr : "'COMMON,age,2013-07-19,2013-07-19,visit.*,{\"register_time\":\"2013-07-01\"},VF-ALL-0-0,HOUR'"
+      expr : "'COMMON,xaa,2013-07-15,2013-07-15,tomcat.exception.*,{\"register_time\":\"2013-07-01\"},VF-ALL-0-0,HOUR'"
     }, {
       ref : "dimension",
       expr : "hour(dimension)"

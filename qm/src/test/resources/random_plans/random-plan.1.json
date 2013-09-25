@@ -4,20 +4,20 @@
     version : 1,
     generator : {
       type : "AUTO",
-      info : "age"
+      info : "xaa"
     }
   },
   storage : { },
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "Scan(Table=age.abflag, Prop=abflag, Val={EQ=NewUIBarrack_NewNewbie_HeroHeadZoom_TroopAddConfig_B})",
+    memo : "Scan(Table=xaa.identifier, Prop=identifier, Val={EQ=android.global.s77})",
     storageengine : "mysql",
     selection : [ {
-      table : "age.abflag",
+      table : "xaa.identifier",
       filter : {
         type : "VAL",
-        expression : " (val)  == ('NewUIBarrack_NewNewbie_HeroHeadZoom_TroopAddConfig_B') "
+        expression : " (val)  == ('android.global.s77') "
       },
       projections : [ {
         ref : "uid",
@@ -28,13 +28,78 @@
   }, {
     op : "scan",
     @id : 2,
-    memo : "deu_age,2013-08-11,2013-08-11,pay.*",
+    memo : "deu_xaa,2013-07-29,2013-08-03,response.*.*.*.error",
     storageengine : "hbase",
     selection : [ {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130811') )  && ( (event0)  == ('pay') ) "
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130729') ) )  && ( (event0)  == ('response') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        type : "ROWKEY",
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130730') ) )  && ( (event0)  == ('response') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        type : "ROWKEY",
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130731') ) )  && ( (event0)  == ('response') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        type : "ROWKEY",
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130801') ) )  && ( (event0)  == ('response') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        type : "ROWKEY",
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130802') ) )  && ( (event0)  == ('response') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        type : "ROWKEY",
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130803') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -79,7 +144,7 @@
     input : 4,
     projections : [ {
       ref : "query_id",
-      expr : "'COMMON,age,2013-08-11,2013-08-11,pay.*,{\"abflag\":\"NewUIBarrack_NewNewbie_HeroHeadZoom_TroopAddConfig_B\"},VF-ALL-0-0,PERIOD'"
+      expr : "'COMMON,xaa,2013-07-29,2013-08-03,response.*.*.*.error,{\"identifier\":\"android.global.s77\"},VF-ALL-0-0,PERIOD'"
     }, {
       ref : "count",
       expr : "count"

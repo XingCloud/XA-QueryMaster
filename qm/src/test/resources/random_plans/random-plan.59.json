@@ -4,20 +4,37 @@
     version : 1,
     generator : {
       type : "AUTO",
-      info : "age"
+      info : "xaa"
     }
   },
   storage : { },
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "deu_age,2013-08-21,2013-08-23,visit.*",
+    memo : "Scan(Table=xaa.identifier, Prop=identifier, Val={EQ=android.global.s77})",
+    storageengine : "mysql",
+    selection : [ {
+      table : "xaa.identifier",
+      filter : {
+        type : "VAL",
+        expression : " (val)  == ('android.global.s77') "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      } ]
+    } ],
+    ref : "user"
+  }, {
+    op : "scan",
+    @id : 2,
+    memo : "deu_xaa,2013-08-08,2013-08-10,response.*.*.*.success",
     storageengine : "hbase",
     selection : [ {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130821') )  && ( (event0)  == ('visit') ) "
+        expression : " ( ( (event4)  == ('success') )  && ( (date)  == ('20130808') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -27,10 +44,10 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130822') )  && ( (event0)  == ('visit') ) "
+        expression : " ( ( (event4)  == ('success') )  && ( (date)  == ('20130809') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -40,10 +57,10 @@
         expr : "value"
       } ]
     }, {
-      table : "deu_age",
+      table : "deu_xaa",
       filter : {
         type : "ROWKEY",
-        expression : " ( (date)  == ('20130823') )  && ( (event0)  == ('visit') ) "
+        expression : " ( ( (event4)  == ('success') )  && ( (date)  == ('20130810') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -55,9 +72,20 @@
     } ],
     ref : "event"
   }, {
+    op : "join",
+    @id : 3,
+    left : 1,
+    right : 2,
+    conditions : [ {
+      relationship : "==",
+      left : "uid",
+      right : "uid"
+    } ],
+    type : "INNER"
+  }, {
     op : "collapsingaggregate",
-    @id : 2,
-    input : 1,
+    @id : 4,
+    input : 3,
     within : null,
     target : null,
     carryovers : null,
@@ -73,11 +101,11 @@
     } ]
   }, {
     op : "project",
-    @id : 3,
-    input : 2,
+    @id : 5,
+    input : 4,
     projections : [ {
       ref : "query_id",
-      expr : "'COMMON,age,2013-08-21,2013-08-23,visit.*,TOTAL_USER,VF-ALL-0-0,PERIOD'"
+      expr : "'COMMON,xaa,2013-08-08,2013-08-10,response.*.*.*.success,{\"identifier\":\"android.global.s77\"},VF-ALL-0-0,PERIOD'"
     }, {
       ref : "count",
       expr : "count"
@@ -90,8 +118,8 @@
     } ]
   }, {
     op : "store",
-    @id : 4,
-    input : 3,
+    @id : 6,
+    input : 5,
     target : null,
     partition : null,
     storageEngine : "DEFAULT-STORE"
