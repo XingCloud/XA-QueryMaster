@@ -27,13 +27,12 @@
   }, {
     op : "scan",
     @id : 2,
-    memo : "Scan(Table=xaa.identifier, Prop=identifier, Val={EQ=android.global.s77})",
+    memo : "Scan(Table=xaa.register_time, Prop=register_time, Val={GTE=2013-07-01, LTE=2013-07-01})",
     storageengine : "mysql",
     selection : [ {
-      table : "xaa.identifier",
+      table : "xaa.register_time",
       filter : {
-        type : "VAL",
-        expression : " (val)  == ('android.global.s77') "
+        expression : " ( (val)  >= (20130701000000) )  && ( (val)  <= (20130701235959) ) "
       },
       projections : [ {
         ref : "uid",
@@ -44,13 +43,12 @@
   }, {
     op : "scan",
     @id : 3,
-    memo : "deu_xaa,2013-07-31,2013-08-09,tomcat.exception.*",
+    memo : "deu_xaa,2013-07-25,2013-07-26,tomcat.descriptor.build.*",
     storageengine : "hbase",
     selection : [ {
       table : "deu_xaa",
       filter : {
-        type : "ROWKEY",
-        expression : " ( ( (date)  == ('20130731') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('exception') ) "
+        expression : " ( ( ( (event2)  == ('build') )  && ( (date)  == ('20130725') ) )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('descriptor') ) "
       },
       projections : [ {
         ref : "uid",
@@ -62,112 +60,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        type : "ROWKEY",
-        expression : " ( ( (date)  == ('20130801') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('exception') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( ( (date)  == ('20130802') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('exception') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( ( (date)  == ('20130803') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('exception') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( ( (date)  == ('20130804') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('exception') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( ( (date)  == ('20130805') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('exception') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( ( (date)  == ('20130806') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('exception') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( ( (date)  == ('20130807') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('exception') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( ( (date)  == ('20130808') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('exception') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( ( (date)  == ('20130809') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('exception') ) "
+        expression : " ( ( ( (event2)  == ('build') )  && ( (date)  == ('20130726') ) )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('descriptor') ) "
       },
       projections : [ {
         ref : "uid",
@@ -232,7 +125,7 @@
     input : 7,
     projections : [ {
       ref : "query_id",
-      expr : "'GROUP,xaa,2013-07-31,2013-08-09,tomcat.exception.*,{\"identifier\":\"android.global.s77\"},VF-ALL-0-0,USER_PROPERTIES,ref'"
+      expr : "'GROUP,xaa,2013-07-25,2013-07-26,tomcat.descriptor.build.*,{\"register_time\":\"2013-07-01\"},VF-ALL-0-0,USER_PROPERTIES,ref'"
     }, {
       ref : "dimension",
       expr : "dimension"

@@ -27,13 +27,12 @@
   }, {
     op : "scan",
     @id : 2,
-    memo : "Scan(Table=xaa.identifier, Prop=identifier, Val={EQ=android.global.s77})",
+    memo : "Scan(Table=xaa.register_time, Prop=register_time, Val={GTE=2013-07-01, LTE=2013-07-01})",
     storageengine : "mysql",
     selection : [ {
-      table : "xaa.identifier",
+      table : "xaa.register_time",
       filter : {
-        type : "VAL",
-        expression : " (val)  == ('android.global.s77') "
+        expression : " ( (val)  >= (20130701000000) )  && ( (val)  <= (20130701235959) ) "
       },
       projections : [ {
         ref : "uid",
@@ -44,130 +43,12 @@
   }, {
     op : "scan",
     @id : 3,
-    memo : "deu_xaa,2013-07-25,2013-08-03,response.*.*.*.pend",
+    memo : "deu_xaa,2013-08-12,2013-08-12,tomcat.query_enter.*",
     storageengine : "hbase",
     selection : [ {
       table : "deu_xaa",
       filter : {
-        type : "ROWKEY",
-        expression : " ( ( (event4)  == ('pend') )  && ( (date)  == ('20130725') ) )  && ( (event0)  == ('response') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( ( (event4)  == ('pend') )  && ( (date)  == ('20130726') ) )  && ( (event0)  == ('response') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( ( (event4)  == ('pend') )  && ( (date)  == ('20130727') ) )  && ( (event0)  == ('response') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( ( (event4)  == ('pend') )  && ( (date)  == ('20130728') ) )  && ( (event0)  == ('response') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( ( (event4)  == ('pend') )  && ( (date)  == ('20130729') ) )  && ( (event0)  == ('response') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( ( (event4)  == ('pend') )  && ( (date)  == ('20130730') ) )  && ( (event0)  == ('response') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( ( (event4)  == ('pend') )  && ( (date)  == ('20130731') ) )  && ( (event0)  == ('response') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( ( (event4)  == ('pend') )  && ( (date)  == ('20130801') ) )  && ( (event0)  == ('response') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( ( (event4)  == ('pend') )  && ( (date)  == ('20130802') ) )  && ( (event0)  == ('response') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( ( (event4)  == ('pend') )  && ( (date)  == ('20130803') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( (date)  == ('20130812') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('query_enter') ) "
       },
       projections : [ {
         ref : "uid",
@@ -232,7 +113,7 @@
     input : 7,
     projections : [ {
       ref : "query_id",
-      expr : "'GROUP,xaa,2013-07-25,2013-08-03,response.*.*.*.pend,{\"identifier\":\"android.global.s77\"},VF-ALL-0-0,USER_PROPERTIES,ref'"
+      expr : "'GROUP,xaa,2013-08-12,2013-08-12,tomcat.query_enter.*,{\"register_time\":\"2013-07-01\"},VF-ALL-0-0,USER_PROPERTIES,ref'"
     }, {
       ref : "dimension",
       expr : "dimension"

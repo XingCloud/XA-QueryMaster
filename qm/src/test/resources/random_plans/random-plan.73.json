@@ -11,13 +11,12 @@
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "Scan(Table=xaa.identifier, Prop=identifier, Val={EQ=android.global.s77})",
+    memo : "Scan(Table=xaa.register_time, Prop=register_time, Val={GTE=2013-07-01, LTE=2013-07-01})",
     storageengine : "mysql",
     selection : [ {
-      table : "xaa.identifier",
+      table : "xaa.register_time",
       filter : {
-        type : "VAL",
-        expression : " (val)  == ('android.global.s77') "
+        expression : " ( (val)  >= (20130701000000) )  && ( (val)  <= (20130701235959) ) "
       },
       projections : [ {
         ref : "uid",
@@ -28,13 +27,12 @@
   }, {
     op : "scan",
     @id : 2,
-    memo : "deu_xaa,2013-07-21,2013-07-21,tomcat.query_enter.*",
+    memo : "deu_xaa,2013-08-19,2013-08-19,click.*",
     storageengine : "hbase",
     selection : [ {
       table : "deu_xaa",
       filter : {
-        type : "ROWKEY",
-        expression : " ( ( (date)  == ('20130721') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('query_enter') ) "
+        expression : " ( (date)  == ('20130819') )  && ( (event0)  == ('click') ) "
       },
       projections : [ {
         ref : "uid",
@@ -91,7 +89,7 @@
     input : 5,
     projections : [ {
       ref : "query_id",
-      expr : "'COMMON,xaa,2013-07-21,2013-07-21,tomcat.query_enter.*,{\"identifier\":\"android.global.s77\"},VF-ALL-0-0,HOUR'"
+      expr : "'COMMON,xaa,2013-08-19,2013-08-19,click.*,{\"register_time\":\"2013-07-01\"},VF-ALL-0-0,HOUR'"
     }, {
       ref : "dimension",
       expr : "hour(dimension)"

@@ -106,13 +106,11 @@ public class PlanMerge {
         Map<String, ProjectMergeContext> projectCtxMap = splitByTableName();
         List<LogicalPlan> resultPlans = new ArrayList<>();
         Map<LogicalPlan, LogicalPlan> resultPlanMap = new HashMap<>();
-        Comparator<String> rkComprator = new Comparator<String>() {
+        Comparator<byte[]> rkPointComprator = new Comparator<byte[]>() {
             @Override
-            public int compare(String o1, String o2) {
-                if (o1 == null || o2 == null)
+            public int compare(byte[] rk1, byte[] rk2) {
+                if (rk1 == null || rk2 == null)
                     logger.debug("null!!!!!!!");
-                byte[] rk1 = ByteUtils.toBytesBinary(o1);
-                byte[] rk2 = ByteUtils.toBytesBinary(o2);
                 return Bytes.compareTo(rk1, rk2);
             }
         };
@@ -127,17 +125,47 @@ public class PlanMerge {
                 if (!tableName.contains("deu")) continue;
                 ScanWithPlan[] swps = new ArrayList<>(entry1.getValue()).toArray
                         (new ScanWithPlan[entry1.getValue().size()]);
-                //Arrays.sort(swps, swpComparator);
-                String[] rkPoints = new String[swps.length * 2];
+                Arrays.sort(swps, swpComparator);
+                //String[] rkPoints = new String[swps.length * 2];
+                byte[][] rkPoints = new byte[swps.length*2][];
                 Map<RowKeyRange, List<ScanWithPlan>> crosses = new HashMap<>();
                 Map<ScanWithPlan, List<RowKeyRange>> scanSplits = new HashMap<>();
                 for (int i = 0; i < swps.length; i++) {
                     RowKeyRange range = LogicalPlanUtil.getRowKeyRange(swps[i].scan);
-                    rkPoints[i * 2] = ByteUtils.toStringBinary(range.getStartRowKey());
-                    rkPoints[i * 2 + 1] = ByteUtils.toStringBinary(range.getEndRowKey());
+                    rkPoints[i * 2] = range.getStartRowKey();
+                    rkPoints[i * 2 + 1] = range.getEndRowKey();
                 }
-                Arrays.sort(rkPoints, rkComprator);
+                Arrays.sort(rkPoints,rkPointComprator);
+                RowKeyRange[] ranges=new RowKeyRange[rkPoints.length-1];
+                for(int i=0;i<rkPoints.length-1;i++)
+                    ranges[i]=new RowKeyRange(rkPoints[i],rkPoints[i+1]);
                 t1=System.currentTimeMillis();
+                int index=0;
+                for(int j=0;j<swps.length;j++){
+                    boolean intoScan=false;
+                    for(int i=index;i<rkPoints.length-1;i++){
+                        if(rkPoints[i].equals(rkPoints[i+1]))continue;
+                        if(LogicalPlanUtil.isRkRangeInScan(rkPoints[i+1],swps[j])){
+                            intoScan=true;
+                             List<ScanWithPlan> swpList=crosses.get(ranges[i]);
+                            if(null == swpList){
+                                swpList = new ArrayList<>();
+                                crosses.put(ranges[i], swpList);
+                            }
+                            swpList.add(swps[j]);
+                            List<RowKeyRange> rangeList = scanSplits.get(swps[j]);
+                            if (rangeList == null) {
+                                rangeList = new ArrayList<>();
+                                scanSplits.put(swps[j], rangeList);
+                            }
+                            rangeList.add(ranges[i]);
+                        }else if(!intoScan){
+                            index++;
+                        }
+                    }
+                    index++;
+                }
+                /*
                 for (int i = 0; i < rkPoints.length - 1; i++) {
                     RowKeyRange range = new RowKeyRange(rkPoints[i], rkPoints[i + 1]);
                     if (rkPoints[i].equals(rkPoints[i + 1])) continue;
@@ -145,8 +173,7 @@ public class PlanMerge {
                         if (LogicalPlanUtil.isRkRangeInScan(range, swps[j])) {
                             List<ScanWithPlan> swpList = crosses.get(range);
                             if (null == swpList) {
-                                swpList = new ArrayList<>();
-                                crosses.put(range, swpList);
+
                             }
                             swpList.add(swps[j]);
                             List<RowKeyRange> rangeList = scanSplits.get(swps[j]);
@@ -158,6 +185,7 @@ public class PlanMerge {
                         }
                     }
                 }
+                */
                 t2=System.currentTimeMillis();
                 logger.info("rkPoint sort using "+(t2-t1)+" ms");
                 t1=System.currentTimeMillis();

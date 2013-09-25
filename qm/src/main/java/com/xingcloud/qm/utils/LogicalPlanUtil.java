@@ -45,7 +45,8 @@ import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY_
  * To change this template use File | Settings | File Templates.
  */
 public class LogicalPlanUtil {
-    public static Logger logger=Logger.getLogger(LogicalPlanUtil.class);
+    public static Logger logger = Logger.getLogger(LogicalPlanUtil.class);
+
     public static String trimSingleQuote(String rkStr) {
         if (rkStr.startsWith("'"))
             rkStr = rkStr.substring(1);
@@ -108,9 +109,9 @@ public class LogicalPlanUtil {
             JsonNode filter = selectionRoot.get(Selections.SELECTION_KEY_WORD_FILTER);
 
             if (filter != null && !(filter instanceof NullNode)) {
-                Map<String,Object> filterMap=new HashMap<>();
-                filterMap.put("type",filter.get("type").asText());
-                filterMap.put("expression",filter.get("expression"));
+                Map<String, Object> filterMap = new HashMap<>();
+                filterMap.put("type", filter.get("type").asText());
+                filterMap.put("expression", filter.get("expression"));
                 selectionMap.put(Selections.SELECTION_KEY_WORD_FILTER, filterMap);
             }
             //selectionMap.put(SELECTION_KEY_WORD_FILTER, selectionRoot.get(SELECTION_KEY_WORD_FILTER));
@@ -123,12 +124,12 @@ public class LogicalPlanUtil {
                     rowkeyRange.get(Selections.SELECTION_KEY_WORD_ROWKEY_END).textValue());
             selectionMap.put(Selections.SELECTION_KEY_WORD_ROWKEY, rkMap);
             //tail
-            JsonNode tailRange= selectionRoot.get(SELECTION_KEY_ROWKEY_TAIL_RANGE);
-            if(tailRange!=null && !(tailRange instanceof NullNode)){
-                Map<String,Object> tailRangeMap=new HashMap<>();
-                tailRangeMap.put(SELECTION_KEY_ROWKEY_TAIL_START,tailRange.get(SELECTION_KEY_ROWKEY_TAIL_START).toString());
-                tailRangeMap.put(SELECTION_KEY_ROWKEY_TAIL_END,tailRange.get(SELECTION_KEY_ROWKEY_TAIL_END).toString());
-                selectionMap.put(SELECTION_KEY_ROWKEY_TAIL_RANGE,tailRangeMap);
+            JsonNode tailRange = selectionRoot.get(SELECTION_KEY_ROWKEY_TAIL_RANGE);
+            if (tailRange != null && !(tailRange instanceof NullNode)) {
+                Map<String, Object> tailRangeMap = new HashMap<>();
+                tailRangeMap.put(SELECTION_KEY_ROWKEY_TAIL_START, tailRange.get(SELECTION_KEY_ROWKEY_TAIL_START).toString());
+                tailRangeMap.put(SELECTION_KEY_ROWKEY_TAIL_END, tailRange.get(SELECTION_KEY_ROWKEY_TAIL_END).toString());
+                selectionMap.put(SELECTION_KEY_ROWKEY_TAIL_RANGE, tailRangeMap);
             }
             //table
             selectionMap.put(Selections.SELECTION_KEY_WORD_TABLE,
@@ -150,7 +151,7 @@ public class LogicalPlanUtil {
 
         List<JsonNode> selectionNodeList = new ArrayList<>();
         for (ScanWithPlan swp : swps) {
-            for(JsonNode selectionNode : swp.scan.getSelection().getRoot()){
+            for (JsonNode selectionNode : swp.scan.getSelection().getRoot()) {
                 selectionNodeList.add(selectionNode);
             }
         }
@@ -164,17 +165,17 @@ public class LogicalPlanUtil {
 
         List<List<String>> filterFields = new ArrayList<>();
         List<LogicalExpression> baseFilterExprs;
-        Set<LogicalExpression> baseFilterExprSet=new HashSet<>();
-        List<String> baseFilterFields=new ArrayList<>();
+        Set<LogicalExpression> baseFilterExprSet = new HashSet<>();
+        List<String> baseFilterFields = new ArrayList<>();
         List<Object> projections = new ArrayList<>();
-        List<String> projectionExprNames = new ArrayList<>(),projectionRefNames = new ArrayList<>();
+        List<String> projectionExprNames = new ArrayList<>(), projectionRefNames = new ArrayList<>();
 
         boolean needFilter = true;
-        String filterType=null;
+        String filterType = null;
         for (JsonNode selectionNode : selectionNodeList) {
             JsonNode ProjectionsNode =
-                     selectionNode.get(SELECTION_KEY_WORD_PROJECTIONS);
-            for ( JsonNode projection : ProjectionsNode) {
+                    selectionNode.get(SELECTION_KEY_WORD_PROJECTIONS);
+            for (JsonNode projection : ProjectionsNode) {
                 String exprName = projection.get("expr").textValue();
                 String refName = projection.get("ref").textValue();
                 if (projectionExprNames.contains(exprName) && projectionRefNames.contains(refName))
@@ -189,8 +190,8 @@ public class LogicalPlanUtil {
                 needFilter = false;
                 continue;
             }
-            filterType=filterNode.get("type").textValue();
-            baseFilterExprSet.add(config.getMapper().readValue((filterNode.get("expression")).traverse(),LogicalExpression.class));
+            //filterType=filterNode.get("type").textValue();
+            baseFilterExprSet.add(config.getMapper().readValue((filterNode.get("expression")).traverse(), LogicalExpression.class));
             Map<String, UnitFunc> filterFuncMap = parseFilterExpr(filterNode.get("expression"), config);
             filterFields.add(new ArrayList<>(filterFuncMap.keySet()));
         }
@@ -201,7 +202,7 @@ public class LogicalPlanUtil {
             baseFilterExprs = new ArrayList<>(baseFilterExprSet);
             LogicalExpression filterExpr = baseFilterExprs.size() > 1 ? registry.createExpression("or", ExpressionPosition.UNKNOWN, baseFilterExprs) : baseFilterExprs.get(0);
             Map<String, Object> filter = new HashMap<>();
-            filter.put("type", filterType);
+            //filter.put("type", filterType);
             filter.put("expression", filterExpr);
             selectionMap.put(SELECTION_KEY_WORD_FILTER, filter);
 
@@ -224,7 +225,7 @@ public class LogicalPlanUtil {
                     Map<String, Object> projectionMap = new HashMap<>();
                     projections.add(projectionMap);
                     projectionMap.put("ref", field);
-                    projectionMap.put("expr",field);
+                    projectionMap.put("expr", field);
                     projectionExprNames.add(field);
                     projectionRefNames.add(field);
                 }
@@ -280,41 +281,126 @@ public class LogicalPlanUtil {
     }
 
     public static List<LogicalExpression> getFilterEntry(Scan baseScan, Scan scan, DrillConfig config) throws IOException {
-        JsonNode baseFilterExpr = baseScan.getSelection().getRoot().get(0).get(SELECTION_KEY_WORD_FILTER).get("expression");
+        String rkPattern = getRkPattern(scan, config);
+        if (!rkPattern.contains(".*.")) return null;
+        JsonNode baseFilterExprNode = baseScan.getSelection().getRoot().get(0).get(SELECTION_KEY_WORD_FILTER).get("expression");
+        FunctionCall baseFilterExpr=(FunctionCall)config.getMapper().readValue(baseFilterExprNode.traverse(),LogicalExpression.class);
         JsonNode fitlerExpr = scan.getSelection().getRoot().get(0).get(SELECTION_KEY_WORD_FILTER).get("expression");
         Map<String, UnitFunc> filterFuncMap = parseFilterExpr(fitlerExpr, config);
-        Map<String, UnitFunc> baseFilterFuncMap = parseFilterExpr(baseFilterExpr, config);
-        if(baseFilterFuncMap.size()>=filterFuncMap.size())return null;
+        List<String> baseFilterFields = getCommonFields(baseFilterExpr, config);
+        if (baseFilterFields.size() >= filterFuncMap.size()) return null;
         List<LogicalExpression> exprs = new ArrayList<>();
-        for (Map.Entry<String, UnitFunc> entry : baseFilterFuncMap.entrySet()) {
-            if (filterFuncMap.containsKey(entry.getKey()))
-                filterFuncMap.remove(entry.getKey());
+        for (String field : baseFilterFields) {
+            if (filterFuncMap.containsKey(field))
+                filterFuncMap.remove(field);
         }
         for (Map.Entry<String, UnitFunc> entry : filterFuncMap.entrySet()) {
             LogicalExpression le = entry.getValue().getFunc();
             exprs.add(le);
         }
-        //if (exprs.size() == 0) return null;
         return exprs;
+    }
+
+    public static String getRkPattern(Scan scan, DrillConfig config) throws IOException {
+        JsonNode filterNode = scan.getSelection().getRoot().get(0).get(SELECTION_KEY_WORD_FILTER);
+        String tableName = scan.getSelection().getRoot().get(0).get(SELECTION_KEY_WORD_TABLE).textValue();
+        try {
+            List<KeyPart> kps = MetaUtil.getInstance().getTableRkKps(tableName);
+            String rkPattern = "";
+            Map<String, UnitFunc> fieldFunc = parseFilterExpr(filterNode, config);
+            List<KeyPart> workKps = kps;
+            Deque<KeyPart> toWorkKps = new ArrayDeque<>(workKps);
+            loop:
+            while (workKps.size() > 0) {
+                for (KeyPart kp : workKps) {
+                    if (kp.getType() == KeyPart.Type.field) {
+                        String value;
+                        UnitFunc unitFunc = fieldFunc.get(kp.getField().getName());
+                        if (unitFunc != null)
+                            value = unitFunc.getValue();
+                        else
+                            value = "*";
+                        rkPattern += value;
+                        toWorkKps.removeFirst();
+                        fieldFunc.remove(kp.getField().getName());
+                        if (fieldFunc.size() == 0)
+                            break loop;
+                    } else if (kp.getType() == KeyPart.Type.constant) {
+                        rkPattern += kp.getConstant();
+                        toWorkKps.removeFirst();
+                    } else {
+                        toWorkKps.removeFirst();
+                        for (int i = kp.getOptionalGroup().size() - 1; i >= 0; i--) {
+                            toWorkKps.addFirst(kp.getOptionalGroup().get(i));
+                        }
+                        break;
+                    }
+                }
+                workKps = Arrays.asList(toWorkKps.toArray(new KeyPart[toWorkKps.size()]));
+            }
+            if (rkPattern.endsWith("."))
+                rkPattern = rkPattern.substring(0, rkPattern.length() - 1);
+            while (rkPattern.endsWith(".*"))
+                rkPattern = rkPattern.substring(0, rkPattern.length() - 2);
+
+            return rkPattern;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new IOException(e.getMessage());
+        }
+    }
+
+    public static List<String> getCommonFields(FunctionCall baseFilterExpr,DrillConfig config){
+        List<Map<String,UnitFunc>> funcMaps=getFuncMaps(baseFilterExpr,config);
+        Map<String,UnitFunc> refFuncMap=funcMaps.get(0);
+        List<String> excludingFields=new ArrayList<>();
+        for(Map.Entry<String,UnitFunc> entry : refFuncMap.entrySet()){
+            String field=entry.getKey();
+            UnitFunc value=entry.getValue();
+            for(int i=1;i<funcMaps.size();i++){
+                if(!funcMaps.get(i).containsKey(field)|| !funcMaps.get(i).get(field).equals(value))
+                {
+                    excludingFields.add(field);
+                    break;
+                }
+            }
+        }
+        for(String field :excludingFields){
+            refFuncMap.remove(field);
+        }
+        return new ArrayList<>(refFuncMap.keySet());
+    }
+    public static List<Map<String,UnitFunc>> getFuncMaps(FunctionCall filterExpr,DrillConfig config){
+        List<Map<String,UnitFunc>> funcMaps=new ArrayList<>();
+        if(!filterExpr.getDefinition().getName().contains("or"))
+            funcMaps.add(parseFunctionCall(filterExpr,config));
+        for(LogicalExpression le :filterExpr){
+            if(((FunctionCall)le).getDefinition().getName().contains("or"))
+                funcMaps.addAll(getFuncMaps(((FunctionCall)le),config));
+            else
+                funcMaps.add(parseFunctionCall(((FunctionCall)le),config));
+        }
+        return funcMaps;
     }
 
     public List<String> getFields(JsonNode filterNode, DrillConfig config) throws IOException {
         try {
-            return getFields((LogicalExpression)config.getMapper().readValues(filterNode.get("expression").traverse(),LogicalExpression.class),config);
+            return getFields((LogicalExpression) config.getMapper().readValues(filterNode.get("expression").traverse(), LogicalExpression.class), config);
         } catch (IOException e) {
             e.printStackTrace();
             throw e;
         }
     }
-    public List<String> getFields(LogicalExpression filterExpr,DrillConfig config){
-        Set<String> fields=new HashSet<>();
-        if(!(filterExpr instanceof FunctionCall))
+
+    public List<String> getFields(LogicalExpression filterExpr, DrillConfig config) {
+        Set<String> fields = new HashSet<>();
+        if (!(filterExpr instanceof FunctionCall))
             return null;
-        for(LogicalExpression childExpr : (FunctionCall)filterExpr){
-            if(childExpr instanceof SchemaPath){
-                fields.add(((SchemaPath)childExpr).getPath().toString());
-            }else if(childExpr instanceof FunctionCall)
-                 fields.addAll(getFields(childExpr,config));
+        for (LogicalExpression childExpr : (FunctionCall) filterExpr) {
+            if (childExpr instanceof SchemaPath) {
+                fields.add(((SchemaPath) childExpr).getPath().toString());
+            } else if (childExpr instanceof FunctionCall)
+                fields.addAll(getFields(childExpr, config));
         }
         return new ArrayList<>(fields);
     }
@@ -413,11 +499,10 @@ public class LogicalPlanUtil {
         return isRowKeyCrossed(range1, range2);
     }
 
-    public static boolean isRkRangeInScan(RowKeyRange range, ScanWithPlan swp) {
+    public static boolean isRkRangeInScan(byte[] rkPoint, ScanWithPlan swp) {
         RowKeyRange scanRange = LogicalPlanUtil.getRowKeyRange(swp.scan);
         byte[] scanSrk = scanRange.getStartRowKey(), scanEnk = scanRange.getEndRowKey();
-        byte[] srk = range.getStartRowKey(), enk = range.getEndRowKey();
-        if (Bytes.compareTo(srk, scanSrk) >= 0 && Bytes.compareTo(enk, scanEnk) <= 0)
+        if (Bytes.compareTo(scanEnk, rkPoint) >= 0 && Bytes.compareTo(scanSrk, rkPoint) < 0)
             return true;
         return false;
     }
@@ -488,9 +573,9 @@ public class LogicalPlanUtil {
 
     public static String getTableName(Scan scan) throws Exception {
         try {
-            if(scan.getSelection().getRoot() instanceof ArrayNode){
+            if (scan.getSelection().getRoot() instanceof ArrayNode) {
                 return scan.getSelection().getRoot().get(0).get(SELECTION_KEY_WORD_TABLE).asText();
-            }else {
+            } else {
                 return scan.getSelection().getRoot().get(SELECTION_KEY_WORD_TABLE).asText();
             }
         } catch (Exception e) {
@@ -502,47 +587,47 @@ public class LogicalPlanUtil {
         String storageEngine = scan.getStorageEngine();
         String tableName = getTableName(scan);
         if (SE_HBASE.equals(storageEngine)) {
-            for(JsonNode selectionNode : scan.getSelection().getRoot()){
-                RowKeyRange range =getRowKeyRangeFromFilter(selectionNode,tableName,config);
-                ObjectNode rkRangeNode=new ObjectNode(JsonNodeFactory.instance);
-                rkRangeNode.put(SELECTION_KEY_WORD_ROWKEY_START,range.getStartRkStr());
-                rkRangeNode.put(SELECTION_KEY_WORD_ROWKEY_END,range.getEndRkStr());
-                ((ObjectNode)selectionNode).put(SELECTION_KEY_WORD_ROWKEY,rkRangeNode);
+            for (JsonNode selectionNode : scan.getSelection().getRoot()) {
+                RowKeyRange range = getRowKeyRangeFromFilter(selectionNode, tableName, config);
+                ObjectNode rkRangeNode = new ObjectNode(JsonNodeFactory.instance);
+                rkRangeNode.put(SELECTION_KEY_WORD_ROWKEY_START, range.getStartRkStr());
+                rkRangeNode.put(SELECTION_KEY_WORD_ROWKEY_END, range.getEndRkStr());
+                ((ObjectNode) selectionNode).put(SELECTION_KEY_WORD_ROWKEY, rkRangeNode);
             }
         }
         return scan;
     }
 
-    public static RowKeyRange getRkTailRangeFromFilter(Map<String,Object> selection,String tableName,DrillConfig config) throws IOException {
-        Map<String,Object> filterMap=(Map<String,Object>)selection.get(SELECTION_KEY_WORD_FILTER);
-        return getRkTailRange((JsonNode)filterMap.get("expression"),tableName,config);
+    public static RowKeyRange getRkTailRangeFromFilter(Map<String, Object> selection, String tableName, DrillConfig config) throws IOException {
+        Map<String, Object> filterMap = (Map<String, Object>) selection.get(SELECTION_KEY_WORD_FILTER);
+        return getRkTailRange((JsonNode) filterMap.get("expression"), tableName, config);
     }
 
     private static RowKeyRange getRkTailRange(JsonNode filterNode, String tableName, DrillConfig config) throws IOException {
-        Map<String,UnitFunc> fieldFunc=parseFilterExpr(filterNode,config);
-        UnitFunc tailFunc=fieldFunc.get("uid");
-        if(tailFunc==null)
+        Map<String, UnitFunc> fieldFunc = parseFilterExpr(filterNode, config);
+        UnitFunc tailFunc = fieldFunc.get("uid");
+        if (tailFunc == null)
             return null;
-        FunctionCall call=tailFunc.getFunc();
-        byte[] srt=null,end=null;
-        List<UnitFunc> funcs=parseToUnit(call,config);
-        for(UnitFunc func : funcs){
-            String funcName=func.getOp();
-            if(funcName.contains("greater")){
-               srt=Bytes.tail(Bytes.toBytes(Long.parseLong(func.getValue())), 5);
-            }else if(funcName.contains("less")){
-               end=Bytes.tail(Bytes.toBytes(Long.parseLong(func.getValue())),5);
+        FunctionCall call = tailFunc.getFunc();
+        byte[] srt = null, end = null;
+        List<UnitFunc> funcs = parseToUnit(call, config);
+        for (UnitFunc func : funcs) {
+            String funcName = func.getOp();
+            if (funcName.contains("greater")) {
+                srt = Bytes.tail(Bytes.toBytes(Long.parseLong(func.getValue())), 5);
+            } else if (funcName.contains("less")) {
+                end = Bytes.tail(Bytes.toBytes(Long.parseLong(func.getValue())), 5);
             }
         }
-        return new RowKeyRange(Bytes.toStringBinary(srt),Bytes.toStringBinary(end));
+        return new RowKeyRange(Bytes.toStringBinary(srt), Bytes.toStringBinary(end));
     }
 
     public static RowKeyRange getRowKeyRangeFromFilter(JsonNode selectionNode, String tableName, DrillConfig config) throws Exception {
-         JsonNode filterNode=selectionNode.get(SELECTION_KEY_WORD_FILTER).get("expression");
-         return getRkRange(tableName,filterNode,config);
+        JsonNode filterNode = selectionNode.get(SELECTION_KEY_WORD_FILTER).get("expression");
+        return getRkRange(tableName, filterNode, config);
     }
 
-    public static RowKeyRange getRkRange(String tableName,JsonNode filter,DrillConfig config) throws Exception {
+    public static RowKeyRange getRkRange(String tableName, JsonNode filter, DrillConfig config) throws Exception {
         List<KeyPart> kps = MetaUtil.getInstance().getTableRkKps(tableName);
         String srkHead = "", enkHead = "";
         String event = "";
@@ -586,17 +671,17 @@ public class LogicalPlanUtil {
             }
             workKps = Arrays.asList(toWorkKps.toArray(new KeyPart[toWorkKps.size()]));
         }
-        if(event.endsWith("."))
-            event=event.substring(0,event.length()-1);
+        if (event.endsWith("."))
+            event = event.substring(0, event.length() - 1);
         String projectId = null;
         if (tableName.contains("_deu"))
             projectId = tableName.replaceAll("_deu", "");
         else if (tableName.contains("deu_"))
             projectId = tableName.replace("deu_", "");
-        long t1=System.currentTimeMillis(),t2;
+        long t1 = System.currentTimeMillis(), t2;
         XEventRange range = XEventOperation.getInstance().getEventRange(projectId, event);
-        t2=System.currentTimeMillis();
-        logger.info("get event "+event+" using "+(t2-t1)+" ms");
+        t2 = System.currentTimeMillis();
+        logger.info("get event " + event + " using " + (t2 - t1) + " ms");
         String eventFrom = "";
         for (int i = 0; i < range.getFrom().getEventArray().length; i++) {
             String levelEvent = range.getFrom().getEventArray()[i];
@@ -611,15 +696,15 @@ public class LogicalPlanUtil {
                 break;
             eventTo += levelEvent + ".";
         }
-        String srk = srkHead + eventFrom+"\\xFF";
-        String enk = enkHead + eventTo+"\\xFF";
+        String srk = srkHead + eventFrom + "\\xFF";
+        String enk = enkHead + eventTo + "\\xFF";
         return new RowKeyRange(srk, enk);
     }
 
     public static Map<String, UnitFunc> parseFilterExpr(JsonNode origExpr, DrillConfig config) throws IOException {
         Map<String, UnitFunc> resultMap = new HashMap<>();
         LogicalExpression func = config.getMapper().readValue(origExpr.traverse(), LogicalExpression.class);
-        return parseFunctionCall((FunctionCall) func,config);
+        return parseFunctionCall((FunctionCall) func, config);
         /*
         String[] exprs = origExpr.split("&&");
         for (String expr : exprs) {
@@ -643,21 +728,21 @@ public class LogicalPlanUtil {
         //return resultMap;
     }
 
-    public static Map<String, UnitFunc> parseFunctionCall(FunctionCall func,DrillConfig config) {
+    public static Map<String, UnitFunc> parseFunctionCall(FunctionCall func, DrillConfig config) {
         Map<String, UnitFunc> result = new HashMap<>();
         String field = null;
         UnitFunc value = null;
         for (LogicalExpression le : func) {
             if (le instanceof FunctionCall) {
-                for(Map.Entry<String,UnitFunc> entry: parseFunctionCall(((FunctionCall) le),config).entrySet()){
-                      if(result.containsKey(entry.getKey())){
-                          LogicalExpression old=result.get(entry.getKey()).getFunc();
-                          FunctionRegistry registry=new FunctionRegistry(config);
-                          FunctionCall call=(FunctionCall)registry.createExpression("&&",ExpressionPosition.UNKNOWN,Arrays.asList(old, entry.getValue().getFunc()));
-                          UnitFunc resultFunc=new UnitFunc(call);
-                          result.put(field,resultFunc);
-                      }else
-                          result.put(entry.getKey(),entry.getValue());
+                for (Map.Entry<String, UnitFunc> entry : parseFunctionCall(((FunctionCall) le), config).entrySet()) {
+                    if (result.containsKey(entry.getKey())) {
+                        LogicalExpression old = result.get(entry.getKey()).getFunc();
+                        FunctionRegistry registry = new FunctionRegistry(config);
+                        FunctionCall call = (FunctionCall) registry.createExpression("&&", ExpressionPosition.UNKNOWN, Arrays.asList(old, entry.getValue().getFunc()));
+                        UnitFunc resultFunc = new UnitFunc(call);
+                        result.put(field, resultFunc);
+                    } else
+                        result.put(entry.getKey(), entry.getValue());
                 }
             } else if (le instanceof SchemaPath) {
                 field = ((SchemaPath) le).getPath().toString();
@@ -666,25 +751,24 @@ public class LogicalPlanUtil {
             }
         }
         if (field != null && value != null) {
-            if(result.containsKey(field)){
-                LogicalExpression old=result.get(field).getFunc();
-                FunctionRegistry registry=new FunctionRegistry(config);
-                FunctionCall call=(FunctionCall)registry.createExpression("&&",ExpressionPosition.UNKNOWN,Arrays.asList(old,value.getFunc()));
-                UnitFunc resultFunc=new UnitFunc(call);
-                result.put(field,resultFunc);
-            }
-            else
+            if (result.containsKey(field)) {
+                LogicalExpression old = result.get(field).getFunc();
+                FunctionRegistry registry = new FunctionRegistry(config);
+                FunctionCall call = (FunctionCall) registry.createExpression("&&", ExpressionPosition.UNKNOWN, Arrays.asList(old, value.getFunc()));
+                UnitFunc resultFunc = new UnitFunc(call);
+                result.put(field, resultFunc);
+            } else
                 result.put(field, value);
         }
         return result;
     }
 
-    public static List<UnitFunc> parseToUnit(FunctionCall call,DrillConfig config){
-        List<UnitFunc> result=new ArrayList<>();
-        for(LogicalExpression le : call){
-            if(le instanceof  FunctionCall){
-                result.addAll(parseToUnit((FunctionCall)le,config));
-            }else{
+    public static List<UnitFunc> parseToUnit(FunctionCall call, DrillConfig config) {
+        List<UnitFunc> result = new ArrayList<>();
+        for (LogicalExpression le : call) {
+            if (le instanceof FunctionCall) {
+                result.addAll(parseToUnit((FunctionCall) le, config));
+            } else {
                 result.add(new UnitFunc(call));
             }
         }
@@ -734,6 +818,14 @@ public class LogicalPlanUtil {
         public FunctionCall getFunc() {
             return func;
         }
+
+        public boolean equals(Object o){
+            if (!( o instanceof UnitFunc))
+                return false;
+            if(func.equals(((UnitFunc)o).getFunc()))
+                return true;
+            return false;
+        }
     }
 
     public static List<Map<String, Object>> getOrigSelectionMap(Scan scan) {
@@ -759,9 +851,9 @@ public class LogicalPlanUtil {
             JsonNode filter = selectionRoot.get(Selections.SELECTION_KEY_WORD_FILTER);
 
             if (filter != null && !(filter instanceof NullNode)) {
-                Map<String,Object> filterMap=new HashMap<>();
-                filterMap.put("type",filter.get("type").asText());
-                filterMap.put("expression",filter.get("expression"));
+                Map<String, Object> filterMap = new HashMap<>();
+                filterMap.put("type", filter.get("type").asText());
+                filterMap.put("expression", filter.get("expression"));
                 selectionMap.put(Selections.SELECTION_KEY_WORD_FILTER, filterMap);
             }
             //table
@@ -779,12 +871,20 @@ public class LogicalPlanUtil {
 
     public static class RowKeyRange {
         byte[] startRowKey, endRowKey;
-        String startRkStr,endRkStr;
+        String startRkStr, endRkStr;
+
         public RowKeyRange(String srk, String enk) {
             this.startRowKey = ByteUtils.toBytesBinary(srk);
             this.endRowKey = ByteUtils.toBytesBinary(enk);
-            this.startRkStr=srk;
-            this.endRkStr=enk;
+            this.startRkStr = srk;
+            this.endRkStr = enk;
+        }
+
+        public RowKeyRange(byte[] srk, byte[] enk) {
+            this.startRowKey = srk;
+            this.endRowKey = enk;
+            this.startRkStr = Bytes.toStringBinary(srk);
+            this.endRkStr = Bytes.toStringBinary(enk);
         }
 
         public byte[] getStartRowKey() {
@@ -795,10 +895,11 @@ public class LogicalPlanUtil {
             return endRowKey;
         }
 
-        public String getStartRkStr(){
-           return startRkStr;
+        public String getStartRkStr() {
+            return startRkStr;
         }
-        public String getEndRkStr(){
+
+        public String getEndRkStr() {
             return endRkStr;
         }
 

@@ -27,13 +27,12 @@
   }, {
     op : "scan",
     @id : 2,
-    memo : "deu_xaa,2013-07-22,2013-07-27,click.*",
+    memo : "deu_xaa,2013-07-22,2013-07-27,response.*.*.*.error",
     storageengine : "hbase",
     selection : [ {
       table : "deu_xaa",
       filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130722') )  && ( (event0)  == ('click') ) "
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130722') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -45,8 +44,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130723') )  && ( (event0)  == ('click') ) "
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130723') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -58,8 +56,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130724') )  && ( (event0)  == ('click') ) "
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130724') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -71,8 +68,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130725') )  && ( (event0)  == ('click') ) "
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130725') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -84,8 +80,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130726') )  && ( (event0)  == ('click') ) "
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130726') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -97,8 +92,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        type : "ROWKEY",
-        expression : " ( (date)  == ('20130727') )  && ( (event0)  == ('click') ) "
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130727') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -152,7 +146,7 @@
     input : 5,
     projections : [ {
       ref : "query_id",
-      expr : "'GROUP,xaa,2013-07-22,2013-07-27,click.*,TOTAL_USER,VF-ALL-0-0,USER_PROPERTIES,ref'"
+      expr : "'GROUP,xaa,2013-07-22,2013-07-27,response.*.*.*.error,TOTAL_USER,VF-ALL-0-0,USER_PROPERTIES,ref'"
     }, {
       ref : "dimension",
       expr : "dimension"

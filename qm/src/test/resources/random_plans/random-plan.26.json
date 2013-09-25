@@ -11,13 +11,12 @@
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "deu_xaa,2013-08-01,2013-08-01,response.*.*.*.success",
+    memo : "deu_xaa,2013-07-28,2013-07-28,response.*.*.*.success",
     storageengine : "hbase",
     selection : [ {
       table : "deu_xaa",
       filter : {
-        type : "ROWKEY",
-        expression : " ( ( (event4)  == ('success') )  && ( (date)  == ('20130801') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( (event4)  == ('success') )  && ( (date)  == ('20130728') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -63,7 +62,7 @@
     input : 3,
     projections : [ {
       ref : "query_id",
-      expr : "'COMMON,xaa,2013-08-01,2013-08-01,response.*.*.*.success,TOTAL_USER,VF-ALL-0-0,HOUR'"
+      expr : "'COMMON,xaa,2013-07-28,2013-07-28,response.*.*.*.success,TOTAL_USER,VF-ALL-0-0,HOUR'"
     }, {
       ref : "dimension",
       expr : "hour(dimension)"

@@ -11,30 +11,12 @@
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "Scan(Table=xaa.register_time, Prop=register_time, Val={GTE=2013-07-01, LTE=2013-07-01})",
-    storageengine : "mysql",
-    selection : [ {
-      table : "xaa.register_time",
-      filter : {
-        type : "VAL",
-        expression : " ( (val)  >= (20130701000000) )  && ( (val)  <= (20130701235959) ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      } ]
-    } ],
-    ref : "user"
-  }, {
-    op : "scan",
-    @id : 2,
-    memo : "deu_xaa,2013-07-24,2013-07-24,response.*.*.*.pend",
+    memo : "deu_xaa,2013-08-15,2013-08-17,tomcat.query_enter.*",
     storageengine : "hbase",
     selection : [ {
       table : "deu_xaa",
       filter : {
-        type : "ROWKEY",
-        expression : " ( ( (event4)  == ('pend') )  && ( (date)  == ('20130724') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( (date)  == ('20130815') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('query_enter') ) "
       },
       projections : [ {
         ref : "uid",
@@ -42,39 +24,40 @@
       }, {
         ref : "value",
         expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " ( ( (date)  == ('20130816') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('query_enter') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
       }, {
-        ref : "timestamp",
-        expr : "timestamp"
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " ( ( (date)  == ('20130817') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('query_enter') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
       } ]
     } ],
     ref : "event"
   }, {
-    op : "join",
-    @id : 3,
-    left : 1,
-    right : 2,
-    conditions : [ {
-      relationship : "==",
-      left : "uid",
-      right : "uid"
-    } ],
-    type : "INNER"
-  }, {
-    op : "segment",
-    @id : 4,
-    input : 3,
-    exprs : [ {
-      ref : "dimension",
-      expr : "div3600(timestamp)"
-    } ],
-    name : "sgmt"
-  }, {
     op : "collapsingaggregate",
-    @id : 5,
-    input : 4,
-    within : "sgmt",
+    @id : 2,
+    input : 1,
+    within : null,
     target : null,
-    carryovers : [ "dimension" ],
+    carryovers : null,
     aggregations : [ {
       ref : "count",
       expr : "count(uid) "
@@ -87,14 +70,11 @@
     } ]
   }, {
     op : "project",
-    @id : 6,
-    input : 5,
+    @id : 3,
+    input : 2,
     projections : [ {
       ref : "query_id",
-      expr : "'COMMON,xaa,2013-07-24,2013-07-24,response.*.*.*.pend,{\"register_time\":\"2013-07-01\"},VF-ALL-0-0,HOUR'"
-    }, {
-      ref : "dimension",
-      expr : "hour(dimension)"
+      expr : "'COMMON,xaa,2013-08-15,2013-08-17,tomcat.query_enter.*,TOTAL_USER,VF-ALL-0-0,PERIOD'"
     }, {
       ref : "count",
       expr : "count"
@@ -107,8 +87,8 @@
     } ]
   }, {
     op : "store",
-    @id : 7,
-    input : 6,
+    @id : 4,
+    input : 3,
     target : null,
     partition : null,
     storageEngine : "DEFAULT-STORE"

@@ -16,7 +16,6 @@
     selection : [ {
       table : "xaa.register_time",
       filter : {
-        type : "VAL",
         expression : " ( (val)  >= (20130701000000) )  && ( (val)  <= (20130701235959) ) "
       },
       projections : [ {
@@ -28,13 +27,84 @@
   }, {
     op : "scan",
     @id : 2,
-    memo : "deu_xaa,2013-07-12,2013-07-12,tomcat.query_enter.*",
+    memo : "deu_xaa,2013-08-17,2013-08-23,tomcat.descriptor.build.*",
     storageengine : "hbase",
     selection : [ {
       table : "deu_xaa",
       filter : {
-        type : "ROWKEY",
-        expression : " ( ( (date)  == ('20130712') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('query_enter') ) "
+        expression : " ( ( ( (event2)  == ('build') )  && ( (date)  == ('20130817') ) )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('descriptor') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " ( ( ( (event2)  == ('build') )  && ( (date)  == ('20130818') ) )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('descriptor') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " ( ( ( (event2)  == ('build') )  && ( (date)  == ('20130819') ) )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('descriptor') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " ( ( ( (event2)  == ('build') )  && ( (date)  == ('20130820') ) )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('descriptor') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " ( ( ( (event2)  == ('build') )  && ( (date)  == ('20130821') ) )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('descriptor') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " ( ( ( (event2)  == ('build') )  && ( (date)  == ('20130822') ) )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('descriptor') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " ( ( ( (event2)  == ('build') )  && ( (date)  == ('20130823') ) )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('descriptor') ) "
       },
       projections : [ {
         ref : "uid",
@@ -79,7 +149,7 @@
     input : 4,
     projections : [ {
       ref : "query_id",
-      expr : "'COMMON,xaa,2013-07-12,2013-07-12,tomcat.query_enter.*,{\"register_time\":\"2013-07-01\"},VF-ALL-0-0,PERIOD'"
+      expr : "'COMMON,xaa,2013-08-17,2013-08-23,tomcat.descriptor.build.*,{\"register_time\":\"2013-07-01\"},VF-ALL-0-0,PERIOD'"
     }, {
       ref : "count",
       expr : "count"

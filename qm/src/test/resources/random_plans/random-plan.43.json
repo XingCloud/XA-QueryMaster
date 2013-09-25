@@ -11,29 +11,28 @@
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "Table=xaa.ref",
+    memo : "Scan(Table=xaa.identifier, Prop=identifier, Val={EQ=android.global.s77})",
     storageengine : "mysql",
-    selection : {
+    selection : [ {
+      table : "xaa.identifier",
+      filter : {
+        expression : " (val)  == ('android.global.s77') "
+      },
       projections : [ {
         ref : "uid",
         expr : "uid"
-      }, {
-        ref : "ref",
-        expr : "val"
-      } ],
-      table : "xaa.ref"
-    },
+      } ]
+    } ],
     ref : "user"
   }, {
     op : "scan",
     @id : 2,
-    memo : "deu_xaa,2013-08-12,2013-08-17,response.*.*.*.error",
+    memo : "deu_xaa,2013-07-25,2013-07-25,tomcat.query_enter.*",
     storageengine : "hbase",
     selection : [ {
       table : "deu_xaa",
       filter : {
-        type : "ROWKEY",
-        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130812') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( (date)  == ('20130725') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('query_enter') ) "
       },
       projections : [ {
         ref : "uid",
@@ -41,71 +40,9 @@
       }, {
         ref : "value",
         expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130813') ) )  && ( (event0)  == ('response') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
       }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130814') ) )  && ( (event0)  == ('response') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130815') ) )  && ( (event0)  == ('response') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130816') ) )  && ( (event0)  == ('response') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        type : "ROWKEY",
-        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130817') ) )  && ( (event0)  == ('response') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
+        ref : "timestamp",
+        expr : "timestamp"
       } ]
     } ],
     ref : "event"
@@ -119,14 +56,14 @@
       left : "uid",
       right : "uid"
     } ],
-    type : "RIGHT"
+    type : "INNER"
   }, {
     op : "segment",
     @id : 4,
     input : 3,
     exprs : [ {
       ref : "dimension",
-      expr : "ref"
+      expr : "div3600(timestamp)"
     } ],
     name : "sgmt"
   }, {
@@ -152,10 +89,10 @@
     input : 5,
     projections : [ {
       ref : "query_id",
-      expr : "'GROUP,xaa,2013-08-12,2013-08-17,response.*.*.*.error,TOTAL_USER,VF-ALL-0-0,USER_PROPERTIES,ref'"
+      expr : "'COMMON,xaa,2013-07-25,2013-07-25,tomcat.query_enter.*,{\"identifier\":\"android.global.s77\"},VF-ALL-0-0,HOUR'"
     }, {
       ref : "dimension",
-      expr : "dimension"
+      expr : "hour(dimension)"
     }, {
       ref : "count",
       expr : "count"
