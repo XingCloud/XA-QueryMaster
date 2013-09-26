@@ -201,6 +201,7 @@ public class LogicalPlanUtil {
             FunctionRegistry registry = new FunctionRegistry(config);
             baseFilterExprs = new ArrayList<>(baseFilterExprSet);
             LogicalExpression filterExpr = baseFilterExprs.size() > 1 ? registry.createExpression("or", ExpressionPosition.UNKNOWN, baseFilterExprs) : baseFilterExprs.get(0);
+            List<String> filterFieldNames=getCommonFields((FunctionCall)filterExpr,config);
             Map<String, Object> filter = new HashMap<>();
             //filter.put("type", filterType);
             filter.put("expression", filterExpr);
@@ -208,7 +209,7 @@ public class LogicalPlanUtil {
 
             baseFilterFields.addAll(filterFields.get(0));
             for (int i = 1; i < filterFields.size(); i++) {
-                for (String field : baseFilterFields) {
+                for (String field : filterFieldNames) {
                     if (!filterFields.get(i).contains(field))
                         filterFields.get(0).remove(field);
                 }
