@@ -11,12 +11,28 @@
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "deu_xaa,2013-08-05,2013-08-08,response.*.*.*.error",
+    memo : "Scan(Table=xaa.identifier, Prop=identifier, Val={EQ=android.global.s77})",
+    storageengine : "mysql",
+    selection : [ {
+      table : "xaa.identifier",
+      filter : {
+        expression : " (val)  == ('android.global.s77') "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      } ]
+    } ],
+    ref : "user"
+  }, {
+    op : "scan",
+    @id : 2,
+    memo : "deu_xaa,2013-07-13,2013-07-13,response.*.*.*.error",
     storageengine : "hbase",
     selection : [ {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130805') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130713') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -24,52 +40,39 @@
       }, {
         ref : "value",
         expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130806') ) )  && ( (event0)  == ('response') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
       }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130807') ) )  && ( (event0)  == ('response') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130808') ) )  && ( (event0)  == ('response') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
+        ref : "timestamp",
+        expr : "timestamp"
       } ]
     } ],
     ref : "event"
   }, {
+    op : "join",
+    @id : 3,
+    left : 1,
+    right : 2,
+    conditions : [ {
+      relationship : "==",
+      left : "uid",
+      right : "uid"
+    } ],
+    type : "INNER"
+  }, {
+    op : "segment",
+    @id : 4,
+    input : 3,
+    exprs : [ {
+      ref : "dimension",
+      expr : "div3600(timestamp)"
+    } ],
+    name : "sgmt"
+  }, {
     op : "collapsingaggregate",
-    @id : 2,
-    input : 1,
-    within : null,
+    @id : 5,
+    input : 4,
+    within : "sgmt",
     target : null,
-    carryovers : null,
+    carryovers : [ "dimension" ],
     aggregations : [ {
       ref : "count",
       expr : "count(uid) "
@@ -82,11 +85,14 @@
     } ]
   }, {
     op : "project",
-    @id : 3,
-    input : 2,
+    @id : 6,
+    input : 5,
     projections : [ {
       ref : "query_id",
-      expr : "'COMMON,xaa,2013-08-05,2013-08-08,response.*.*.*.error,TOTAL_USER,VF-ALL-0-0,PERIOD'"
+      expr : "'COMMON,xaa,2013-07-13,2013-07-13,response.*.*.*.error,{\"identifier\":\"android.global.s77\"},VF-ALL-0-0,HOUR'"
+    }, {
+      ref : "dimension",
+      expr : "hour(dimension)"
     }, {
       ref : "count",
       expr : "count"
@@ -99,8 +105,8 @@
     } ]
   }, {
     op : "store",
-    @id : 4,
-    input : 3,
+    @id : 7,
+    input : 6,
     target : null,
     partition : null,
     storageEngine : "DEFAULT-STORE"

@@ -27,12 +27,12 @@
   }, {
     op : "scan",
     @id : 2,
-    memo : "Scan(Table=xaa.register_time, Prop=register_time, Val={GTE=2013-07-01, LTE=2013-07-01})",
+    memo : "Scan(Table=xaa.register_time, Prop=register_time, Val={LTE=2013-07-01, GTE=2013-07-01})",
     storageengine : "mysql",
     selection : [ {
       table : "xaa.register_time",
       filter : {
-        expression : " ( (val)  >= (20130701000000) )  && ( (val)  <= (20130701235959) ) "
+        expression : " ( (val)  <= (20130701235959) )  && ( (val)  >= (20130701000000) ) "
       },
       projections : [ {
         ref : "uid",
@@ -43,12 +43,12 @@
   }, {
     op : "scan",
     @id : 3,
-    memo : "deu_xaa,2013-07-21,2013-07-25,response.*.*.*.error",
+    memo : "deu_xaa,2013-07-27,2013-07-28,response.*.*.*.show",
     storageengine : "hbase",
     selection : [ {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130721') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( (event4)  == ('show') )  && ( (date)  == ('20130727') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -60,43 +60,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130722') ) )  && ( (event0)  == ('response') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130723') ) )  && ( (event0)  == ('response') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130724') ) )  && ( (event0)  == ('response') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130725') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( (event4)  == ('show') )  && ( (date)  == ('20130728') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -161,7 +125,7 @@
     input : 7,
     projections : [ {
       ref : "query_id",
-      expr : "'GROUP,xaa,2013-07-21,2013-07-25,response.*.*.*.error,{\"register_time\":\"2013-07-01\"},VF-ALL-0-0,USER_PROPERTIES,ref'"
+      expr : "'GROUP,xaa,2013-07-27,2013-07-28,response.*.*.*.show,{\"register_time\":\"2013-07-01\"},VF-ALL-0-0,USER_PROPERTIES,ref'"
     }, {
       ref : "dimension",
       expr : "dimension"

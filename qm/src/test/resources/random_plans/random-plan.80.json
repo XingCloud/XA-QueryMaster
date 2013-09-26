@@ -11,12 +11,44 @@
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "deu_xaa,2013-07-28,2013-08-04,click.*",
+    memo : "Table=xaa.ref",
+    storageengine : "mysql",
+    selection : {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "ref",
+        expr : "val"
+      } ],
+      table : "xaa.ref"
+    },
+    ref : "user"
+  }, {
+    op : "scan",
+    @id : 2,
+    memo : "Scan(Table=xaa.register_time, Prop=register_time, Val={LTE=2013-07-01, GTE=2013-07-01})",
+    storageengine : "mysql",
+    selection : [ {
+      table : "xaa.register_time",
+      filter : {
+        expression : " ( (val)  <= (20130701235959) )  && ( (val)  >= (20130701000000) ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      } ]
+    } ],
+    ref : "user"
+  }, {
+    op : "scan",
+    @id : 3,
+    memo : "deu_xaa,2013-08-08,2013-08-12,response.*.*.*.show",
     storageengine : "hbase",
     selection : [ {
       table : "deu_xaa",
       filter : {
-        expression : " ( (date)  == ('20130728') )  && ( (event0)  == ('click') ) "
+        expression : " ( ( (event4)  == ('show') )  && ( (date)  == ('20130808') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -28,7 +60,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( (date)  == ('20130729') )  && ( (event0)  == ('click') ) "
+        expression : " ( ( (event4)  == ('show') )  && ( (date)  == ('20130809') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -40,7 +72,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( (date)  == ('20130730') )  && ( (event0)  == ('click') ) "
+        expression : " ( ( (event4)  == ('show') )  && ( (date)  == ('20130810') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -52,7 +84,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( (date)  == ('20130731') )  && ( (event0)  == ('click') ) "
+        expression : " ( ( (event4)  == ('show') )  && ( (date)  == ('20130811') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -64,43 +96,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( (date)  == ('20130801') )  && ( (event0)  == ('click') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        expression : " ( (date)  == ('20130802') )  && ( (event0)  == ('click') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        expression : " ( (date)  == ('20130803') )  && ( (event0)  == ('click') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        expression : " ( (date)  == ('20130804') )  && ( (event0)  == ('click') ) "
+        expression : " ( ( (event4)  == ('show') )  && ( (date)  == ('20130812') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -112,12 +108,43 @@
     } ],
     ref : "event"
   }, {
+    op : "join",
+    @id : 4,
+    left : 2,
+    right : 3,
+    conditions : [ {
+      relationship : "==",
+      left : "uid",
+      right : "uid"
+    } ],
+    type : "INNER"
+  }, {
+    op : "join",
+    @id : 5,
+    left : 1,
+    right : 4,
+    conditions : [ {
+      relationship : "==",
+      left : "uid",
+      right : "uid"
+    } ],
+    type : "RIGHT"
+  }, {
+    op : "segment",
+    @id : 6,
+    input : 5,
+    exprs : [ {
+      ref : "dimension",
+      expr : "ref"
+    } ],
+    name : "sgmt"
+  }, {
     op : "collapsingaggregate",
-    @id : 2,
-    input : 1,
-    within : null,
+    @id : 7,
+    input : 6,
+    within : "sgmt",
     target : null,
-    carryovers : null,
+    carryovers : [ "dimension" ],
     aggregations : [ {
       ref : "count",
       expr : "count(uid) "
@@ -130,11 +157,14 @@
     } ]
   }, {
     op : "project",
-    @id : 3,
-    input : 2,
+    @id : 8,
+    input : 7,
     projections : [ {
       ref : "query_id",
-      expr : "'COMMON,xaa,2013-07-28,2013-08-04,click.*,TOTAL_USER,VF-ALL-0-0,PERIOD'"
+      expr : "'GROUP,xaa,2013-08-08,2013-08-12,response.*.*.*.show,{\"register_time\":\"2013-07-01\"},VF-ALL-0-0,USER_PROPERTIES,ref'"
+    }, {
+      ref : "dimension",
+      expr : "dimension"
     }, {
       ref : "count",
       expr : "count"
@@ -147,8 +177,8 @@
     } ]
   }, {
     op : "store",
-    @id : 4,
-    input : 3,
+    @id : 9,
+    input : 8,
     target : null,
     partition : null,
     storageEngine : "DEFAULT-STORE"

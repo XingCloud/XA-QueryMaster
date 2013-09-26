@@ -11,28 +11,12 @@
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "Table=xaa.ref",
-    storageengine : "mysql",
-    selection : {
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "ref",
-        expr : "val"
-      } ],
-      table : "xaa.ref"
-    },
-    ref : "user"
-  }, {
-    op : "scan",
-    @id : 2,
-    memo : "deu_xaa,2013-08-21,2013-08-22,response.*.*.*.pend",
+    memo : "deu_xaa,2013-08-09,2013-08-09,response.*.*.*.error",
     storageengine : "hbase",
     selection : [ {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (event4)  == ('pend') )  && ( (date)  == ('20130821') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130809') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -40,45 +24,25 @@
       }, {
         ref : "value",
         expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        expression : " ( ( (event4)  == ('pend') )  && ( (date)  == ('20130822') ) )  && ( (event0)  == ('response') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
       }, {
-        ref : "value",
-        expr : "value"
+        ref : "timestamp",
+        expr : "timestamp"
       } ]
     } ],
     ref : "event"
   }, {
-    op : "join",
-    @id : 3,
-    left : 1,
-    right : 2,
-    conditions : [ {
-      relationship : "==",
-      left : "uid",
-      right : "uid"
-    } ],
-    type : "RIGHT"
-  }, {
     op : "segment",
-    @id : 4,
-    input : 3,
+    @id : 2,
+    input : 1,
     exprs : [ {
       ref : "dimension",
-      expr : "ref"
+      expr : "div3600(timestamp)"
     } ],
     name : "sgmt"
   }, {
     op : "collapsingaggregate",
-    @id : 5,
-    input : 4,
+    @id : 3,
+    input : 2,
     within : "sgmt",
     target : null,
     carryovers : [ "dimension" ],
@@ -94,14 +58,14 @@
     } ]
   }, {
     op : "project",
-    @id : 6,
-    input : 5,
+    @id : 4,
+    input : 3,
     projections : [ {
       ref : "query_id",
-      expr : "'GROUP,xaa,2013-08-21,2013-08-22,response.*.*.*.pend,TOTAL_USER,VF-ALL-0-0,USER_PROPERTIES,ref'"
+      expr : "'COMMON,xaa,2013-08-09,2013-08-09,response.*.*.*.error,TOTAL_USER,VF-ALL-0-0,HOUR'"
     }, {
       ref : "dimension",
-      expr : "dimension"
+      expr : "hour(dimension)"
     }, {
       ref : "count",
       expr : "count"
@@ -114,8 +78,8 @@
     } ]
   }, {
     op : "store",
-    @id : 7,
-    input : 6,
+    @id : 5,
+    input : 4,
     target : null,
     partition : null,
     storageEngine : "DEFAULT-STORE"

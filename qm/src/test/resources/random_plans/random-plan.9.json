@@ -11,12 +11,56 @@
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "deu_xaa,2013-07-27,2013-07-27,tomcat.descriptor.build.*",
+    memo : "Table=xaa.ref",
+    storageengine : "mysql",
+    selection : {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "ref",
+        expr : "val"
+      } ],
+      table : "xaa.ref"
+    },
+    ref : "user"
+  }, {
+    op : "scan",
+    @id : 2,
+    memo : "Scan(Table=xaa.identifier, Prop=identifier, Val={EQ=android.global.s77})",
+    storageengine : "mysql",
+    selection : [ {
+      table : "xaa.identifier",
+      filter : {
+        expression : " (val)  == ('android.global.s77') "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      } ]
+    } ],
+    ref : "user"
+  }, {
+    op : "scan",
+    @id : 3,
+    memo : "deu_xaa,2013-07-31,2013-08-01,*.*",
     storageengine : "hbase",
     selection : [ {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( ( (event2)  == ('build') )  && ( (date)  == ('20130727') ) )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('descriptor') ) "
+        expression : " (date)  == ('20130731') "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " (date)  == ('20130801') "
       },
       projections : [ {
         ref : "uid",
@@ -28,12 +72,43 @@
     } ],
     ref : "event"
   }, {
+    op : "join",
+    @id : 4,
+    left : 2,
+    right : 3,
+    conditions : [ {
+      relationship : "==",
+      left : "uid",
+      right : "uid"
+    } ],
+    type : "INNER"
+  }, {
+    op : "join",
+    @id : 5,
+    left : 1,
+    right : 4,
+    conditions : [ {
+      relationship : "==",
+      left : "uid",
+      right : "uid"
+    } ],
+    type : "RIGHT"
+  }, {
+    op : "segment",
+    @id : 6,
+    input : 5,
+    exprs : [ {
+      ref : "dimension",
+      expr : "ref"
+    } ],
+    name : "sgmt"
+  }, {
     op : "collapsingaggregate",
-    @id : 2,
-    input : 1,
-    within : null,
+    @id : 7,
+    input : 6,
+    within : "sgmt",
     target : null,
-    carryovers : null,
+    carryovers : [ "dimension" ],
     aggregations : [ {
       ref : "count",
       expr : "count(uid) "
@@ -46,11 +121,14 @@
     } ]
   }, {
     op : "project",
-    @id : 3,
-    input : 2,
+    @id : 8,
+    input : 7,
     projections : [ {
       ref : "query_id",
-      expr : "'COMMON,xaa,2013-07-27,2013-07-27,tomcat.descriptor.build.*,TOTAL_USER,VF-ALL-0-0,PERIOD'"
+      expr : "'GROUP,xaa,2013-07-31,2013-08-01,*.*,{\"identifier\":\"android.global.s77\"},VF-ALL-0-0,USER_PROPERTIES,ref'"
+    }, {
+      ref : "dimension",
+      expr : "dimension"
     }, {
       ref : "count",
       expr : "count"
@@ -63,8 +141,8 @@
     } ]
   }, {
     op : "store",
-    @id : 4,
-    input : 3,
+    @id : 9,
+    input : 8,
     target : null,
     partition : null,
     storageEngine : "DEFAULT-STORE"

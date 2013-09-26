@@ -268,15 +268,22 @@ public class LogicalPlanUtil {
     public static Filter getFilter(Scan baseScan, Scan scan, DrillConfig config) throws IOException {
         //List<LogicalExpression> filterEntry = getFilterEntry(scan, config);
         List<LogicalExpression> filterEntry = getFilterEntry(baseScan, scan, config);
+        LogicalExpression filterExpr;
+        Filter filter;
         if (filterEntry == null) {
             return null;
         }
         //ExpressionPosition position = new ExpressionPosition(null, 0);
-        FunctionRegistry registry = new FunctionRegistry(config);
+        if (filterEntry.size() > 1) {
+            FunctionRegistry registry = new FunctionRegistry(config);
 
-        LogicalExpression filterExpr = registry.createExpression("&&", ExpressionPosition.UNKNOWN, filterEntry);
-        //LogicalExpression filterExpr=registry.createExpression("and",position,filterEntry);
-        Filter filter = new Filter(filterExpr);
+            filterExpr = registry.createExpression("&&", ExpressionPosition.UNKNOWN, filterEntry);
+            //LogicalExpression filterExpr=registry.createExpression("and",position,filterEntry);
+            filter = new Filter(filterExpr);
+        } else {
+            filterExpr = filterEntry.get(0);
+            filter = new Filter(filterExpr);
+        }
         return filter;
     }
 
@@ -302,7 +309,7 @@ public class LogicalPlanUtil {
     }
 
     public static String getRkPattern(Scan scan, DrillConfig config) throws IOException {
-        JsonNode filterNode = scan.getSelection().getRoot().get(0).get(SELECTION_KEY_WORD_FILTER);
+        JsonNode filterNode = scan.getSelection().getRoot().get(0).get(SELECTION_KEY_WORD_FILTER).get("expression");
         String tableName = scan.getSelection().getRoot().get(0).get(SELECTION_KEY_WORD_TABLE).textValue();
         try {
             List<KeyPart> kps = MetaUtil.getInstance().getTableRkKps(tableName);
@@ -507,6 +514,14 @@ public class LogicalPlanUtil {
         return false;
     }
 
+    public static boolean isRkRangeInScan(RowKeyRange range,ScanWithPlan swp){
+        RowKeyRange scanRange = LogicalPlanUtil.getRowKeyRange(swp.scan);
+        byte[] scanSrk = scanRange.getStartRowKey(), scanEnk = scanRange.getEndRowKey();
+        if (Bytes.compareTo(scanEnk, range.getEndRowKey()) >= 0 && Bytes.compareTo(scanSrk, range.getStartRowKey()) <= 0)
+            return true;
+        return false;
+    }
+
     public static boolean isRangeEquals(RowKeyRange range1, RowKeyRange range2) {
         if (Bytes.compareTo(range1.getStartRowKey(), range2.getStartRowKey()) == 0 &&
                 Bytes.compareTo(range1.getEndRowKey(), range2.getEndRowKey()) == 0)
@@ -696,8 +711,8 @@ public class LogicalPlanUtil {
                 break;
             eventTo += levelEvent + ".";
         }
-        String srk = srkHead + eventFrom + "\\xFF";
-        String enk = enkHead + eventTo + "\\xFF";
+        String srk = srkHead + eventFrom + "\\xFF\\x00\\x00\\x00\\x00\\x00";
+        String enk = enkHead + eventTo + "\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF";
         return new RowKeyRange(srk, enk);
     }
 

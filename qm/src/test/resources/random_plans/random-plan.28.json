@@ -11,12 +11,12 @@
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "Scan(Table=xaa.register_time, Prop=register_time, Val={GTE=2013-07-01, LTE=2013-07-01})",
+    memo : "Scan(Table=xaa.register_time, Prop=register_time, Val={LTE=2013-07-01, GTE=2013-07-01})",
     storageengine : "mysql",
     selection : [ {
       table : "xaa.register_time",
       filter : {
-        expression : " ( (val)  >= (20130701000000) )  && ( (val)  <= (20130701235959) ) "
+        expression : " ( (val)  <= (20130701235959) )  && ( (val)  >= (20130701000000) ) "
       },
       projections : [ {
         ref : "uid",
@@ -27,12 +27,12 @@
   }, {
     op : "scan",
     @id : 2,
-    memo : "deu_xaa,2013-07-22,2013-07-22,tomcat.query_enter.*",
+    memo : "deu_xaa,2013-08-08,2013-08-08,response.*.report.*.responsetime.*",
     storageengine : "hbase",
     selection : [ {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (date)  == ('20130722') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('query_enter') ) "
+        expression : " ( ( ( (event2)  == ('report') )  && ( (event4)  == ('responsetime') ) )  && ( (date)  == ('20130808') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -89,7 +89,7 @@
     input : 5,
     projections : [ {
       ref : "query_id",
-      expr : "'COMMON,xaa,2013-07-22,2013-07-22,tomcat.query_enter.*,{\"register_time\":\"2013-07-01\"},VF-ALL-0-0,HOUR'"
+      expr : "'COMMON,xaa,2013-08-08,2013-08-08,response.*.report.*.responsetime.*,{\"register_time\":\"2013-07-01\"},VF-ALL-0-0,HOUR'"
     }, {
       ref : "dimension",
       expr : "hour(dimension)"

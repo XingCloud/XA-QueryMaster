@@ -11,12 +11,44 @@
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "deu_xaa,2013-07-19,2013-07-26,response.*.*.*.error",
+    memo : "Table=xaa.ref",
+    storageengine : "mysql",
+    selection : {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "ref",
+        expr : "val"
+      } ],
+      table : "xaa.ref"
+    },
+    ref : "user"
+  }, {
+    op : "scan",
+    @id : 2,
+    memo : "Scan(Table=xaa.register_time, Prop=register_time, Val={LTE=2013-07-01, GTE=2013-07-01})",
+    storageengine : "mysql",
+    selection : [ {
+      table : "xaa.register_time",
+      filter : {
+        expression : " ( (val)  <= (20130701235959) )  && ( (val)  >= (20130701000000) ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      } ]
+    } ],
+    ref : "user"
+  }, {
+    op : "scan",
+    @id : 3,
+    memo : "deu_xaa,2013-07-14,2013-07-15,tomcat.descriptor.build.*",
     storageengine : "hbase",
     selection : [ {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130719') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( ( (event2)  == ('build') )  && ( (date)  == ('20130714') ) )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('descriptor') ) "
       },
       projections : [ {
         ref : "uid",
@@ -28,79 +60,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130720') ) )  && ( (event0)  == ('response') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130721') ) )  && ( (event0)  == ('response') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130722') ) )  && ( (event0)  == ('response') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130723') ) )  && ( (event0)  == ('response') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130724') ) )  && ( (event0)  == ('response') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130725') ) )  && ( (event0)  == ('response') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130726') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( ( (event2)  == ('build') )  && ( (date)  == ('20130715') ) )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('descriptor') ) "
       },
       projections : [ {
         ref : "uid",
@@ -112,12 +72,43 @@
     } ],
     ref : "event"
   }, {
+    op : "join",
+    @id : 4,
+    left : 2,
+    right : 3,
+    conditions : [ {
+      relationship : "==",
+      left : "uid",
+      right : "uid"
+    } ],
+    type : "INNER"
+  }, {
+    op : "join",
+    @id : 5,
+    left : 1,
+    right : 4,
+    conditions : [ {
+      relationship : "==",
+      left : "uid",
+      right : "uid"
+    } ],
+    type : "RIGHT"
+  }, {
+    op : "segment",
+    @id : 6,
+    input : 5,
+    exprs : [ {
+      ref : "dimension",
+      expr : "ref"
+    } ],
+    name : "sgmt"
+  }, {
     op : "collapsingaggregate",
-    @id : 2,
-    input : 1,
-    within : null,
+    @id : 7,
+    input : 6,
+    within : "sgmt",
     target : null,
-    carryovers : null,
+    carryovers : [ "dimension" ],
     aggregations : [ {
       ref : "count",
       expr : "count(uid) "
@@ -130,11 +121,14 @@
     } ]
   }, {
     op : "project",
-    @id : 3,
-    input : 2,
+    @id : 8,
+    input : 7,
     projections : [ {
       ref : "query_id",
-      expr : "'COMMON,xaa,2013-07-19,2013-07-26,response.*.*.*.error,TOTAL_USER,VF-ALL-0-0,PERIOD'"
+      expr : "'GROUP,xaa,2013-07-14,2013-07-15,tomcat.descriptor.build.*,{\"register_time\":\"2013-07-01\"},VF-ALL-0-0,USER_PROPERTIES,ref'"
+    }, {
+      ref : "dimension",
+      expr : "dimension"
     }, {
       ref : "count",
       expr : "count"
@@ -147,8 +141,8 @@
     } ]
   }, {
     op : "store",
-    @id : 4,
-    input : 3,
+    @id : 9,
+    input : 8,
     target : null,
     partition : null,
     storageEngine : "DEFAULT-STORE"

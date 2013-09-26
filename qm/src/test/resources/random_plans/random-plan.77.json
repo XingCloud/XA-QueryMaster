@@ -27,12 +27,12 @@
   }, {
     op : "scan",
     @id : 2,
-    memo : "Scan(Table=xaa.identifier, Prop=identifier, Val={EQ=android.global.s77})",
+    memo : "Scan(Table=xaa.register_time, Prop=register_time, Val={LTE=2013-07-01, GTE=2013-07-01})",
     storageengine : "mysql",
     selection : [ {
-      table : "xaa.identifier",
+      table : "xaa.register_time",
       filter : {
-        expression : " (val)  == ('android.global.s77') "
+        expression : " ( (val)  <= (20130701235959) )  && ( (val)  >= (20130701000000) ) "
       },
       projections : [ {
         ref : "uid",
@@ -43,12 +43,12 @@
   }, {
     op : "scan",
     @id : 3,
-    memo : "deu_xaa,2013-08-08,2013-08-16,response.*.*.*.success",
+    memo : "deu_xaa,2013-07-29,2013-08-05,tomcat.*.online.*",
     storageengine : "hbase",
     selection : [ {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (event4)  == ('success') )  && ( (date)  == ('20130808') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( (date)  == ('20130729') )  && ( (event2)  == ('online') ) )  && ( (event0)  == ('tomcat') ) "
       },
       projections : [ {
         ref : "uid",
@@ -60,7 +60,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (event4)  == ('success') )  && ( (date)  == ('20130809') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( (date)  == ('20130730') )  && ( (event2)  == ('online') ) )  && ( (event0)  == ('tomcat') ) "
       },
       projections : [ {
         ref : "uid",
@@ -72,7 +72,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (event4)  == ('success') )  && ( (date)  == ('20130810') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( (date)  == ('20130731') )  && ( (event2)  == ('online') ) )  && ( (event0)  == ('tomcat') ) "
       },
       projections : [ {
         ref : "uid",
@@ -84,7 +84,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (event4)  == ('success') )  && ( (date)  == ('20130811') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( (date)  == ('20130801') )  && ( (event2)  == ('online') ) )  && ( (event0)  == ('tomcat') ) "
       },
       projections : [ {
         ref : "uid",
@@ -96,7 +96,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (event4)  == ('success') )  && ( (date)  == ('20130812') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( (date)  == ('20130802') )  && ( (event2)  == ('online') ) )  && ( (event0)  == ('tomcat') ) "
       },
       projections : [ {
         ref : "uid",
@@ -108,7 +108,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (event4)  == ('success') )  && ( (date)  == ('20130813') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( (date)  == ('20130803') )  && ( (event2)  == ('online') ) )  && ( (event0)  == ('tomcat') ) "
       },
       projections : [ {
         ref : "uid",
@@ -120,7 +120,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (event4)  == ('success') )  && ( (date)  == ('20130814') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( (date)  == ('20130804') )  && ( (event2)  == ('online') ) )  && ( (event0)  == ('tomcat') ) "
       },
       projections : [ {
         ref : "uid",
@@ -132,19 +132,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (event4)  == ('success') )  && ( (date)  == ('20130815') ) )  && ( (event0)  == ('response') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        expression : " ( ( (event4)  == ('success') )  && ( (date)  == ('20130816') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( (date)  == ('20130805') )  && ( (event2)  == ('online') ) )  && ( (event0)  == ('tomcat') ) "
       },
       projections : [ {
         ref : "uid",
@@ -209,7 +197,7 @@
     input : 7,
     projections : [ {
       ref : "query_id",
-      expr : "'GROUP,xaa,2013-08-08,2013-08-16,response.*.*.*.success,{\"identifier\":\"android.global.s77\"},VF-ALL-0-0,USER_PROPERTIES,ref'"
+      expr : "'GROUP,xaa,2013-07-29,2013-08-05,tomcat.*.online.*,{\"register_time\":\"2013-07-01\"},VF-ALL-0-0,USER_PROPERTIES,ref'"
     }, {
       ref : "dimension",
       expr : "dimension"

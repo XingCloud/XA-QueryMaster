@@ -11,28 +11,28 @@
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "Table=xaa.ref",
+    memo : "Scan(Table=xaa.identifier, Prop=identifier, Val={EQ=android.global.s77})",
     storageengine : "mysql",
-    selection : {
+    selection : [ {
+      table : "xaa.identifier",
+      filter : {
+        expression : " (val)  == ('android.global.s77') "
+      },
       projections : [ {
         ref : "uid",
         expr : "uid"
-      }, {
-        ref : "ref",
-        expr : "val"
-      } ],
-      table : "xaa.ref"
-    },
+      } ]
+    } ],
     ref : "user"
   }, {
     op : "scan",
     @id : 2,
-    memo : "deu_xaa,2013-07-29,2013-07-30,response.*.*.*.error",
+    memo : "deu_xaa,2013-07-29,2013-07-29,click.report.filter_dimension",
     storageengine : "hbase",
     selection : [ {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130729') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( ( (event2)  == ('filter_dimension') )  && ( (date)  == ('20130729') ) )  && ( (event0)  == ('click') ) )  && ( (event1)  == ('report') ) "
       },
       projections : [ {
         ref : "uid",
@@ -40,18 +40,9 @@
       }, {
         ref : "value",
         expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130730') ) )  && ( (event0)  == ('response') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
       }, {
-        ref : "value",
-        expr : "value"
+        ref : "timestamp",
+        expr : "timestamp"
       } ]
     } ],
     ref : "event"
@@ -65,14 +56,14 @@
       left : "uid",
       right : "uid"
     } ],
-    type : "RIGHT"
+    type : "INNER"
   }, {
     op : "segment",
     @id : 4,
     input : 3,
     exprs : [ {
       ref : "dimension",
-      expr : "ref"
+      expr : "div3600(timestamp)"
     } ],
     name : "sgmt"
   }, {
@@ -98,10 +89,10 @@
     input : 5,
     projections : [ {
       ref : "query_id",
-      expr : "'GROUP,xaa,2013-07-29,2013-07-30,response.*.*.*.error,TOTAL_USER,VF-ALL-0-0,USER_PROPERTIES,ref'"
+      expr : "'COMMON,xaa,2013-07-29,2013-07-29,click.report.filter_dimension,{\"identifier\":\"android.global.s77\"},VF-ALL-0-0,HOUR'"
     }, {
       ref : "dimension",
-      expr : "dimension"
+      expr : "hour(dimension)"
     }, {
       ref : "count",
       expr : "count"

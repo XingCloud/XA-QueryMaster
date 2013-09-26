@@ -62,10 +62,12 @@ public class TestPlanMerge {
           }
       }
       */
+      int[] planIndex={0,10,20,30,40,50,60,70,80,90,100};
       for(int j=0;j<3;j++){
       logger.info("test logger");
+      LogicalPlan logicalPlan=Utils.readPlan("/filterinscan/logical.json",c);
       List<LogicalPlan> plans=new ArrayList<>();
-      for(int i=0;i<100;i++){
+      for(int i=0;i<200;i++){
           LogicalPlan plan=Utils.readPlan("/random_plans/random-plan."+i+".json",c);
           plans.add(plan);
       }
@@ -78,7 +80,8 @@ public class TestPlanMerge {
       logger.info("transfer using "+(t2-t1)+ " ms");
 
       for (LogicalPlan ret : transfered.values()) {
-          //System.out.println(c.getMapper().writeValueAsString(ret));
+          String json=c.getMapper().writeValueAsString(ret);
+          LogicalPlan result=c.getMapper().readValue(json,LogicalPlan.class);
       }
 
       //System.out.println("-------------------------------------------------" +
@@ -94,7 +97,7 @@ public class TestPlanMerge {
       for (LogicalPlan ret : new HashSet<>(merged.values())) {
           String planStr=c.getMapper().writeValueAsString(ret);
           LogicalPlan result=c.getMapper().readValue(planStr,LogicalPlan.class);
-          //logger.info(planStr);
+          logger.info(planStr);
           File targetFile=new File(dir.getAbsolutePath()+"/"+(++index)+".json");
           Writer writer=new FileWriter(targetFile);
           writer.write(planStr);

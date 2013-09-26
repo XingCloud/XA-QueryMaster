@@ -11,12 +11,12 @@
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "deu_xaa,2013-08-19,2013-08-22,tomcat.query_enter.*",
+    memo : "deu_xaa,2013-08-08,2013-08-08,tomcat.query_enter.*",
     storageengine : "hbase",
     selection : [ {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (date)  == ('20130819') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('query_enter') ) "
+        expression : " ( ( (date)  == ('20130808') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('query_enter') ) "
       },
       projections : [ {
         ref : "uid",
@@ -24,52 +24,28 @@
       }, {
         ref : "value",
         expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        expression : " ( ( (date)  == ('20130820') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('query_enter') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
       }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        expression : " ( ( (date)  == ('20130821') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('query_enter') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_xaa",
-      filter : {
-        expression : " ( ( (date)  == ('20130822') )  && ( (event0)  == ('tomcat') ) )  && ( (event1)  == ('query_enter') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
+        ref : "timestamp",
+        expr : "timestamp"
       } ]
     } ],
     ref : "event"
   }, {
-    op : "collapsingaggregate",
+    op : "segment",
     @id : 2,
     input : 1,
-    within : null,
+    exprs : [ {
+      ref : "dimension",
+      expr : "div3600(timestamp)"
+    } ],
+    name : "sgmt"
+  }, {
+    op : "collapsingaggregate",
+    @id : 3,
+    input : 2,
+    within : "sgmt",
     target : null,
-    carryovers : null,
+    carryovers : [ "dimension" ],
     aggregations : [ {
       ref : "count",
       expr : "count(uid) "
@@ -82,11 +58,14 @@
     } ]
   }, {
     op : "project",
-    @id : 3,
-    input : 2,
+    @id : 4,
+    input : 3,
     projections : [ {
       ref : "query_id",
-      expr : "'COMMON,xaa,2013-08-19,2013-08-22,tomcat.query_enter.*,TOTAL_USER,VF-ALL-0-0,PERIOD'"
+      expr : "'COMMON,xaa,2013-08-08,2013-08-08,tomcat.query_enter.*,TOTAL_USER,VF-ALL-0-0,HOUR'"
+    }, {
+      ref : "dimension",
+      expr : "hour(dimension)"
     }, {
       ref : "count",
       expr : "count"
@@ -99,8 +78,8 @@
     } ]
   }, {
     op : "store",
-    @id : 4,
-    input : 3,
+    @id : 5,
+    input : 4,
     target : null,
     partition : null,
     storageEngine : "DEFAULT-STORE"

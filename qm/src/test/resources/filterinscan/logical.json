@@ -31,7 +31,9 @@
         ref : "value",
         expr : "value"
       } ],
-      filter : "( ( ( (date)  == ('20130913') )  && ( (event3)  == ('Success') ) )  && ( (event0)  == ('Age') ) )  && ( (event1)  == ('Menu') )",
+      filter : {
+              expression : " ( ( ( (event4)  == ('success') )  && ( (date)  == ('20130717') ) )  && ( (event0)  == ('response') ) )  || ( ( ( (event4)  == ('error') )  && ( (date)  == ('20130717') ) )  && ( (event0)  == ('response') ) ) "
+      },
       table : "age_deu"
     } ],
     ref : "event"

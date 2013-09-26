@@ -11,12 +11,12 @@
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "deu_xaa,2013-07-28,2013-07-28,response.*.*.*.success",
+    memo : "deu_xaa,2013-08-14,2013-08-21,response.*.*.*.success",
     storageengine : "hbase",
     selection : [ {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (event4)  == ('success') )  && ( (date)  == ('20130728') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( (event4)  == ('success') )  && ( (date)  == ('20130814') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -24,28 +24,100 @@
       }, {
         ref : "value",
         expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " ( ( (event4)  == ('success') )  && ( (date)  == ('20130815') ) )  && ( (event0)  == ('response') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
       }, {
-        ref : "timestamp",
-        expr : "timestamp"
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " ( ( (event4)  == ('success') )  && ( (date)  == ('20130816') ) )  && ( (event0)  == ('response') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " ( ( (event4)  == ('success') )  && ( (date)  == ('20130817') ) )  && ( (event0)  == ('response') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " ( ( (event4)  == ('success') )  && ( (date)  == ('20130818') ) )  && ( (event0)  == ('response') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " ( ( (event4)  == ('success') )  && ( (date)  == ('20130819') ) )  && ( (event0)  == ('response') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " ( ( (event4)  == ('success') )  && ( (date)  == ('20130820') ) )  && ( (event0)  == ('response') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " ( ( (event4)  == ('success') )  && ( (date)  == ('20130821') ) )  && ( (event0)  == ('response') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
       } ]
     } ],
     ref : "event"
   }, {
-    op : "segment",
+    op : "collapsingaggregate",
     @id : 2,
     input : 1,
-    exprs : [ {
-      ref : "dimension",
-      expr : "div3600(timestamp)"
-    } ],
-    name : "sgmt"
-  }, {
-    op : "collapsingaggregate",
-    @id : 3,
-    input : 2,
-    within : "sgmt",
+    within : null,
     target : null,
-    carryovers : [ "dimension" ],
+    carryovers : null,
     aggregations : [ {
       ref : "count",
       expr : "count(uid) "
@@ -58,14 +130,11 @@
     } ]
   }, {
     op : "project",
-    @id : 4,
-    input : 3,
+    @id : 3,
+    input : 2,
     projections : [ {
       ref : "query_id",
-      expr : "'COMMON,xaa,2013-07-28,2013-07-28,response.*.*.*.success,TOTAL_USER,VF-ALL-0-0,HOUR'"
-    }, {
-      ref : "dimension",
-      expr : "hour(dimension)"
+      expr : "'COMMON,xaa,2013-08-14,2013-08-21,response.*.*.*.success,TOTAL_USER,VF-ALL-0-0,PERIOD'"
     }, {
       ref : "count",
       expr : "count"
@@ -78,8 +147,8 @@
     } ]
   }, {
     op : "store",
-    @id : 5,
-    input : 4,
+    @id : 4,
+    input : 3,
     target : null,
     partition : null,
     storageEngine : "DEFAULT-STORE"

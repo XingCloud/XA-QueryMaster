@@ -27,12 +27,12 @@
   }, {
     op : "scan",
     @id : 2,
-    memo : "deu_xaa,2013-07-28,2013-07-30,response.*.*.*.pend",
+    memo : "deu_xaa,2013-07-31,2013-08-07,*.*",
     storageengine : "hbase",
     selection : [ {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (event4)  == ('pend') )  && ( (date)  == ('20130728') ) )  && ( (event0)  == ('response') ) "
+        expression : " (date)  == ('20130731') "
       },
       projections : [ {
         ref : "uid",
@@ -44,7 +44,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (event4)  == ('pend') )  && ( (date)  == ('20130729') ) )  && ( (event0)  == ('response') ) "
+        expression : " (date)  == ('20130801') "
       },
       projections : [ {
         ref : "uid",
@@ -56,7 +56,67 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (event4)  == ('pend') )  && ( (date)  == ('20130730') ) )  && ( (event0)  == ('response') ) "
+        expression : " (date)  == ('20130802') "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " (date)  == ('20130803') "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " (date)  == ('20130804') "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " (date)  == ('20130805') "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " (date)  == ('20130806') "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " (date)  == ('20130807') "
       },
       projections : [ {
         ref : "uid",
@@ -110,7 +170,7 @@
     input : 5,
     projections : [ {
       ref : "query_id",
-      expr : "'GROUP,xaa,2013-07-28,2013-07-30,response.*.*.*.pend,TOTAL_USER,VF-ALL-0-0,USER_PROPERTIES,ref'"
+      expr : "'GROUP,xaa,2013-07-31,2013-08-07,*.*,TOTAL_USER,VF-ALL-0-0,USER_PROPERTIES,ref'"
     }, {
       ref : "dimension",
       expr : "dimension"

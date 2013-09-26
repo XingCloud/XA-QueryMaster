@@ -27,12 +27,28 @@
   }, {
     op : "scan",
     @id : 2,
-    memo : "deu_xaa,2013-08-19,2013-08-23,response.*.*.*.success",
+    memo : "Scan(Table=xaa.register_time, Prop=register_time, Val={LTE=2013-07-01, GTE=2013-07-01})",
+    storageengine : "mysql",
+    selection : [ {
+      table : "xaa.register_time",
+      filter : {
+        expression : " ( (val)  <= (20130701235959) )  && ( (val)  >= (20130701000000) ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      } ]
+    } ],
+    ref : "user"
+  }, {
+    op : "scan",
+    @id : 3,
+    memo : "deu_xaa,2013-08-20,2013-08-25,response.*.*.*.show",
     storageengine : "hbase",
     selection : [ {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (event4)  == ('success') )  && ( (date)  == ('20130819') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( (event4)  == ('show') )  && ( (date)  == ('20130820') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -44,7 +60,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (event4)  == ('success') )  && ( (date)  == ('20130820') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( (event4)  == ('show') )  && ( (date)  == ('20130821') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -56,7 +72,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (event4)  == ('success') )  && ( (date)  == ('20130821') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( (event4)  == ('show') )  && ( (date)  == ('20130822') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -68,7 +84,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (event4)  == ('success') )  && ( (date)  == ('20130822') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( (event4)  == ('show') )  && ( (date)  == ('20130823') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -80,7 +96,19 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (event4)  == ('success') )  && ( (date)  == ('20130823') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( (event4)  == ('show') )  && ( (date)  == ('20130824') ) )  && ( (event0)  == ('response') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " ( ( (event4)  == ('show') )  && ( (date)  == ('20130825') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -93,9 +121,20 @@
     ref : "event"
   }, {
     op : "join",
-    @id : 3,
+    @id : 4,
+    left : 2,
+    right : 3,
+    conditions : [ {
+      relationship : "==",
+      left : "uid",
+      right : "uid"
+    } ],
+    type : "INNER"
+  }, {
+    op : "join",
+    @id : 5,
     left : 1,
-    right : 2,
+    right : 4,
     conditions : [ {
       relationship : "==",
       left : "uid",
@@ -104,8 +143,8 @@
     type : "RIGHT"
   }, {
     op : "segment",
-    @id : 4,
-    input : 3,
+    @id : 6,
+    input : 5,
     exprs : [ {
       ref : "dimension",
       expr : "ref"
@@ -113,8 +152,8 @@
     name : "sgmt"
   }, {
     op : "collapsingaggregate",
-    @id : 5,
-    input : 4,
+    @id : 7,
+    input : 6,
     within : "sgmt",
     target : null,
     carryovers : [ "dimension" ],
@@ -130,11 +169,11 @@
     } ]
   }, {
     op : "project",
-    @id : 6,
-    input : 5,
+    @id : 8,
+    input : 7,
     projections : [ {
       ref : "query_id",
-      expr : "'GROUP,xaa,2013-08-19,2013-08-23,response.*.*.*.success,TOTAL_USER,VF-ALL-0-0,USER_PROPERTIES,ref'"
+      expr : "'GROUP,xaa,2013-08-20,2013-08-25,response.*.*.*.show,{\"register_time\":\"2013-07-01\"},VF-ALL-0-0,USER_PROPERTIES,ref'"
     }, {
       ref : "dimension",
       expr : "dimension"
@@ -150,8 +189,8 @@
     } ]
   }, {
     op : "store",
-    @id : 7,
-    input : 6,
+    @id : 9,
+    input : 8,
     target : null,
     partition : null,
     storageEngine : "DEFAULT-STORE"
