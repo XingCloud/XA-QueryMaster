@@ -2,7 +2,7 @@ package com.xingcluod.qm.service;
 
 import com.xingcloud.qm.service.PlanMerge;
 import com.xingcloud.qm.utils.GraphVisualize;
-import com.xingcluod.qm.utils.Utils;
+import com.xingcloud.qm.utils.Utils;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.junit.Test;
