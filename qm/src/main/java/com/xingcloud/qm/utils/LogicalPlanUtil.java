@@ -196,12 +196,12 @@ public class LogicalPlanUtil {
             filterFields.add(new ArrayList<>(filterFuncMap.keySet()));
         }
 
-
+        List<String> filterFieldNames=new ArrayList<>();
         if (needFilter) {
             FunctionRegistry registry = new FunctionRegistry(config);
             baseFilterExprs = new ArrayList<>(baseFilterExprSet);
             LogicalExpression filterExpr = baseFilterExprs.size() > 1 ? registry.createExpression("or", ExpressionPosition.UNKNOWN, baseFilterExprs) : baseFilterExprs.get(0);
-            List<String> filterFieldNames=getCommonFields((FunctionCall)filterExpr,config);
+            filterFieldNames=getCommonFields((FunctionCall)filterExpr,config);
             Map<String, Object> filter = new HashMap<>();
             //filter.put("type", filterType);
             filter.put("expression", filterExpr);
@@ -220,7 +220,7 @@ public class LogicalPlanUtil {
         }
         for (List<String> fields : filterFields) {
             for (String field : fields) {
-                if (!baseFilterFields.contains(field)) {
+                if (!filterFieldNames.contains(field)) {
                     if (projectionExprNames.contains(field) && projectionRefNames.contains(field))
                         continue;
                     Map<String, Object> projectionMap = new HashMap<>();
