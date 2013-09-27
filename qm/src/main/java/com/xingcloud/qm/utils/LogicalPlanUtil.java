@@ -700,21 +700,27 @@ public class LogicalPlanUtil {
         t2 = System.currentTimeMillis();
         logger.info("get "+ projectId+" event " + event + " using " + (t2 - t1) + " ms");
         String eventFrom = "";
-        for (int i = 0; i < range.getFrom().getEventArray().length; i++) {
-            String levelEvent = range.getFrom().getEventArray()[i];
-            if (levelEvent == null)
-                break;
-            eventFrom += levelEvent + ".";
+        String srk,enk;
+        if (range != null) {
+            for (int i = 0; i < range.getFrom().getEventArray().length; i++) {
+                String levelEvent = range.getFrom().getEventArray()[i];
+                if (levelEvent == null)
+                    break;
+                eventFrom += levelEvent + ".";
+            }
+            String eventTo = "";
+            for (int i = 0; i < range.getTo().getEventArray().length; i++) {
+                String levelEvent = range.getTo().getEventArray()[i];
+                if (levelEvent == null)
+                    break;
+                eventTo += levelEvent + ".";
+            }
+            srk = srkHead + eventFrom + "\\xFF\\x00\\x00\\x00\\x00\\x00";
+            enk = enkHead + eventTo + "\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF";
+        }else {
+            srk=srkHead+"\\x00\\x00\\x00"+"\\xFF\\x00\\x00\\x00\\x00\\x00";
+            enk=srkHead+"\\x00\\x00\\x00"+"\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF";
         }
-        String eventTo = "";
-        for (int i = 0; i < range.getTo().getEventArray().length; i++) {
-            String levelEvent = range.getTo().getEventArray()[i];
-            if (levelEvent == null)
-                break;
-            eventTo += levelEvent + ".";
-        }
-        String srk = srkHead + eventFrom + "\\xFF\\x00\\x00\\x00\\x00\\x00";
-        String enk = enkHead + eventTo + "\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF";
         return new RowKeyRange(srk, enk);
     }
 
