@@ -697,7 +697,7 @@ public class LogicalPlanUtil {
         long t1 = System.currentTimeMillis(), t2;
         XEventRange range = XEventOperation.getInstance().getEventRange(projectId, event);
         t2 = System.currentTimeMillis();
-        logger.info("get event " + event + " using " + (t2 - t1) + " ms");
+        logger.info("get "+ projectId+" event " + event + " using " + (t2 - t1) + " ms");
         String eventFrom = "";
         for (int i = 0; i < range.getFrom().getEventArray().length; i++) {
             String levelEvent = range.getFrom().getEventArray()[i];
