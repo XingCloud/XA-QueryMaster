@@ -379,15 +379,16 @@ public class LogicalPlanUtil {
         return new ArrayList<>(refFuncMap.keySet());
     }
     public static List<Map<String,UnitFunc>> getFuncMaps(FunctionCall filterExpr,DrillConfig config){
-        List<Map<String,UnitFunc>> funcMaps=new ArrayList<>();
-        if(!filterExpr.getDefinition().getName().contains("or"))
-            funcMaps.add(parseFunctionCall(filterExpr,config));
-        for(LogicalExpression le :filterExpr){
-            if(((FunctionCall)le).getDefinition().getName().contains("or"))
-                funcMaps.addAll(getFuncMaps(((FunctionCall)le),config));
-            else
-                funcMaps.add(parseFunctionCall(((FunctionCall)le),config));
-        }
+        List<Map<String, UnitFunc>> funcMaps = new ArrayList<>();
+        if (!filterExpr.getDefinition().getName().contains("or"))
+            funcMaps.add(parseFunctionCall(filterExpr, config));
+        else
+            for (LogicalExpression le : filterExpr) {
+                if (((FunctionCall) le).getDefinition().getName().contains("or"))
+                    funcMaps.addAll(getFuncMaps(((FunctionCall) le), config));
+                else
+                    funcMaps.add(parseFunctionCall(((FunctionCall) le), config));
+            }
         return funcMaps;
     }
 
