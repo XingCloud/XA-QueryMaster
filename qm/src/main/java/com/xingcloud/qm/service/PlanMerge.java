@@ -969,7 +969,7 @@ public class PlanMerge {
 
         PlanMerge planMerge = new PlanMerge(plans);
         long t1=System.currentTimeMillis(),t2;
-        SimpleDateFormat format=new SimpleDateFormat("mmsshh-yyyyMMdd");
+        SimpleDateFormat format=new SimpleDateFormat("mmssHH-yyyyMMdd");
         String dirPath=format.format(new Date(t1));
         dirPath=parentDir+"/"+dirPath;
         File dir=new File(dirPath);
