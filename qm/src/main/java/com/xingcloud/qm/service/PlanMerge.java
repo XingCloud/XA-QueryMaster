@@ -26,7 +26,11 @@ import org.jgrapht.graph.SimpleGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class PlanMerge {
@@ -958,8 +962,25 @@ public class PlanMerge {
      *         没有和别的plan合并，则在返回的map中，key和value都是这个plan。
      */
     public static Map<LogicalPlan, LogicalPlan> sortAndMerge(List<LogicalPlan> plans, DrillConfig config) throws Exception {
+        File parentDir=new File("/home/hadoop/yangbo/planMerges");
+
         PlanMerge planMerge = new PlanMerge(plans);
         long t1=System.currentTimeMillis(),t2;
+        SimpleDateFormat format=new SimpleDateFormat("mmsshh-yyyyMMdd");
+        String dirPath=format.format(new Date(t1));
+        dirPath=parentDir+"/"+dirPath;
+        File dir=new File(dirPath);
+        dir.mkdir();
+        File targetFile=new File(dir.getAbsolutePath()+"/"+"target.json");
+        File sourceFile=new File(dir.getAbsolutePath()+"/"+"source.json");
+        Writer targetWriter=new FileWriter(targetFile);
+        Writer sourceWriter=new FileWriter(sourceFile);
+        for(LogicalPlan plan : plans){
+            sourceWriter.write(config.getMapper().writeValueAsString(plan));
+            sourceWriter.write("\n\r");
+        }
+        sourceWriter.flush();
+        sourceWriter.close();
         Map<LogicalPlan,LogicalPlan> transferedPlanMap= transferPlan(plans,config);
         t2=System.currentTimeMillis();
         logger.info("transfer using "+(t2-t1)+ " ms");
@@ -1014,6 +1035,13 @@ public class PlanMerge {
             LogicalPlan mergeToTableScanResultPlan = mergeToTableScanMap.get(mergePlanResultPlan);
             result.put(orig, mergeToTableScanResultPlan);
         }
+
+        for(LogicalPlan plan : new HashSet<>(mergeToTableScanMap.values())){
+            targetWriter.write(config.getMapper().writeValueAsString(plan));
+            targetWriter.write("\n\r");
+        }
+        targetWriter.flush();
+        targetWriter.close();
         return result;
         //return planMerge.getMerged();
     }

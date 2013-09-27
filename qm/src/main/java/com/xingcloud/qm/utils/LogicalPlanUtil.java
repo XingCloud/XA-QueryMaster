@@ -196,11 +196,12 @@ public class LogicalPlanUtil {
             filterFields.add(new ArrayList<>(filterFuncMap.keySet()));
         }
 
-
+        List<String> filterFieldNames=new ArrayList<>();
         if (needFilter) {
             FunctionRegistry registry = new FunctionRegistry(config);
             baseFilterExprs = new ArrayList<>(baseFilterExprSet);
             LogicalExpression filterExpr = baseFilterExprs.size() > 1 ? registry.createExpression("or", ExpressionPosition.UNKNOWN, baseFilterExprs) : baseFilterExprs.get(0);
+            filterFieldNames=getCommonFields((FunctionCall)filterExpr,config);
             Map<String, Object> filter = new HashMap<>();
             //filter.put("type", filterType);
             filter.put("expression", filterExpr);
@@ -208,7 +209,7 @@ public class LogicalPlanUtil {
 
             baseFilterFields.addAll(filterFields.get(0));
             for (int i = 1; i < filterFields.size(); i++) {
-                for (String field : baseFilterFields) {
+                for (String field : filterFieldNames) {
                     if (!filterFields.get(i).contains(field))
                         filterFields.get(0).remove(field);
                 }
@@ -219,7 +220,7 @@ public class LogicalPlanUtil {
         }
         for (List<String> fields : filterFields) {
             for (String field : fields) {
-                if (!baseFilterFields.contains(field)) {
+                if (!filterFieldNames.contains(field)) {
                     if (projectionExprNames.contains(field) && projectionRefNames.contains(field))
                         continue;
                     Map<String, Object> projectionMap = new HashMap<>();
@@ -378,15 +379,16 @@ public class LogicalPlanUtil {
         return new ArrayList<>(refFuncMap.keySet());
     }
     public static List<Map<String,UnitFunc>> getFuncMaps(FunctionCall filterExpr,DrillConfig config){
-        List<Map<String,UnitFunc>> funcMaps=new ArrayList<>();
-        if(!filterExpr.getDefinition().getName().contains("or"))
-            funcMaps.add(parseFunctionCall(filterExpr,config));
-        for(LogicalExpression le :filterExpr){
-            if(((FunctionCall)le).getDefinition().getName().contains("or"))
-                funcMaps.addAll(getFuncMaps(((FunctionCall)le),config));
-            else
-                funcMaps.add(parseFunctionCall(((FunctionCall)le),config));
-        }
+        List<Map<String, UnitFunc>> funcMaps = new ArrayList<>();
+        if (!filterExpr.getDefinition().getName().contains("or"))
+            funcMaps.add(parseFunctionCall(filterExpr, config));
+        else
+            for (LogicalExpression le : filterExpr) {
+                if (((FunctionCall) le).getDefinition().getName().contains("or"))
+                    funcMaps.addAll(getFuncMaps(((FunctionCall) le), config));
+                else
+                    funcMaps.add(parseFunctionCall(((FunctionCall) le), config));
+            }
         return funcMaps;
     }
 
@@ -696,23 +698,29 @@ public class LogicalPlanUtil {
         long t1 = System.currentTimeMillis(), t2;
         XEventRange range = XEventOperation.getInstance().getEventRange(projectId, event);
         t2 = System.currentTimeMillis();
-        logger.info("get event " + event + " using " + (t2 - t1) + " ms");
+        logger.info("get "+ projectId+" event " + event + " using " + (t2 - t1) + " ms");
         String eventFrom = "";
-        for (int i = 0; i < range.getFrom().getEventArray().length; i++) {
-            String levelEvent = range.getFrom().getEventArray()[i];
-            if (levelEvent == null)
-                break;
-            eventFrom += levelEvent + ".";
+        String srk,enk;
+        if (range != null) {
+            for (int i = 0; i < range.getFrom().getEventArray().length; i++) {
+                String levelEvent = range.getFrom().getEventArray()[i];
+                if (levelEvent == null)
+                    break;
+                eventFrom += levelEvent + ".";
+            }
+            String eventTo = "";
+            for (int i = 0; i < range.getTo().getEventArray().length; i++) {
+                String levelEvent = range.getTo().getEventArray()[i];
+                if (levelEvent == null)
+                    break;
+                eventTo += levelEvent + ".";
+            }
+            srk = srkHead + eventFrom + "\\xFF\\x00\\x00\\x00\\x00\\x00";
+            enk = enkHead + eventTo + "\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF";
+        }else {
+            srk=srkHead+"\\x00\\x00\\x00"+"\\xFF\\x00\\x00\\x00\\x00\\x00";
+            enk=srkHead+"\\x00\\x00\\x00"+"\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF";
         }
-        String eventTo = "";
-        for (int i = 0; i < range.getTo().getEventArray().length; i++) {
-            String levelEvent = range.getTo().getEventArray()[i];
-            if (levelEvent == null)
-                break;
-            eventTo += levelEvent + ".";
-        }
-        String srk = srkHead + eventFrom + "\\xFF\\x00\\x00\\x00\\x00\\x00";
-        String enk = enkHead + eventTo + "\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF";
         return new RowKeyRange(srk, enk);
     }
 
