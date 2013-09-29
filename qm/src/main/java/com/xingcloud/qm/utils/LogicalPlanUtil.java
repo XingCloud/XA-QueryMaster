@@ -498,7 +498,6 @@ public class LogicalPlanUtil {
    * @throws Exception
    */
     public static RowKeyRange getDeuRkRange(String tableName, JsonNode filter, DrillConfig config) throws Exception {
-      List<KeyPart> kps = MetaUtil.getInstance().getTableRkKps(tableName);
       Map<String, UnitFunc> fieldFunc = parseFilterExpr(filter, config);
       String eventFilter = getEventFilter(fieldFunc);
       UnitFunc dateUF = fieldFunc.get(QueryMasterConstant.DATE);
