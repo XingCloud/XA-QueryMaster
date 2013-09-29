@@ -120,18 +120,25 @@ public class TestPlanMerge {
     set.addAll(merged.values());
     int i=0;
     for (LogicalPlan m : set) {
-      GraphVisualize.visualizeMX(m, "test"+(i++)+".svg");      
+      //GraphVisualize.visualizeMX(m, "test"+(i++)+".svg");
+      System.out.println(c.getMapper().writeValueAsString(m));
     }    
   }
   
   @Test
   public void testIdenticalPlan() throws Exception{
-    doTestMerge("/plans/common.day.noseg.json", "/plans/common.day.noseg.json");
+    doTestMerge("/plan_merge/source/random-plan.0.json",
+            "/plan_merge/source/random-plan.0.json");
   }
   
   @Test
   public void testPlan0() throws Exception{
-    doTestMerge("/plans/common.day.noseg.json", "/plans/common.day.withseg.json");
+    doTestMerge("/plan_merge/source/random-plan.0.json", "/plan_merge/source/random-plan.1.json");
+  }
+
+  @Test
+  public void testPlan1() throws Exception {
+    doTestMerge("/plan_merge/source/random-plan.0.json", "/plan_merge/source/random-plan.1.json", "/plan_merge/source/random-plan.2.json");
   }
   
   @Test
