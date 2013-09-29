@@ -259,13 +259,14 @@ public class LogicalPlanUtil {
         List<Map<String, UnitFunc>> funcMaps = new ArrayList<>();
         if (!filterExpr.getDefinition().getName().contains("or"))
             funcMaps.add(parseFunctionCall(filterExpr, config));
-        else
-            for (LogicalExpression le : filterExpr) {
-                if (((FunctionCall) le).getDefinition().getName().contains("or"))
-                    funcMaps.addAll(getFuncMaps(((FunctionCall) le), config));
-                else
-                    funcMaps.add(parseFunctionCall(((FunctionCall) le), config));
-            }
+        else {
+          for (LogicalExpression le : filterExpr) {
+              if (((FunctionCall) le).getDefinition().getName().contains("or"))
+                  funcMaps.addAll(getFuncMaps(((FunctionCall) le), config));
+              else
+                  funcMaps.add(parseFunctionCall(((FunctionCall) le), config));
+          }
+        }
         return funcMaps;
     }
 
