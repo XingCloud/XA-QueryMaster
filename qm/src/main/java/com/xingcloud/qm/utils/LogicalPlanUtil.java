@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.util.*;
 
 import static org.apache.drill.common.util.DrillConstants.SE_HBASE;
+import static org.apache.drill.common.util.DrillConstants.SE_MYSQL;
 import static org.apache.drill.common.util.Selections.*;
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY_END;
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY_START;
@@ -600,7 +601,7 @@ public class LogicalPlanUtil {
         }
     }
 
-    public static Scan transferHBaseScan(Scan scan, DrillConfig config) throws Exception {
+    public static Scan transferScan(Scan scan, DrillConfig config) throws Exception {
         String storageEngine = scan.getStorageEngine();
         String tableName = getTableName(scan);
         if (SE_HBASE.equals(storageEngine)) {
@@ -611,9 +612,33 @@ public class LogicalPlanUtil {
                 rkRangeNode.put(SELECTION_KEY_WORD_ROWKEY_END, range.getEndRkStr());
                 ((ObjectNode) selectionNode).put(SELECTION_KEY_WORD_ROWKEY, rkRangeNode);
             }
+        }else if (SE_MYSQL.equals(storageEngine)){
+            if(scan.getSelection().getRoot() instanceof ArrayNode){
+                for(JsonNode selectionNode : scan.getSelection().getRoot()){
+                   JsonNode filterNode=selectionNode.get(SELECTION_KEY_WORD_FILTER);
+                   if(filterNode==null || filterNode instanceof NullNode)
+                       continue;
+                   JsonNode filterExprNode=filterNode.get(SELECTION_KEY_WORD_FILTER_EXPRESSION);
+                   String filterExpr=filterExprNode.textValue();
+                   filterExpr=filterExpr.replaceAll("&&","and");
+                   ((ObjectNode)filterNode).remove(SELECTION_KEY_WORD_FILTER_EXPRESSION);
+                    ((ObjectNode)filterNode).put(SELECTION_KEY_WORD_FILTER_EXPRESSION,filterExpr);
+                }
+            }else if(scan.getSelection().getRoot() instanceof ObjectNode){
+                JsonNode filterNode=scan.getSelection().getRoot().get(SELECTION_KEY_WORD_FILTER);
+                if (filterNode != null && !(filterNode instanceof NullNode)) {
+                    JsonNode filterExprNode = filterNode.get(SELECTION_KEY_WORD_FILTER_EXPRESSION);
+                    String filterExpr = filterExprNode.textValue();
+                    filterExpr = filterExpr.replaceAll("&&", "and");
+                    ((ObjectNode) filterNode).remove(SELECTION_KEY_WORD_FILTER_EXPRESSION);
+                    ((ObjectNode) filterNode).put(SELECTION_KEY_WORD_FILTER_EXPRESSION, filterExpr);
+                }
+            }
         }
         return scan;
     }
+
+
 
     public static RowKeyRange getRkTailRangeFromFilter(Map<String, Object> selection, String tableName, DrillConfig config) throws IOException {
         Map<String, Object> filterMap = (Map<String, Object>) selection.get(SELECTION_KEY_WORD_FILTER);

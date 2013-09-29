@@ -2,14 +2,11 @@ package com.xingcloud.qm.service;
 
 import static org.apache.drill.common.util.Selections.*;
 
-import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.NullNode;
 import com.xingcloud.qm.utils.LogicalPlanUtil.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.xingcloud.meta.ByteUtils;
 import com.xingcloud.qm.utils.LogicalPlanUtil;
 import org.apache.drill.common.JSONOptions;
 import org.apache.drill.common.PlanProperties;
@@ -54,27 +51,28 @@ public class PlanMerge {
         this.incoming = plans;
     }
 
-    public static Map<LogicalPlan, LogicalPlan> transferPlan(List<LogicalPlan> plans, DrillConfig config) throws Exception {
-        Map<LogicalPlan, LogicalPlan> resultMap = new HashMap<>();
+    public static void  transferPlan(List<LogicalPlan> plans, DrillConfig config) throws Exception {
+        //Map<LogicalPlan, LogicalPlan> resultMap = new HashMap<>();
         long t1,t2;
         for(LogicalPlan plan: plans){
-              t1=System.currentTimeMillis();
-              LogicalPlan resultPlan=getRkRangePlan(plan,config);
-              t2=System.currentTimeMillis();
+            t1=System.currentTimeMillis();
+//            LogicalPlan resultPlan=transferSinglePlan(plan,config);
+            transferSinglePlan(plan, config);
+            t2=System.currentTimeMillis();
               logger.info("transfer one plan using "+(t2-t1)+" ms");
-              resultMap.put(plan,resultPlan);
+              //resultMap.put(plan,resultPlan);
         }
-        return resultMap;
+        //return resultMap;
     }
 
-    private  static LogicalPlan getRkRangePlan(LogicalPlan plan,DrillConfig config) throws Exception {
+    private  static LogicalPlan transferSinglePlan(LogicalPlan plan, DrillConfig config) throws Exception {
         List<LogicalOperator> operators=plan.getSortedOperators();
         long t1,t2;
         for(LogicalOperator operator: operators){
             if(operator instanceof Scan){
                 logger.info("start transfer scan ");
                 t1=System.currentTimeMillis();
-                LogicalPlanUtil.transferHBaseScan((Scan)operator,config);
+                LogicalPlanUtil.transferScan((Scan) operator, config);
                 t2=System.currentTimeMillis();
                 logger.info("transfer hbase scan using "+(t2-t1)+" ms");
                 logger.info("transfer scan complete");
@@ -965,12 +963,11 @@ public class PlanMerge {
      *         没有和别的plan合并，则在返回的map中，key和value都是这个plan。
      */
     public static Map<LogicalPlan, LogicalPlan> sortAndMerge(List<LogicalPlan> plans, DrillConfig config) throws Exception {
-        File parentDir=new File("/home/hadoop/yangbo/planMerges");
+        long srtTime=System.currentTimeMillis(),endTime;
 
-        PlanMerge planMerge = new PlanMerge(plans);
-        long t1=System.currentTimeMillis(),t2;
+        File parentDir=new File("/home/hadoop/yangbo/planMerges");
         SimpleDateFormat format=new SimpleDateFormat("mmssHH-yyyyMMdd");
-        String dirPath=format.format(new Date(t1));
+        String dirPath=format.format(new Date(srtTime));
         dirPath=parentDir+"/"+dirPath;
         File dir=new File(dirPath);
         dir.mkdir();
@@ -984,51 +981,37 @@ public class PlanMerge {
         }
         sourceWriter.flush();
         sourceWriter.close();
-        Map<LogicalPlan,LogicalPlan> transferedPlanMap= transferPlan(plans,config);
+
+        PlanMerge planMerge = new PlanMerge(plans);
+        long t1=System.currentTimeMillis(),t2;
+        transferPlan(plans,config);
         t2=System.currentTimeMillis();
         logger.info("transfer using "+(t2-t1)+ " ms");
+
         t1=System.currentTimeMillis();
-        Map<LogicalPlan, LogicalPlan> splitBigPlanMap = planMerge.splitBigScan(new ArrayList<LogicalPlan>(transferedPlanMap.values()), config);
+        Map<LogicalPlan, LogicalPlan> splitBigPlanMap = planMerge.splitBigScan(plans, config);
         t2=System.currentTimeMillis();
         logger.info("split big scan "+" using "+(t2-t1)+" ms");
-        /*
-        for(LogicalPlan plan : new HashSet<>(splitBigPlanMap.values())){
-            String json=config.getMapper().writeValueAsString(plan);
-            LogicalPlan result=config.getMapper().readValue(json,LogicalPlan.class);
-        }
-        */
+
         List<LogicalPlan> bigPlanSplitedPlans = new ArrayList(splitBigPlanMap.values());
         t1=System.currentTimeMillis();
         Map<LogicalPlan, LogicalPlan> splitRkPlanMap =
                 planMerge.splitScanByRowKey(bigPlanSplitedPlans, config);
         t2=System.currentTimeMillis();
         logger.info("split Scan by Rk. using "+(t2-t1)+" ms");
-//        for(LogicalPlan plan : new HashSet<>(splitRkPlanMap.values())){
-//            String json=config.getMapper().writeValueAsString(plan);
-//            LogicalPlan result=config.getMapper().readValue(json,LogicalPlan.class);
-//        }
+
         List<LogicalPlan> rkSplitedPlans = new ArrayList<>(splitRkPlanMap.values());
-        int index = 0;
-        for (LogicalPlan plan : rkSplitedPlans) {
-            String json=config.getMapper().writeValueAsString(plan);
-            logger.info("index "+(index++));
-            LogicalPlan result=config.getMapper().readValue(json,LogicalPlan.class);
-        }
         t1=System.currentTimeMillis();
         Map<LogicalPlan, LogicalPlan> mergePlanMap = planMerge.sortAndMergePlans(rkSplitedPlans, config);
         t2=System.currentTimeMillis();
+        logger.info("merge in SortAndMerge using "+(t2-t1)+ "ms");
         Set<LogicalPlan> scanMergedPlanSet = new HashSet<>(mergePlanMap.values());
         List<LogicalPlan> scanMergedPlans = new ArrayList<>(scanMergedPlanSet);
-        index = 0;
-        logger.info("merge plan using "+(t2-t1)+" ms");
-//        for (LogicalPlan plan : scanMergedPlans) {
-//            String json=config.getMapper().writeValueAsString(plan);
-//            LogicalPlan result=config.getMapper().readValue(json,LogicalPlan.class);
-//        }
         t1=System.currentTimeMillis();
         Map<LogicalPlan, LogicalPlan> mergeToTableScanMap = planMerge.mergeToBigScan(scanMergedPlans, config);
         t2=System.currentTimeMillis();
         logger.info("merge to big scan using "+(t2-t1)+" ms");
+
         Map<LogicalPlan, LogicalPlan> result = new HashMap<>();
         for (Map.Entry<LogicalPlan, LogicalPlan> entry : splitBigPlanMap.entrySet()) {
             LogicalPlan orig = entry.getKey();
@@ -1045,8 +1028,9 @@ public class PlanMerge {
         }
         targetWriter.flush();
         targetWriter.close();
+        endTime=System.currentTimeMillis();
+        logger.info("SortAndMerge using "+(endTime-srtTime)+" ms");
         return result;
-        //return planMerge.getMerged();
     }
 
     public Map<LogicalPlan, LogicalPlan> getMerged() {
