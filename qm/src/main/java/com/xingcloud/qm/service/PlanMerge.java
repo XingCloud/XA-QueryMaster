@@ -907,6 +907,7 @@ public class PlanMerge {
      *         没有和别的plan合并，则在返回的map中，key和value都是这个plan。
      */
     public static Map<LogicalPlan, LogicalPlan> sortAndMerge(List<LogicalPlan> plans, DrillConfig config) throws Exception {
+      long begin = System.nanoTime();
       boolean writePlan = QMConfig.conf().getBoolean(QMConfig.WRITE_PLAN, false);
       PlanWriter pw = null;
       if (writePlan) {
@@ -965,6 +966,7 @@ public class PlanMerge {
         pw.writeMergedPlan(mergeToTableScanMap.values());
       }
 
+      logger.info("------Plan merge taken: " + (System.nanoTime()-begin)/1.0e9 + " sec");
       return result;
     }
 
