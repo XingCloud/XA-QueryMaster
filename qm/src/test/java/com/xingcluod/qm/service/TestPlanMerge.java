@@ -19,50 +19,23 @@ public class TestPlanMerge {
 
   @Test
   public void testPlan8() throws Exception{
-    //for(int i=0;i<20;i++){
-    LogicalPlan plan2 = Utils.readPlan("/plans/test1.json", c);
-    //LogicalPlan plan = Utils.readPlan("/plans/common.day.withseg.json", c);
-
-    LogicalPlan plan1=Utils.readPlan("/plans/test2.json", c);
-      /*
-    LogicalPlan plan3=Utils.readPlan("/plans/common.day.noseg.json", c);
-    LogicalPlan plan4=Utils.readPlan("/plans/groupby.prop.noseg.json",c);
-    LogicalPlan plan5=Utils.readPlan("/plans/common.hour.withseg.json",c);
-    LogicalPlan plan6=Utils.readPlan("/plans/groupby.event.noseg.json",c);
-    */
-    //LogicalPlan plan7=Utils.readPlan("/plans/common.hour.noseg.json",c);
-    /*
-      LogicalPlan plan8=Utils.readPlan("/plans/groupby.prop.withseg.json",c);
-    */
-
     List<LogicalPlan> planList=new ArrayList<>();
     for(int i=0;i<100;i++){
         //String planName="/plans/common.hour.noseg.random."+i+".json";
         //String planName="/plans/random/random-plan."+i+".json";
-        String planName="/plans1/random-plan."+i+".json";
+        String planName="/random_plans/random-plan."+i+".json";
         LogicalPlan tmpPlan=Utils.readPlan(planName,c);
         planList.add(tmpPlan);
     }
     DrillConfig config=DrillConfig.create();
-
-    /*
-    PlanMerge planMerge=new PlanMerge(Arrays.asList(plan));
-    planMerge.splitBigScan();
-
-    for(LogicalPlan m: planMerge.getSplitedPlans()){
-       GraphVisualize.visualize(m,"splited.png");
-    }
-    */
     Map<LogicalPlan, LogicalPlan> merged;
-      //merged=PlanMerge.sortAndMerge(planList,config);
-            merged=PlanMerge.sortAndMerge(Arrays.asList(plan2),config);
-    //
+    merged=PlanMerge.sortAndMerge(planList,config);
     Set<LogicalPlan> set = new HashSet<>();
     set.addAll(merged.values());
     int index=0;
     for (LogicalPlan m : set) {
       index++;
-        String planStr=config.getMapper().writeValueAsString(m);
+      String planStr=config.getMapper().writeValueAsString(m);
       System.out.println(planStr);
       LogicalPlan result=LogicalPlan.parse(config,planStr);
       GraphVisualize.visualizeMX(m, "test"+index+".svg");
