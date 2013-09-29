@@ -1,18 +1,12 @@
 package com.xingcloud.qm.utils;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.xingcloud.events.XEventOperation;
 import com.xingcloud.events.XEventRange;
-import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
-import com.xingcloud.meta.TableInfo;
-import com.xingcloud.qm.enums.Operator;
-import com.xingcloud.qm.result.ResultTable;
 import com.xingcloud.qm.service.LOPComparator;
-import com.xingcloud.qm.service.PlanMerge;
 import com.xingcloud.qm.service.PlanMerge.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,7 +27,6 @@ import java.io.IOException;
 import java.util.*;
 
 import static org.apache.drill.common.util.DrillConstants.SE_HBASE;
-import static org.apache.drill.common.util.DrillConstants.SE_MYSQL;
 import static org.apache.drill.common.util.Selections.*;
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY_END;
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY_START;
@@ -48,99 +41,6 @@ import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY_
 public class LogicalPlanUtil {
     public static Logger logger = Logger.getLogger(LogicalPlanUtil.class);
 
-    public static String trimSingleQuote(String rkStr) {
-        if (rkStr.startsWith("'"))
-            rkStr = rkStr.substring(1);
-        if (rkStr.endsWith("'"))
-            rkStr = rkStr.substring(0, rkStr.length() - 1);
-        return rkStr;
-    }
-
-    public static String addSingleQuote(String rkStr) {
-        rkStr = rkStr.concat("'");
-        rkStr = new String("'").concat(rkStr);
-        return rkStr;
-    }
-
-    public static List<Map<String, Object>> getSelectionMap(Scan scan) {
-        List<Map<String, Object>> selectionMapList = new ArrayList<>();
-
-        JsonNode selections = scan.getSelection().getRoot();
-        for (JsonNode selectionRoot : selections) {
-            Map<String, Object> selectionMap = new HashMap<>();
-            //projection
-            JsonNode projections = selectionRoot.get(Selections.SELECTION_KEY_WORD_PROJECTIONS);
-            List<Object> projectionFields = new ArrayList<>();
-            for (JsonNode node : projections) {
-                Map<String, Object> projectionField = new HashMap<>();
-                String ref = node.get("ref").textValue();
-                String expr = node.get("expr").textValue();
-                projectionField.put("ref", ref);
-                projectionField.put("expr", expr);
-                projectionFields.add(projectionField);
-            }
-            selectionMap.put(Selections.SELECTION_KEY_WORD_PROJECTIONS, projectionFields);
-
-            //filter
-            /*
-            JsonNode filters = selectionRoot.get(Selections.SELECTION_KEY_WORD_FILTERS);
-            if (filters != null && !(filters instanceof NullNode)) {
-                List<Object> filterList = new ArrayList<>();
-                for (JsonNode node : filters) {
-                    Map<String, Object> filterFieldMap = new HashMap<>();
-                    String filterType = node.get(Selections.SELECTION_KEY_WORD_FILTER_TYPE).textValue();
-                    filterFieldMap.put(Selections.SELECTION_KEY_WORD_FILTER_TYPE, filterType);
-                    JsonNode includes = node.get(Selections.SELECTION_KEY_WORD_ROWKEY_INCLUDES);
-                    List<Object> exprs = new ArrayList<>();
-                    for (JsonNode node1 : includes) {
-                        exprs.add(node1.textValue());
-                    }
-                    filterFieldMap.put(Selections.SELECTION_KEY_WORD_ROWKEY_INCLUDES, exprs);
-                    List<Object> mappingExprs = new ArrayList<>();
-                    JsonNode mapping = node.get(Selections.SELECTION_KEY_WORD_ROWKEY_EVENT_MAPPING);
-                    for (JsonNode node1 : mapping) {
-                        mappingExprs.add(node1.textValue());
-                    }
-                    filterFieldMap.put(Selections.SELECTION_KEY_WORD_ROWKEY_EVENT_MAPPING, mappingExprs);
-                    filterList.add(filterFieldMap);
-                }
-                selectionMap.put(Selections.SELECTION_KEY_WORD_FILTERS, filterList);
-            }
-            */
-            JsonNode filter = selectionRoot.get(Selections.SELECTION_KEY_WORD_FILTER);
-
-            if (filter != null && !(filter instanceof NullNode)) {
-                Map<String, Object> filterMap = new HashMap<>();
-                filterMap.put("type", filter.get("type").asText());
-                filterMap.put("expression", filter.get("expression"));
-                selectionMap.put(Selections.SELECTION_KEY_WORD_FILTER, filterMap);
-            }
-            //selectionMap.put(SELECTION_KEY_WORD_FILTER, selectionRoot.get(SELECTION_KEY_WORD_FILTER));
-            //rowkey
-            JsonNode rowkeyRange = selectionRoot.get(Selections.SELECTION_KEY_WORD_ROWKEY);
-            Map<String, Object> rkMap = new HashMap<>();
-            rkMap.put(Selections.SELECTION_KEY_WORD_ROWKEY_START,
-                    rowkeyRange.get(Selections.SELECTION_KEY_WORD_ROWKEY_START).textValue());
-            rkMap.put(Selections.SELECTION_KEY_WORD_ROWKEY_END,
-                    rowkeyRange.get(Selections.SELECTION_KEY_WORD_ROWKEY_END).textValue());
-            selectionMap.put(Selections.SELECTION_KEY_WORD_ROWKEY, rkMap);
-            //tail
-            JsonNode tailRange = selectionRoot.get(SELECTION_KEY_ROWKEY_TAIL_RANGE);
-            if (tailRange != null && !(tailRange instanceof NullNode)) {
-                Map<String, Object> tailRangeMap = new HashMap<>();
-                tailRangeMap.put(SELECTION_KEY_ROWKEY_TAIL_START, tailRange.get(SELECTION_KEY_ROWKEY_TAIL_START).toString());
-                tailRangeMap.put(SELECTION_KEY_ROWKEY_TAIL_END, tailRange.get(SELECTION_KEY_ROWKEY_TAIL_END).toString());
-                selectionMap.put(SELECTION_KEY_ROWKEY_TAIL_RANGE, tailRangeMap);
-            }
-            //table
-            selectionMap.put(Selections.SELECTION_KEY_WORD_TABLE,
-                    selectionRoot.get(Selections.SELECTION_KEY_WORD_TABLE));
-
-            selectionMapList.add(selectionMap);
-        }
-        return selectionMapList;
-    }
-
     public static JSONOptions buildJsonOptions(List<Map<String, Object>> mapList, DrillConfig config) throws IOException {
         ObjectMapper mapper = config.getMapper();
         String optionStr = mapper.writeValueAsString(mapList);
@@ -149,7 +49,6 @@ public class LogicalPlanUtil {
     }
 
     public static Scan getBaseScan(RowKeyRange range, List<ScanWithPlan> swps, DrillConfig config) throws IOException {
-
         List<JsonNode> selectionNodeList = new ArrayList<>();
         for (ScanWithPlan swp : swps) {
             for (JsonNode selectionNode : swp.scan.getSelection().getRoot()) {
@@ -164,7 +63,7 @@ public class LogicalPlanUtil {
         rkMap.put(SELECTION_KEY_WORD_ROWKEY_END, range.getEndRkStr());
         selectionMap.put(SELECTION_KEY_WORD_ROWKEY, rkMap);
 
-        List<List<String>> filterFields = new ArrayList<>();
+        List<Set<String>> filterFields = new ArrayList<>();
         List<LogicalExpression> baseFilterExprs;
         Set<LogicalExpression> baseFilterExprSet = new HashSet<>();
         List<String> baseFilterFields = new ArrayList<>();
@@ -172,66 +71,65 @@ public class LogicalPlanUtil {
         List<String> projectionExprNames = new ArrayList<>(), projectionRefNames = new ArrayList<>();
 
         boolean needFilter = true;
-        String filterType = null;
         for (JsonNode selectionNode : selectionNodeList) {
-            JsonNode ProjectionsNode =
+          JsonNode ProjectionsNode =
                     selectionNode.get(SELECTION_KEY_WORD_PROJECTIONS);
-            for (JsonNode projection : ProjectionsNode) {
-                String exprName = projection.get("expr").textValue();
-                String refName = projection.get("ref").textValue();
-                if (projectionExprNames.contains(exprName) && projectionRefNames.contains(refName))
-                    continue;
-                projectionExprNames.add(exprName);
-                projectionRefNames.add(refName);
-                projections.add(projection);
+          for (JsonNode projection : ProjectionsNode) {
+            String exprName = projection.get(QueryMasterConstant.EXPR).textValue();
+            String refName = projection.get(QueryMasterConstant.REF).textValue();
+            if (projectionExprNames.contains(exprName) && projectionRefNames.contains(refName)) {
+              continue;
             }
-
-            JsonNode filterNode = selectionNode.get(SELECTION_KEY_WORD_FILTER);
-            if (filterNode == null || filterNode instanceof NullNode) {
-                needFilter = false;
-                continue;
-            }
-            //filterType=filterNode.get("type").textValue();
-            baseFilterExprSet.add(config.getMapper().readValue((filterNode.get("expression")).traverse(), LogicalExpression.class));
-            Map<String, UnitFunc> filterFuncMap = parseFilterExpr(filterNode.get("expression"), config);
-            filterFields.add(new ArrayList<>(filterFuncMap.keySet()));
+            projectionExprNames.add(exprName);
+            projectionRefNames.add(refName);
+            projections.add(projection);
+          }
+          JsonNode filterNode = selectionNode.get(SELECTION_KEY_WORD_FILTER);
+          if (filterNode == null || filterNode instanceof NullNode) {
+              needFilter = false;
+              continue;
+          }
+          baseFilterExprSet.add(config.getMapper().readValue((filterNode.get(QueryMasterConstant.EXPRESSION)).traverse(), LogicalExpression.class));
+          Map<String, UnitFunc> filterFuncMap = parseFilterExpr(filterNode.get(QueryMasterConstant.EXPRESSION), config);
+          filterFields.add(filterFuncMap.keySet());
         }
 
         List<String> filterFieldNames=new ArrayList<>();
         if (needFilter) {
-            FunctionRegistry registry = new FunctionRegistry(config);
-            baseFilterExprs = new ArrayList<>(baseFilterExprSet);
-            LogicalExpression filterExpr = baseFilterExprs.size() > 1 ? registry.createExpression("or", ExpressionPosition.UNKNOWN, baseFilterExprs) : baseFilterExprs.get(0);
-            filterFieldNames=getCommonFields((FunctionCall)filterExpr,config);
-            Map<String, Object> filter = new HashMap<>();
-            //filter.put("type", filterType);
-            filter.put("expression", filterExpr);
-            selectionMap.put(SELECTION_KEY_WORD_FILTER, filter);
+          FunctionRegistry registry = new FunctionRegistry(config);
+          baseFilterExprs = new ArrayList<>(baseFilterExprSet);
+          LogicalExpression filterExpr = baseFilterExprs.size() > 1 ? registry.createExpression(QueryMasterConstant.OR,
+                  ExpressionPosition.UNKNOWN, baseFilterExprs) : baseFilterExprs.get(0);
+          filterFieldNames = getCommonFields((FunctionCall)filterExpr, config);
+          Map<String, Object> filter = new HashMap<>();
+          filter.put(QueryMasterConstant.EXPRESSION, filterExpr);
+          selectionMap.put(SELECTION_KEY_WORD_FILTER, filter);
 
-            baseFilterFields.addAll(filterFields.get(0));
-            for (int i = 1; i < filterFields.size(); i++) {
-                for (String field : filterFieldNames) {
-                    if (!filterFields.get(i).contains(field))
-                        filterFields.get(0).remove(field);
-                }
-                baseFilterFields.clear();
-                baseFilterFields.addAll(filterFields.get(0));
+          Set<String> filterField = filterFields.get(0);
+          for (int i=1; i<filterFields.size(); i++) {
+            Set<String> filterFieldTmp = filterFields.get(i);
+            for (String field : filterFieldNames) {
+              if (!filterFieldTmp.contains(field)) {
+                  filterField.remove(field);
+              }
             }
-
+          }
+          baseFilterFields.addAll(filterField);
         }
-        for (List<String> fields : filterFields) {
-            for (String field : fields) {
-                if (!filterFieldNames.contains(field)) {
-                    if (projectionExprNames.contains(field) && projectionRefNames.contains(field))
-                        continue;
-                    Map<String, Object> projectionMap = new HashMap<>();
-                    projections.add(projectionMap);
-                    projectionMap.put("ref", field);
-                    projectionMap.put("expr", field);
-                    projectionExprNames.add(field);
-                    projectionRefNames.add(field);
-                }
+        for (Set<String> fields : filterFields) {
+          for (String field : fields) {
+            if (!filterFieldNames.contains(field)) {
+              if (projectionExprNames.contains(field) && projectionRefNames.contains(field)) {
+                continue;
+              }
+              Map<String, Object> projectionMap = new HashMap<>();
+              projections.add(projectionMap);
+              projectionMap.put(QueryMasterConstant.REF, field);
+              projectionMap.put(QueryMasterConstant.EXPR, field);
+              projectionExprNames.add(field);
+              projectionRefNames.add(field);
             }
+          }
         }
         selectionMap.put(SELECTION_KEY_WORD_PROJECTIONS, projections);
         List<Map<String, Object>> resultSelectionMapList = new ArrayList<>();
@@ -247,40 +145,17 @@ public class LogicalPlanUtil {
         return scan;
     }
 
-    /*
-    public static List<LogicalExpression> getFilterEntry(Scan scan, DrillConfig config) throws IOException {
-        JsonNode filters = scan.getSelection().getRoot().get(0).get(SELECTION_KEY_WORD_FILTERS);
-        if (filters == null || filters instanceof NullNode) {
-            return null;
-        }
-        List<LogicalExpression> les = new ArrayList<>();
-        for (JsonNode filter : filters) {
-            JsonNode mapping = filter.get(Selections.SELECTION_KEY_WORD_ROWKEY_EVENT_MAPPING);
-            if (mapping == null || mapping instanceof NullNode) {
-                return null;
-            }
-            for (JsonNode expr : mapping) {
-                LogicalExpression le = config.getMapper().readValue(expr.toString(), LogicalExpression.class);
-                les.add(le);
-            }
-        }
-        return les;
-    }
-    */
     public static Filter getFilter(Scan baseScan, Scan scan, DrillConfig config) throws IOException {
-        //List<LogicalExpression> filterEntry = getFilterEntry(scan, config);
         List<LogicalExpression> filterEntry = getFilterEntry(baseScan, scan, config);
         LogicalExpression filterExpr;
         Filter filter;
         if (filterEntry == null) {
             return null;
         }
-        //ExpressionPosition position = new ExpressionPosition(null, 0);
         if (filterEntry.size() > 1) {
             FunctionRegistry registry = new FunctionRegistry(config);
 
             filterExpr = registry.createExpression("&&", ExpressionPosition.UNKNOWN, filterEntry);
-            //LogicalExpression filterExpr=registry.createExpression("and",position,filterEntry);
             filter = new Filter(filterExpr);
         } else {
             filterExpr = filterEntry.get(0);
@@ -379,17 +254,19 @@ public class LogicalPlanUtil {
         }
         return new ArrayList<>(refFuncMap.keySet());
     }
+
     public static List<Map<String,UnitFunc>> getFuncMaps(FunctionCall filterExpr,DrillConfig config){
         List<Map<String, UnitFunc>> funcMaps = new ArrayList<>();
         if (!filterExpr.getDefinition().getName().contains("or"))
             funcMaps.add(parseFunctionCall(filterExpr, config));
-        else
-            for (LogicalExpression le : filterExpr) {
-                if (((FunctionCall) le).getDefinition().getName().contains("or"))
-                    funcMaps.addAll(getFuncMaps(((FunctionCall) le), config));
-                else
-                    funcMaps.add(parseFunctionCall(((FunctionCall) le), config));
-            }
+        else {
+          for (LogicalExpression le : filterExpr) {
+              if (((FunctionCall) le).getDefinition().getName().contains("or"))
+                  funcMaps.addAll(getFuncMaps(((FunctionCall) le), config));
+              else
+                  funcMaps.add(parseFunctionCall(((FunctionCall) le), config));
+          }
+        }
         return funcMaps;
     }
 
@@ -423,8 +300,6 @@ public class LogicalPlanUtil {
     }
 
     public static List<NamedExpression> getProjectionEntry(Scan scan, DrillConfig config) {
-        //JsonNode projectionNode=scan.getSelection().getRoot().get(0).get(SELECTION_KEY_WORD_PROJECTIONS);
-        //List<Map<String, Object>> selectionList = getSelectionMap(scan);
         List<NamedExpression> nes = new ArrayList<>();
         try {
             for (JsonNode selectionNode : scan.getSelection().getRoot()) {
@@ -488,11 +363,14 @@ public class LogicalPlanUtil {
     }
 
     public static LogicalPlanUtil.RowKeyRange getRowKeyRange(Scan scan) {
-        JsonNode selection = scan.getSelection().getRoot().get(0);
-        JsonNode rowKey = selection.get(Selections.SELECTION_KEY_WORD_ROWKEY);
-        String startRowKey = rowKey.get(Selections.SELECTION_KEY_WORD_ROWKEY_START).textValue();
-        String endRowKey = rowKey.get(Selections.SELECTION_KEY_WORD_ROWKEY_END).textValue();
-        return new LogicalPlanUtil.RowKeyRange(startRowKey, endRowKey);
+      if (!scan.getStorageEngine().equals(QueryMasterConstant.HBASE)) {
+        throw new IllegalArgumentException(scan.getStorageEngine() + " has no row key range info!");
+      }
+      JsonNode selection = scan.getSelection().getRoot().get(0);
+      JsonNode rowKey = selection.get(Selections.SELECTION_KEY_WORD_ROWKEY);
+      String startRowKey = rowKey.get(Selections.SELECTION_KEY_WORD_ROWKEY_START).textValue();
+      String endRowKey = rowKey.get(Selections.SELECTION_KEY_WORD_ROWKEY_END).textValue();
+      return new LogicalPlanUtil.RowKeyRange(startRowKey, endRowKey);
     }
 
 
@@ -510,41 +388,12 @@ public class LogicalPlanUtil {
     }
 
     public static boolean isRkRangeInScan(byte[] rkPoint, ScanWithPlan swp) {
-        RowKeyRange scanRange = LogicalPlanUtil.getRowKeyRange(swp.scan);
+        RowKeyRange scanRange = swp.range;
         byte[] scanSrk = scanRange.getStartRowKey(), scanEnk = scanRange.getEndRowKey();
-        if (Bytes.compareTo(scanEnk, rkPoint) >= 0 && Bytes.compareTo(scanSrk, rkPoint) < 0)
+        if (Bytes.compareTo(scanEnk, rkPoint) >= 0 && Bytes.compareTo(scanSrk, rkPoint) < 0) {
             return true;
-        return false;
-    }
-
-    public static boolean isRkRangeInScan(RowKeyRange range,ScanWithPlan swp){
-        RowKeyRange scanRange = LogicalPlanUtil.getRowKeyRange(swp.scan);
-        byte[] scanSrk = scanRange.getStartRowKey(), scanEnk = scanRange.getEndRowKey();
-        if (Bytes.compareTo(scanEnk, range.getEndRowKey()) >= 0 && Bytes.compareTo(scanSrk, range.getStartRowKey()) <= 0)
-            return true;
-        return false;
-    }
-
-    public static boolean isRangeEquals(RowKeyRange range1, RowKeyRange range2) {
-        if (Bytes.compareTo(range1.getStartRowKey(), range2.getStartRowKey()) == 0 &&
-                Bytes.compareTo(range1.getEndRowKey(), range2.getEndRowKey()) == 0)
-            return true;
-        return false;
-    }
-
-
-    private boolean childrenSame(LogicalOperator op1, LogicalOperator op2) {
-        Iterator<LogicalOperator> iter1 = op1.iterator();
-        Iterator<LogicalOperator> iter2 = op2.iterator();
-        for (; iter1.hasNext(); ) {
-            if (!iter2.hasNext()) {
-                return false;
-            }
-            if (!iter1.next().equals(iter2.next())) {
-                return false;
-            }
         }
-        return true;
+        return false;
     }
 
     public static Mergeability<LogicalOperator> equals(LogicalOperator op1, LogicalOperator op2) {
@@ -601,48 +450,19 @@ public class LogicalPlanUtil {
         }
     }
 
-    public static Scan transferScan(Scan scan, DrillConfig config) throws Exception {
+    public static Scan transferHBaseScan(Scan scan, DrillConfig config) throws Exception {
         String storageEngine = scan.getStorageEngine();
         String tableName = getTableName(scan);
         if (SE_HBASE.equals(storageEngine)) {
             for (JsonNode selectionNode : scan.getSelection().getRoot()) {
-                RowKeyRange range = getRowKeyRangeFromFilter(selectionNode, tableName, config);
-                ObjectNode rkRangeNode = new ObjectNode(JsonNodeFactory.instance);
-                rkRangeNode.put(SELECTION_KEY_WORD_ROWKEY_START, range.getStartRkStr());
-                rkRangeNode.put(SELECTION_KEY_WORD_ROWKEY_END, range.getEndRkStr());
-                ((ObjectNode) selectionNode).put(SELECTION_KEY_WORD_ROWKEY, rkRangeNode);
-            }
-        }else if (SE_MYSQL.equals(storageEngine)){
-            if(scan.getSelection().getRoot() instanceof ArrayNode){
-                for(JsonNode selectionNode : scan.getSelection().getRoot()){
-                   JsonNode filterNode=selectionNode.get(SELECTION_KEY_WORD_FILTER);
-                   if(filterNode==null || filterNode instanceof NullNode)
-                       continue;
-                   JsonNode filterExprNode=filterNode.get(SELECTION_KEY_WORD_FILTER_EXPRESSION);
-                   String filterExpr=filterExprNode.textValue();
-                   filterExpr=filterExpr.replaceAll("&&","and");
-                   ((ObjectNode)filterNode).remove(SELECTION_KEY_WORD_FILTER_EXPRESSION);
-                    ((ObjectNode)filterNode).put(SELECTION_KEY_WORD_FILTER_EXPRESSION,filterExpr);
-                }
-            }else if(scan.getSelection().getRoot() instanceof ObjectNode){
-                JsonNode filterNode=scan.getSelection().getRoot().get(SELECTION_KEY_WORD_FILTER);
-                if (filterNode != null && !(filterNode instanceof NullNode)) {
-                    JsonNode filterExprNode = filterNode.get(SELECTION_KEY_WORD_FILTER_EXPRESSION);
-                    String filterExpr = filterExprNode.textValue();
-                    filterExpr = filterExpr.replaceAll("&&", "and");
-                    ((ObjectNode) filterNode).remove(SELECTION_KEY_WORD_FILTER_EXPRESSION);
-                    ((ObjectNode) filterNode).put(SELECTION_KEY_WORD_FILTER_EXPRESSION, filterExpr);
-                }
+              RowKeyRange range = getRowKeyRangeFromFilter(selectionNode, tableName, config);
+              ObjectNode rkRangeNode = new ObjectNode(JsonNodeFactory.instance);
+              rkRangeNode.put(SELECTION_KEY_WORD_ROWKEY_START, range.getStartRkStr());
+              rkRangeNode.put(SELECTION_KEY_WORD_ROWKEY_END, range.getEndRkStr());
+              ((ObjectNode) selectionNode).put(SELECTION_KEY_WORD_ROWKEY, rkRangeNode);
             }
         }
         return scan;
-    }
-
-
-
-    public static RowKeyRange getRkTailRangeFromFilter(Map<String, Object> selection, String tableName, DrillConfig config) throws IOException {
-        Map<String, Object> filterMap = (Map<String, Object>) selection.get(SELECTION_KEY_WORD_FILTER);
-        return getRkTailRange((JsonNode) filterMap.get("expression"), tableName, config);
     }
 
     private static RowKeyRange getRkTailRange(JsonNode filterNode, String tableName, DrillConfig config) throws IOException {
@@ -665,115 +485,54 @@ public class LogicalPlanUtil {
     }
 
     public static RowKeyRange getRowKeyRangeFromFilter(JsonNode selectionNode, String tableName, DrillConfig config) throws Exception {
-        JsonNode filterNode = selectionNode.get(SELECTION_KEY_WORD_FILTER).get("expression");
-        return getRkRange(tableName, filterNode, config);
+        JsonNode filterNode = selectionNode.get(SELECTION_KEY_WORD_FILTER).get(QueryMasterConstant.EXPRESSION);
+        return getDeuRkRange(tableName, filterNode, config);
     }
 
-    public static RowKeyRange getRkRange(String tableName, JsonNode filter, DrillConfig config) throws Exception {
-        List<KeyPart> kps = MetaUtil.getInstance().getTableRkKps(tableName);
-        String srkHead = "", enkHead = "";
-        String event = "";
-        Map<String, UnitFunc> fieldFunc = parseFilterExpr(filter, config);
-
-        List<KeyPart> workKps = kps;
-        Deque<KeyPart> toWorkKps = new ArrayDeque<>(workKps);
-        //String tail=null;
-        loop:
-        while (workKps.size() > 0) {
-            for (KeyPart kp : workKps) {
-                if (kp.getType() == KeyPart.Type.field) {
-                    String value;
-                    UnitFunc unitFunc = fieldFunc.get(kp.getField().getName());
-                    if (unitFunc != null)
-                        value = unitFunc.getValue();
-                    else
-                        value = "*";
-                    if (kp.getField().getName().contains("event")) {
-                        event += value;
-                    } else {
-                        if (event.length() > 0)
-                            break loop;
-                        srkHead += value;
-                        enkHead += value;
-                    }
-                    toWorkKps.removeFirst();
-                } else if (kp.getType() == KeyPart.Type.constant) {
-                    if (kp.getConstant().equals("\\xFF")) break loop;
-                    if (event.length() != 0) {
-                        event += kp.getConstant();
-                    }
-                    toWorkKps.removeFirst();
-                } else {
-                    toWorkKps.removeFirst();
-                    for (int i = kp.getOptionalGroup().size() - 1; i >= 0; i--) {
-                        toWorkKps.addFirst(kp.getOptionalGroup().get(i));
-                    }
-                    break;
-                }
-            }
-            workKps = Arrays.asList(toWorkKps.toArray(new KeyPart[toWorkKps.size()]));
-        }
-        if (event.endsWith("."))
-            event = event.substring(0, event.length() - 1);
-        String projectId = null;
-        if (tableName.contains("_deu"))
-            projectId = tableName.replaceAll("_deu", "");
-        else if (tableName.contains("deu_"))
-            projectId = tableName.replace("deu_", "");
-        long t1 = System.currentTimeMillis(), t2;
-        XEventRange range = XEventOperation.getInstance().getEventRange(projectId, event);
-        t2 = System.currentTimeMillis();
-        logger.info("get "+ projectId+" event " + event + " using " + (t2 - t1) + " ms");
-        String eventFrom = "";
-        String srk,enk;
+  /**
+   * 通过解析filter的表达式获取针对DEU table的start row key 和 end row key
+   * @param tableName
+   * @param filter
+   * @param config
+   * @return
+   * @throws Exception
+   */
+    public static RowKeyRange getDeuRkRange(String tableName, JsonNode filter, DrillConfig config) throws Exception {
+      List<KeyPart> kps = MetaUtil.getInstance().getTableRkKps(tableName);
+      Map<String, UnitFunc> fieldFunc = parseFilterExpr(filter, config);
+      String eventFilter = getEventFilter(fieldFunc);
+      UnitFunc dateUF = fieldFunc.get(QueryMasterConstant.DATE);
+      if (dateUF == null) {
+        throw new IllegalArgumentException("No date info in expression!");
+      }
+      String date = dateUF.getValue();
+      String srk = null;
+      String erk = null;
+      if (eventFilter.contains("*")) {
+        //需要去mongodb查询得到具体的最小和最大的事件名
+        String pID = tableName.replace("deu_", "");
+        XEventRange range = XEventOperation.getInstance().getEventRange(pID, eventFilter);
         if (range != null) {
-            for (int i = 0; i < range.getFrom().getEventArray().length; i++) {
-                String levelEvent = range.getFrom().getEventArray()[i];
-                if (levelEvent == null)
-                    break;
-                eventFrom += levelEvent + ".";
-            }
-            String eventTo = "";
-            for (int i = 0; i < range.getTo().getEventArray().length; i++) {
-                String levelEvent = range.getTo().getEventArray()[i];
-                if (levelEvent == null)
-                    break;
-                eventTo += levelEvent + ".";
-            }
-            srk = srkHead + eventFrom + "\\xFF\\x00\\x00\\x00\\x00\\x00";
-            enk = enkHead + eventTo + "\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF";
+          String eventFrom = range.getFrom().nameRowkeyStyle();
+          String eventTo = range.getTo().nameRowkeyStyle();
+          srk = date + eventFrom + QueryMasterConstant.START_KEY_TAIL;
+          erk = date + eventTo + QueryMasterConstant.END_KEY_TAIL;
         }else {
-            srk=srkHead+"\\x00\\x00\\x00"+"\\xFF\\x00\\x00\\x00\\x00\\x00";
-            enk=srkHead+"\\x00\\x00\\x00"+"\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF";
+          srk = date + QueryMasterConstant.NA_START_KEY;
+          erk = date + QueryMasterConstant.NA_END_KEY;
         }
-        return new RowKeyRange(srk, enk);
+      } else {
+        //已经是具体事件
+        srk = date + eventFilter + QueryMasterConstant.START_KEY_TAIL;
+        erk = date + eventFilter + QueryMasterConstant.END_KEY_TAIL;
+      }
+
+      return new RowKeyRange(srk, erk);
     }
 
     public static Map<String, UnitFunc> parseFilterExpr(JsonNode origExpr, DrillConfig config) throws IOException {
-        Map<String, UnitFunc> resultMap = new HashMap<>();
         LogicalExpression func = config.getMapper().readValue(origExpr.traverse(), LogicalExpression.class);
         return parseFunctionCall((FunctionCall) func, config);
-        /*
-        String[] exprs = origExpr.split("&&");
-        for (String expr : exprs) {
-            UnitFunc result = new UnitFunc();
-            String[] args = new String[2];
-            if (expr.contains("=")) {
-                result.setOp("=");
-                args = expr.split("=");
-            } else if (expr.contains(">")) {
-                result.setOp(">");
-                args = expr.split(">");
-            } else if (expr.contains("<")) {
-                result.setOp("<");
-                args = expr.split("<");
-            }
-            result.setField(args[0].trim());
-            result.setValue(trimSingleQuote(args[1].trim()));
-            resultMap.put(result.getField(), result);
-        }
-        */
-        //return resultMap;
     }
 
     public static Map<String, UnitFunc> parseFunctionCall(FunctionCall func, DrillConfig config) {
@@ -876,43 +635,6 @@ public class LogicalPlanUtil {
         }
     }
 
-    public static List<Map<String, Object>> getOrigSelectionMap(Scan scan) {
-        List<Map<String, Object>> selectionMapList = new ArrayList<>();
-
-        JsonNode selections = scan.getSelection().getRoot();
-        for (JsonNode selectionRoot : selections) {
-            Map<String, Object> selectionMap = new HashMap<>();
-            //projection
-            JsonNode projections = selectionRoot.get(Selections.SELECTION_KEY_WORD_PROJECTIONS);
-            List<Object> projectionFields = new ArrayList<>();
-            for (JsonNode node : projections) {
-                Map<String, Object> projectionField = new HashMap<>();
-                String ref = node.get("ref").textValue();
-                String expr = node.get("expr").textValue();
-                projectionField.put("ref", ref);
-                projectionField.put("expr", expr);
-                projectionFields.add(projectionField);
-            }
-            selectionMap.put(Selections.SELECTION_KEY_WORD_PROJECTIONS, projectionFields);
-
-            //filter
-            JsonNode filter = selectionRoot.get(Selections.SELECTION_KEY_WORD_FILTER);
-
-            if (filter != null && !(filter instanceof NullNode)) {
-                Map<String, Object> filterMap = new HashMap<>();
-                filterMap.put("type", filter.get("type").asText());
-                filterMap.put("expression", filter.get("expression"));
-                selectionMap.put(Selections.SELECTION_KEY_WORD_FILTER, filterMap);
-            }
-            //table
-            selectionMap.put(Selections.SELECTION_KEY_WORD_TABLE,
-                    selectionRoot.get(Selections.SELECTION_KEY_WORD_TABLE));
-
-            selectionMapList.add(selectionMap);
-        }
-        return selectionMapList;
-    }
-
     public static enum MergeType {
         same, belongsto, sametable
     }
@@ -957,13 +679,6 @@ public class LogicalPlanUtil {
         }
     }
 
-    public static class RowKeyRangeComparator implements Comparator<RowKeyRange> {
-        @Override
-        public int compare(RowKeyRange o1, RowKeyRange o2) {
-            return Bytes.compareTo(o1.getStartRowKey(), o2.getStartRowKey());
-        }
-    }
-
     public static class ScanRkCompartor implements Comparator<ScanWithPlan> {
 
         @Override
@@ -972,9 +687,70 @@ public class LogicalPlanUtil {
             RowKeyRange range1 = getRowKeyRange(o1.scan);
             RowKeyRange range2 = getRowKeyRange(o2.scan);
             return Bytes.compareTo(range1.getStartRowKey(), range2.getStartRowKey());
-
         }
     }
+
+  public static LogicalPlan getRkRangePlan(LogicalPlan plan, DrillConfig config) throws Exception {
+    Collection<SourceOperator> operators = plan.getGraph().getLeaves();
+    long t1,t2;
+    for(SourceOperator operator: operators){
+      if(operator instanceof Scan){
+        logger.info("start transfer scan ");
+        t1 = System.currentTimeMillis();
+        transferHBaseScan((Scan)operator,config);
+        t2=System.currentTimeMillis();
+        logger.info("transfer hbase scan using "+(t2-t1)+" ms");
+        logger.info("transfer scan complete");
+      }
+    }
+    return plan;
+  }
+
+  public static String getEventFilter(Map<String, UnitFunc> fieldFunc) {
+    StringBuilder eventFilter = new StringBuilder();
+    UnitFunc uf = fieldFunc.get(QueryMasterConstant.EVENT0);
+    if (uf != null) {
+      eventFilter.append(uf.getValue());
+    } else {
+      eventFilter.append("*");
+    }
+    eventFilter.append(".");
+    uf = fieldFunc.get(QueryMasterConstant.EVENT1);
+    if (uf != null) {
+      eventFilter.append(uf.getValue());
+    } else {
+      eventFilter.append("*");
+    }
+    eventFilter.append(".");
+    uf = fieldFunc.get(QueryMasterConstant.EVENT2);
+    if (uf != null) {
+      eventFilter.append(uf.getValue());
+    } else {
+      eventFilter.append("*");
+    }
+    eventFilter.append(".");
+    uf = fieldFunc.get(QueryMasterConstant.EVENT3);
+    if (uf != null) {
+      eventFilter.append(uf.getValue());
+    } else {
+      eventFilter.append("*");
+    }
+    eventFilter.append(".");
+    uf = fieldFunc.get(QueryMasterConstant.EVENT4);
+    if (uf != null) {
+      eventFilter.append(uf.getValue());
+    } else {
+      eventFilter.append("*");
+    }
+    eventFilter.append(".");
+    uf = fieldFunc.get(QueryMasterConstant.EVENT5);
+    if (uf != null) {
+      eventFilter.append(uf.getValue());
+    } else {
+      eventFilter.append("*");
+    }
+    return eventFilter.toString();
+  }
 
 
 }
