@@ -266,17 +266,15 @@ public class QueryMaster implements QueryListener {
           }
           //找任务，合并。不超过MAX_BATCHMERGE，MAX_BATCHCOST
           List<QuerySubmission> pickedSubmissions = new ArrayList<>();
+          List<LogicalPlan> pickedPlans = new ArrayList<>();
           int totalCost = 0;
           for (int i = 0; projectSubmissions.size() > 0 && i < MAX_BATCHMERGE && totalCost < MAX_BATCHCOST; i++) {
             QuerySubmission submission = projectSubmissions.pollFirst();
             totalCost += submission.cost;
             pickedSubmissions.add(submission);
+            pickedPlans.add(submission.plan);
           }
-          List<LogicalPlan> pickedPlans = new ArrayList<>();
-          for (int i = 0; i < pickedSubmissions.size(); i++) {
-            QuerySubmission querySubmission = pickedSubmissions.get(i);
-            pickedPlans.add(querySubmission.plan);
-          }
+
           Map<LogicalPlan, LogicalPlan> origin2Merged = null;
           try {
             origin2Merged = PlanMerge.sortAndMerge(pickedPlans, config);
