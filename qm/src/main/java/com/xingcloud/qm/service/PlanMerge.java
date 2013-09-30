@@ -965,22 +965,22 @@ public class PlanMerge {
     public static Map<LogicalPlan, LogicalPlan> sortAndMerge(List<LogicalPlan> plans, DrillConfig config) throws Exception {
         long srtTime=System.currentTimeMillis(),endTime;
 
-        File parentDir=new File("/home/hadoop/yangbo/planMerges");
-        SimpleDateFormat format=new SimpleDateFormat("mmssHH-yyyyMMdd");
-        String dirPath=format.format(new Date(srtTime));
-        dirPath=parentDir+"/"+dirPath;
-        File dir=new File(dirPath);
-        dir.mkdir();
-        File targetFile=new File(dir.getAbsolutePath()+"/"+"target.json");
-        File sourceFile=new File(dir.getAbsolutePath()+"/"+"source.json");
-        Writer targetWriter=new FileWriter(targetFile);
-        Writer sourceWriter=new FileWriter(sourceFile);
-        for(LogicalPlan plan : plans){
-            sourceWriter.write(config.getMapper().writeValueAsString(plan));
-            sourceWriter.write("\n\r");
-        }
-        sourceWriter.flush();
-        sourceWriter.close();
+//        File parentDir=new File("/home/hadoop/yangbo/planMerges");
+//        SimpleDateFormat format=new SimpleDateFormat("mmssHH-yyyyMMdd");
+//        String dirPath=format.format(new Date(srtTime));
+//        dirPath=parentDir+"/"+dirPath;
+//        File dir=new File(dirPath);
+//        dir.mkdir();
+//        File targetFile=new File(dir.getAbsolutePath()+"/"+"target.json");
+//        File sourceFile=new File(dir.getAbsolutePath()+"/"+"source.json");
+//        Writer targetWriter=new FileWriter(targetFile);
+//        Writer sourceWriter=new FileWriter(sourceFile);
+//        for(LogicalPlan plan : plans){
+//            sourceWriter.write(config.getMapper().writeValueAsString(plan));
+//            sourceWriter.write("\n\r");
+//        }
+//        sourceWriter.flush();
+//        sourceWriter.close();
 
         PlanMerge planMerge = new PlanMerge(plans);
         long t1=System.currentTimeMillis(),t2;
@@ -1022,12 +1022,12 @@ public class PlanMerge {
             result.put(orig, mergeToTableScanResultPlan);
         }
 
-        for(LogicalPlan plan : new HashSet<>(mergeToTableScanMap.values())){
-            targetWriter.write(config.getMapper().writeValueAsString(plan));
-            targetWriter.write("\n\r");
-        }
-        targetWriter.flush();
-        targetWriter.close();
+//        for(LogicalPlan plan : new HashSet<>(mergeToTableScanMap.values())){
+//            targetWriter.write(config.getMapper().writeValueAsString(plan));
+//            targetWriter.write("\n\r");
+//        }
+//        targetWriter.flush();
+//        targetWriter.close();
         endTime=System.currentTimeMillis();
         logger.info("SortAndMerge using "+(endTime-srtTime)+" ms");
         return result;
