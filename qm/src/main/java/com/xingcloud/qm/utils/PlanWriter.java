@@ -26,7 +26,7 @@ public class PlanWriter {
   private static Logger logger = LoggerFactory.getLogger(PlanWriter.class);
 
   private static final String basePath = "/data/log/plans/";
-  private final SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd-hhssmm");
+  private final SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd-hhmmss");
   private static final String target = "target.json";
   private static final String source = "source.json";
 
