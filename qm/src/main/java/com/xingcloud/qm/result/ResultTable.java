@@ -18,7 +18,6 @@ public class ResultTable implements Map<String, ResultRow> {
     this.resultLines = resultLines;
   }
 
-
   @Override
   public int size() {
     return resultLines.size();
