@@ -907,7 +907,76 @@ public class PlanMerge {
      *         没有和别的plan合并，则在返回的map中，key和value都是这个plan。
      */
     public static Map<LogicalPlan, LogicalPlan> sortAndMerge(List<LogicalPlan> plans, DrillConfig config) throws Exception {
+<<<<<<< HEAD
+        long srtTime=System.currentTimeMillis(),endTime;
 
+//        File parentDir=new File("/home/hadoop/yangbo/planMerges");
+//        SimpleDateFormat format=new SimpleDateFormat("mmssHH-yyyyMMdd");
+//        String dirPath=format.format(new Date(srtTime));
+//        dirPath=parentDir+"/"+dirPath;
+//        File dir=new File(dirPath);
+//        dir.mkdir();
+//        File targetFile=new File(dir.getAbsolutePath()+"/"+"target.json");
+//        File sourceFile=new File(dir.getAbsolutePath()+"/"+"source.json");
+//        Writer targetWriter=new FileWriter(targetFile);
+//        Writer sourceWriter=new FileWriter(sourceFile);
+//        for(LogicalPlan plan : plans){
+//            sourceWriter.write(config.getMapper().writeValueAsString(plan));
+//            sourceWriter.write("\n\r");
+//        }
+//        sourceWriter.flush();
+//        sourceWriter.close();
+
+        PlanMerge planMerge = new PlanMerge(plans);
+        long t1=System.currentTimeMillis(),t2;
+        transferPlan(plans,config);
+        t2=System.currentTimeMillis();
+        logger.info("transfer using "+(t2-t1)+ " ms");
+
+        t1=System.currentTimeMillis();
+        Map<LogicalPlan, LogicalPlan> splitBigPlanMap = planMerge.splitBigScan(plans, config);
+        t2=System.currentTimeMillis();
+        logger.info("split big scan "+" using "+(t2-t1)+" ms");
+
+        List<LogicalPlan> bigPlanSplitedPlans = new ArrayList(splitBigPlanMap.values());
+        t1=System.currentTimeMillis();
+        Map<LogicalPlan, LogicalPlan> splitRkPlanMap =
+                planMerge.splitScanByRowKey(bigPlanSplitedPlans, config);
+        t2=System.currentTimeMillis();
+        logger.info("split Scan by Rk. using "+(t2-t1)+" ms");
+
+        List<LogicalPlan> rkSplitedPlans = new ArrayList<>(splitRkPlanMap.values());
+        t1=System.currentTimeMillis();
+        Map<LogicalPlan, LogicalPlan> mergePlanMap = planMerge.sortAndMergePlans(rkSplitedPlans, config);
+        t2=System.currentTimeMillis();
+        logger.info("merge in SortAndMerge using "+(t2-t1)+ "ms");
+        Set<LogicalPlan> scanMergedPlanSet = new HashSet<>(mergePlanMap.values());
+        List<LogicalPlan> scanMergedPlans = new ArrayList<>(scanMergedPlanSet);
+        t1=System.currentTimeMillis();
+        Map<LogicalPlan, LogicalPlan> mergeToTableScanMap = planMerge.mergeToBigScan(scanMergedPlans, config);
+        t2=System.currentTimeMillis();
+        logger.info("merge to big scan using "+(t2-t1)+" ms");
+
+        Map<LogicalPlan, LogicalPlan> result = new HashMap<>();
+        for (Map.Entry<LogicalPlan, LogicalPlan> entry : splitBigPlanMap.entrySet()) {
+            LogicalPlan orig = entry.getKey();
+            LogicalPlan splitBigScanResultPlan = splitBigPlanMap.get(entry.getKey());
+            LogicalPlan splitRkResultPlan = splitRkPlanMap.get(splitBigScanResultPlan);
+            LogicalPlan mergePlanResultPlan = mergePlanMap.get(splitRkResultPlan);
+            LogicalPlan mergeToTableScanResultPlan = mergeToTableScanMap.get(mergePlanResultPlan);
+            result.put(orig, mergeToTableScanResultPlan);
+        }
+
+//        for(LogicalPlan plan : new HashSet<>(mergeToTableScanMap.values())){
+//            targetWriter.write(config.getMapper().writeValueAsString(plan));
+//            targetWriter.write("\n\r");
+//        }
+//        targetWriter.flush();
+//        targetWriter.close();
+        endTime=System.currentTimeMillis();
+        logger.info("SortAndMerge using "+(endTime-srtTime)+" ms");
+        return result;
+=======
       long begin = System.nanoTime();
       boolean writePlan = QMConfig.conf().getBoolean(QMConfig.WRITE_PLAN, false);
       PlanWriter pw = null;
@@ -963,6 +1032,7 @@ public class PlanMerge {
 
       logger.info("------Plan merge taken: " + (System.nanoTime()-begin)/1.0e9 + " sec");
       return result;
+>>>>>>> 14ca6115ce5a66e8a3c25945ef9878e57580b94d
     }
 
     public Map<LogicalPlan, LogicalPlan> getMerged() {

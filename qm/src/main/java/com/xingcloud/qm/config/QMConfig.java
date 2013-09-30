@@ -26,7 +26,10 @@ public class QMConfig {
   // 是否在查询结束后存放缓存
   public static final String USING_CACHE = "qm.using_cache";
 
-  
+  //是否输出合并前logical plan和合并后的logical plan
+  public static final String WRITE_PLAN = "qm.write_plan";
+
+
   private Configuration conf;
 
   public QMConfig() {
