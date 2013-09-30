@@ -55,7 +55,7 @@ public class PlanMerge {
       for(LogicalPlan plan : plans){
         long st = System.currentTimeMillis();
         LogicalPlanUtil.getRkRangePlan(plan, config);
-        logger.info("transfer one plan using " + (System.currentTimeMillis() - st) + " ms");
+        logger.debug("transfer one plan using " + (System.currentTimeMillis() - st) + " ms");
       }
     }
 
@@ -934,12 +934,6 @@ public class PlanMerge {
       logger.info("split Scan by Rk using " + (System.currentTimeMillis() - st) + " ms");
 
       List<LogicalPlan> rkSplitedPlans = new ArrayList<>(splitRkPlanMap.values());
-      int index = 0;
-      for (LogicalPlan plan : rkSplitedPlans) {
-        String json = config.getMapper().writeValueAsString(plan);
-        logger.info("index "+(index++));
-        LogicalPlan result = config.getMapper().readValue(json,LogicalPlan.class);
-      }
 
       //对相同的操作符进行合并
       st = System.currentTimeMillis();

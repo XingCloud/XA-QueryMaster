@@ -694,12 +694,12 @@ public class LogicalPlanUtil {
     long t1,t2;
     for(SourceOperator operator: operators){
       if(operator instanceof Scan){
-        logger.info("start transfer scan ");
+        logger.debug("start transfer scan ");
         t1 = System.currentTimeMillis();
         transferHBaseScan((Scan)operator,config);
         t2=System.currentTimeMillis();
-        logger.info("transfer hbase scan using "+(t2-t1)+" ms");
-        logger.info("transfer scan complete");
+        logger.debug("transfer hbase scan using "+(t2-t1)+" ms");
+        logger.debug("transfer scan complete");
       }
     }
     return plan;
