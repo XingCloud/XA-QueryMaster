@@ -1,0 +1,207 @@
+{
+  head : {
+    type : "APACHE_DRILL_LOGICAL",
+    version : 1,
+    generator : {
+      type : "AUTO",
+      info : "xaa"
+    }
+  },
+  storage : { },
+  query : [ {
+    op : "scan",
+    @id : 1,
+    memo : "Scan(Table=xaa.identifier, Prop=identifier, Val={EQ=android.global.s77})",
+    storageengine : "mysql",
+    selection : [ {
+      table : "xaa.identifier",
+      filter : {
+        expression : " (val)  == ('android.global.s77') "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      } ]
+    } ],
+    ref : "user"
+  }, {
+    op : "scan",
+    @id : 2,
+    memo : "deu_xaa,2013-08-18,2013-08-27,*.*",
+    storageengine : "hbase",
+    selection : [ {
+      table : "deu_xaa",
+      filter : {
+        expression : " (date)  == ('20130818') "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " (date)  == ('20130819') "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " (date)  == ('20130820') "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " (date)  == ('20130821') "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " (date)  == ('20130822') "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " (date)  == ('20130823') "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " (date)  == ('20130824') "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " (date)  == ('20130825') "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " (date)  == ('20130826') "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " (date)  == ('20130827') "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    } ],
+    ref : "event"
+  }, {
+    op : "join",
+    @id : 3,
+    left : 1,
+    right : 2,
+    conditions : [ {
+      relationship : "==",
+      left : "uid",
+      right : "uid"
+    } ],
+    type : "INNER"
+  }, {
+    op : "collapsingaggregate",
+    @id : 4,
+    input : 3,
+    within : null,
+    target : null,
+    carryovers : null,
+    aggregations : [ {
+      ref : "count",
+      expr : "count(uid) "
+    }, {
+      ref : "user_num",
+      expr : "count_distinct(uid) "
+    }, {
+      ref : "sum",
+      expr : "sum(value) "
+    } ]
+  }, {
+    op : "project",
+    @id : 5,
+    input : 4,
+    projections : [ {
+      ref : "query_id",
+      expr : "'COMMON,xaa,2013-08-18,2013-08-27,*.*,{\"identifier\":\"android.global.s77\"},VF-ALL-0-0,PERIOD'"
+    }, {
+      ref : "count",
+      expr : "count"
+    }, {
+      ref : "user_num",
+      expr : "user_num"
+    }, {
+      ref : "sum",
+      expr : "sum"
+    } ]
+  }, {
+    op : "store",
+    @id : 6,
+    input : 5,
+    target : null,
+    partition : null,
+    storageEngine : "DEFAULT-STORE"
+  } ]
+}

@@ -1,0 +1,144 @@
+{
+  head : {
+    type : "APACHE_DRILL_LOGICAL",
+    version : 1,
+    generator : {
+      type : "AUTO",
+      info : "xaa"
+    }
+  },
+  storage : { },
+  query : [ {
+    op : "scan",
+    @id : 1,
+    memo : "deu_xaa,2013-07-13,2013-07-19,response.*.*.*.error",
+    storageengine : "hbase",
+    selection : [ {
+      table : "deu_xaa",
+      filter : {
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130713') ) )  && ( (event0)  == ('response') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130714') ) )  && ( (event0)  == ('response') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130715') ) )  && ( (event0)  == ('response') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130716') ) )  && ( (event0)  == ('response') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130717') ) )  && ( (event0)  == ('response') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130718') ) )  && ( (event0)  == ('response') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_xaa",
+      filter : {
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130719') ) )  && ( (event0)  == ('response') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    } ],
+    ref : "event"
+  }, {
+    op : "collapsingaggregate",
+    @id : 2,
+    input : 1,
+    within : null,
+    target : null,
+    carryovers : null,
+    aggregations : [ {
+      ref : "count",
+      expr : "count(uid) "
+    }, {
+      ref : "user_num",
+      expr : "count_distinct(uid) "
+    }, {
+      ref : "sum",
+      expr : "sum(value) "
+    } ]
+  }, {
+    op : "project",
+    @id : 3,
+    input : 2,
+    projections : [ {
+      ref : "query_id",
+      expr : "'COMMON,xaa,2013-07-13,2013-07-19,response.*.*.*.error,TOTAL_USER,VF-ALL-0-0,PERIOD'"
+    }, {
+      ref : "count",
+      expr : "count"
+    }, {
+      ref : "user_num",
+      expr : "user_num"
+    }, {
+      ref : "sum",
+      expr : "sum"
+    } ]
+  }, {
+    op : "store",
+    @id : 4,
+    input : 3,
+    target : null,
+    partition : null,
+    storageEngine : "DEFAULT-STORE"
+  } ]
+}
