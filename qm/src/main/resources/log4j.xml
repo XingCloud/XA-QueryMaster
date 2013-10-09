@@ -29,9 +29,5 @@
       <level value="debug" />
       <appender-ref ref="PLANMERGE" />
   </logger>
-  <logger name="com.xingcloud.qm.service.PlanExecutor">
-      <level value="debug" />
-      <appender-ref ref="CONSOLE" />
-  </logger>
 
 </log4j:configuration>

@@ -1,10 +1,6 @@
 package com.xingcloud.qm.service;
 
-import com.xingcloud.events.XEventOperation;
-import com.xingcloud.events.XEventRange;
-import com.xingcloud.qm.service.PlanMerge;
 import com.xingcloud.qm.utils.GraphVisualize;
-import com.xingcloud.qm.utils.Utils;
 import com.xingcloud.qm.utils.Utils;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.logical.LogicalPlan;
@@ -14,7 +10,6 @@ import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
 
@@ -118,6 +113,19 @@ public class TestPlanMerge {
     String origDir = "/differenttable_plans";
     testCase(origDir);
   }
+
+  @Test
+  public void testCase5() throws Exception {
+    String origDir="/random_plans";
+    testCase(origDir);
+  }
+
+  @Test
+  public void testCase6() throws Exception {
+    String origDir="/allevent_plans";
+    testCase(origDir);
+  }
+
 
   public void testCase(String origDir) throws Exception {
     List<LogicalPlan> planList = new ArrayList<>();

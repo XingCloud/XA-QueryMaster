@@ -43,12 +43,12 @@
   }, {
     op : "scan",
     @id : 3,
-    memo : "deu_xaa,2013-07-28,2013-08-03,tomcat.*.online.*",
+    memo : "deu_xaa,2013-07-15,2013-08-21,tomcat.*.online.*",
     storageengine : "hbase",
     selection : [ {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (date)  == ('20130728') )  && ( (event2)  == ('online') ) )  && ( (event0)  == ('tomcat') ) "
+        expression : " ( ( (date)  == ('20130715') )  && ( (event2)  == ('online') ) )  && ( (event0)  == ('tomcat') ) "
       },
       projections : [ {
         ref : "uid",
@@ -60,7 +60,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (date)  == ('20130729') )  && ( (event2)  == ('online') ) )  && ( (event0)  == ('tomcat') ) "
+        expression : " ( ( (date)  == ('20130716') )  && ( (event2)  == ('online') ) )  && ( (event0)  == ('tomcat') ) "
       },
       projections : [ {
         ref : "uid",
@@ -72,7 +72,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (date)  == ('20130730') )  && ( (event2)  == ('online') ) )  && ( (event0)  == ('tomcat') ) "
+        expression : " ( ( (date)  == ('20130717') )  && ( (event2)  == ('online') ) )  && ( (event0)  == ('tomcat') ) "
       },
       projections : [ {
         ref : "uid",
@@ -84,7 +84,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (date)  == ('20130731') )  && ( (event2)  == ('online') ) )  && ( (event0)  == ('tomcat') ) "
+        expression : " ( ( (date)  == ('20130718') )  && ( (event2)  == ('online') ) )  && ( (event0)  == ('tomcat') ) "
       },
       projections : [ {
         ref : "uid",
@@ -96,7 +96,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (date)  == ('20130801') )  && ( (event2)  == ('online') ) )  && ( (event0)  == ('tomcat') ) "
+        expression : " ( ( (date)  == ('20130819') )  && ( (event2)  == ('online') ) )  && ( (event0)  == ('tomcat') ) "
       },
       projections : [ {
         ref : "uid",
@@ -108,7 +108,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (date)  == ('20130802') )  && ( (event2)  == ('online') ) )  && ( (event0)  == ('tomcat') ) "
+        expression : " ( ( (date)  == ('20130820') )  && ( (event2)  == ('online') ) )  && ( (event0)  == ('tomcat') ) "
       },
       projections : [ {
         ref : "uid",
@@ -120,7 +120,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (date)  == ('20130803') )  && ( (event2)  == ('online') ) )  && ( (event0)  == ('tomcat') ) "
+        expression : " ( ( (date)  == ('20130821') )  && ( (event2)  == ('online') ) )  && ( (event0)  == ('tomcat') ) "
       },
       projections : [ {
         ref : "uid",

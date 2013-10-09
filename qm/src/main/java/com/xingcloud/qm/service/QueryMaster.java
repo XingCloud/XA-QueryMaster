@@ -28,9 +28,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * 接收前端提交的plan，由QueryMaster控制查询的队列。 - 不接受已经提交、且正在查询的的重复query。 - 控制集群正在进行的查询计算量。 - 控制单个项目正在进行的查询数。 - 提交的查询请求进行排序，合并。 -
- * 监控查询的完成状况，填到cache里面去。
- */
+* 接收前端提交的plan，由QueryMaster控制查询的队列。 - 不接受已经提交、且正在查询的的重复query。 - 控制集群正在进行的查询计算量。 - 控制单个项目正在进行的查询数。 - 提交的查询请求进行排序，合并。 -
+* 监控查询的完成状况，填到cache里面去。
+*/
 public class QueryMaster implements QueryListener {
 
   static Logger logger = LoggerFactory.getLogger(QueryMaster.class);
@@ -266,17 +266,15 @@ public class QueryMaster implements QueryListener {
           }
           //找任务，合并。不超过MAX_BATCHMERGE，MAX_BATCHCOST
           List<QuerySubmission> pickedSubmissions = new ArrayList<>();
+          List<LogicalPlan> pickedPlans = new ArrayList<>();
           int totalCost = 0;
           for (int i = 0; projectSubmissions.size() > 0 && i < MAX_BATCHMERGE && totalCost < MAX_BATCHCOST; i++) {
             QuerySubmission submission = projectSubmissions.pollFirst();
             totalCost += submission.cost;
             pickedSubmissions.add(submission);
+            pickedPlans.add(submission.plan);
           }
-          List<LogicalPlan> pickedPlans = new ArrayList<>();
-          for (int i = 0; i < pickedSubmissions.size(); i++) {
-            QuerySubmission querySubmission = pickedSubmissions.get(i);
-            pickedPlans.add(querySubmission.plan);
-          }
+
           Map<LogicalPlan, LogicalPlan> origin2Merged = null;
           try {
             origin2Merged = PlanMerge.sortAndMerge(pickedPlans, config);

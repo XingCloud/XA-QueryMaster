@@ -48,7 +48,7 @@
     selection : [ {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (event4)  == ('success') )  && ( (date)  == ('20130920') ) )  && ( (event0)  == ('response') ) "
+        expression : "   (date)  == ('20130920')   "
       },
       projections : [ {
         ref : "uid",

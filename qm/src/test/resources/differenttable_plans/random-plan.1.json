@@ -43,12 +43,12 @@
   }, {
     op : "scan",
     @id : 3,
-    memo : "deu_xaa,2013-09-20,2013-09-20,response.*.*.*.error",
+    memo : "deu_xaa,2013-09-17,2013-09-17,response.*.*.*.error",
     storageengine : "hbase",
     selection : [ {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130920') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( (event4)  == ('error') )  && ( (date)  == ('20130917') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",

@@ -43,12 +43,12 @@
   }, {
     op : "scan",
     @id : 3,
-    memo : "deu_xaa,2013-08-06,2013-08-13,response.*.report.*.responsetime.*",
+    memo : "deu_xaa,2013-07-15,2013-07-22,response.*.report.*.responsetime.*",
     storageengine : "hbase",
     selection : [ {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( ( (event2)  == ('report') )  && ( (event4)  == ('responsetime') ) )  && ( (date)  == ('20130806') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( ( (event2)  == ('report') )  && ( (event4)  == ('responsetime') ) )  && ( (date)  == ('20130815') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -60,7 +60,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( ( (event2)  == ('report') )  && ( (event4)  == ('responsetime') ) )  && ( (date)  == ('20130807') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( ( (event2)  == ('report') )  && ( (event4)  == ('responsetime') ) )  && ( (date)  == ('20130816') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -72,7 +72,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( ( (event2)  == ('report') )  && ( (event4)  == ('responsetime') ) )  && ( (date)  == ('20130808') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( ( (event2)  == ('report') )  && ( (event4)  == ('responsetime') ) )  && ( (date)  == ('20130817') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -84,7 +84,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( ( (event2)  == ('report') )  && ( (event4)  == ('responsetime') ) )  && ( (date)  == ('20130809') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( ( (event2)  == ('report') )  && ( (event4)  == ('responsetime') ) )  && ( (date)  == ('20130818') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -96,7 +96,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( ( (event2)  == ('report') )  && ( (event4)  == ('responsetime') ) )  && ( (date)  == ('20130810') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( ( (event2)  == ('report') )  && ( (event4)  == ('responsetime') ) )  && ( (date)  == ('20130819') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -108,7 +108,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( ( (event2)  == ('report') )  && ( (event4)  == ('responsetime') ) )  && ( (date)  == ('20130811') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( ( (event2)  == ('report') )  && ( (event4)  == ('responsetime') ) )  && ( (date)  == ('20130820') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -120,7 +120,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( ( (event2)  == ('report') )  && ( (event4)  == ('responsetime') ) )  && ( (date)  == ('20130812') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( ( (event2)  == ('report') )  && ( (event4)  == ('responsetime') ) )  && ( (date)  == ('20130821') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",
@@ -132,7 +132,7 @@
     }, {
       table : "deu_xaa",
       filter : {
-        expression : " ( ( ( (event2)  == ('report') )  && ( (event4)  == ('responsetime') ) )  && ( (date)  == ('20130813') ) )  && ( (event0)  == ('response') ) "
+        expression : " ( ( ( (event2)  == ('report') )  && ( (event4)  == ('responsetime') ) )  && ( (date)  == ('20130822') ) )  && ( (event0)  == ('response') ) "
       },
       projections : [ {
         ref : "uid",

@@ -54,7 +54,7 @@ public class PlanMerge {
     public static void transferPlan(List<LogicalPlan> plans, DrillConfig config) throws Exception {
       for(LogicalPlan plan : plans){
         long st = System.currentTimeMillis();
-        LogicalPlanUtil.getRkRangePlan(plan, config);
+        LogicalPlanUtil.transferPlan(plan, config);
         logger.debug("transfer one plan using " + (System.currentTimeMillis() - st) + " ms");
       }
     }
@@ -907,7 +907,6 @@ public class PlanMerge {
      *         没有和别的plan合并，则在返回的map中，key和value都是这个plan。
      */
     public static Map<LogicalPlan, LogicalPlan> sortAndMerge(List<LogicalPlan> plans, DrillConfig config) throws Exception {
-
       long begin = System.nanoTime();
       boolean writePlan = QMConfig.conf().getBoolean(QMConfig.WRITE_PLAN, false);
       PlanWriter pw = null;
