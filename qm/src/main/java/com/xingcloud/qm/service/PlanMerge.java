@@ -122,8 +122,8 @@ public class PlanMerge {
                 for (int i = 0; i < swps.length; i++) {
                     //rkPoints[i * 2] = swps[i].range.getStartRowKey();
                     //rkPoints[i * 2 + 1] = swps[i].range.getEndRowKey();
-                  rkPoints.set(i*2, swps[i].range.getStartRowKey());
-                  rkPoints.set(i*2+1, swps[i].range.getEndRowKey());
+                  rkPoints.add(swps[i].range.getStartRowKey());
+                  rkPoints.add(swps[i].range.getEndRowKey());
                 }
 
               //对row key point排序并去重，构造出key range段
