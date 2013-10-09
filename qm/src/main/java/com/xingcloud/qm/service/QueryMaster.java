@@ -265,17 +265,15 @@ public class QueryMaster implements QueryListener {
           }
           //找任务，合并。不超过MAX_BATCHMERGE，MAX_BATCHCOST
           List<QuerySubmission> pickedSubmissions = new ArrayList<>();
+          List<LogicalPlan> pickedPlans = new ArrayList<>();
           int totalCost = 0;
           for (int i = 0; projectSubmissions.size() > 0 && i < MAX_BATCHMERGE && totalCost < MAX_BATCHCOST; i++) {
             QuerySubmission submission = projectSubmissions.pollFirst();
             totalCost += submission.cost;
             pickedSubmissions.add(submission);
+            pickedPlans.add(submission.plan);
           }
-          List<LogicalPlan> pickedPlans = new ArrayList<>();
-          for (int i = 0; i < pickedSubmissions.size(); i++) {
-            QuerySubmission querySubmission = pickedSubmissions.get(i);
-            pickedPlans.add(querySubmission.plan);
-          }
+
           Map<LogicalPlan, LogicalPlan> origin2Merged = null;
           try {
             origin2Merged = PlanMerge.sortAndMerge(pickedPlans, config);
@@ -371,12 +369,12 @@ public class QueryMaster implements QueryListener {
           for (String basicQueryID : planSubmission.originalSubmissions) {
             BasicQuerySubmission basicSubmission = (BasicQuerySubmission) submitted.get(basicQueryID);
             basicSubmission.e = planSubmission.e;
+            //Drill-bit 返回empty set
             if (basicSubmission.e == null) {
               basicSubmission.value = new ResultTable();
+              basicSubmission.value.put("XA-NA", new ResultRow(0, 0, 0));
               logger.info("PlanSubmission: {} completed with empty result.", queryID);
-//              basicSubmission.e = new NullPointerException("haven't received any results for " + basicQueryID + "!");
             }
-            //basicSubmission.value=new ResultTable();
             QueryMaster.this.onQueryResultReceived(basicQueryID, basicSubmission);
           }
         } else {
@@ -386,9 +384,10 @@ public class QueryMaster implements QueryListener {
             BasicQuerySubmission basicSubmission = (BasicQuerySubmission) submitted.get(basicQueryID);
             basicSubmission.value = value;
             if (value == null) {
-//              basicSubmission.e = new NullPointerException("haven't received any results for " + basicQueryID + "!");
+              //Drill-bit 返回empty set
               logger.info("PlanSubmission: {} completed with empty result.", queryID);
               basicSubmission.value = new ResultTable();
+              basicSubmission.value.put("XA-NA", new ResultRow(0, 0, 0));
             }
             QueryMaster.this.onQueryResultReceived(basicQueryID, basicSubmission);
           }

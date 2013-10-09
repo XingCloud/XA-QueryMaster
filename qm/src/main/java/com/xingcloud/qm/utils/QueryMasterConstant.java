@@ -15,4 +15,31 @@ public class QueryMasterConstant {
   public static final int SUM = 1;
   public static final int USER_NUM = 2;
   public static final int GROUP = -1;
+
+  public static final String EXPRESSION = "expression";
+  public static final String EXPR = "expr";
+  public static final String REF = "ref";
+  public static final String OR = "or";
+
+  //事件层级名称
+  public static final String EVENT0 = "event0";
+  public static final String EVENT1 = "event1";
+  public static final String EVENT2 = "event2";
+  public static final String EVENT3 = "event3";
+  public static final String EVENT4 = "event4";
+  public static final String EVENT5 = "event5";
+
+  public static final String DATE = "date";
+  public static final String START_KEY_TAIL = "\\xFF\\x00\\x00\\x00\\x00\\x00";
+  public static final String END_KEY_TAIL = "\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF";
+
+  public static final String NA_START_KEY = "\\x00\\x00\\x00"+"\\xFF\\x00\\x00\\x00\\x00\\x00";
+  public static final String NA_END_KEY = "\\x00\\x00\\x00"+"\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF";
+
+  public static final String HBASE = "hbase";
+  public static final String DEU = "deu";
+
+
+
+
 }
