@@ -100,20 +100,23 @@ public class PlanMerge {
                         (new ScanWithPlan[entry1.getValue().size()]);
                 Arrays.sort(swps, swpComparator);
 
-                byte[][] rkPoints = new byte[swps.length*2][];
+                //byte[][] rkPoints = new byte[swps.length*2][];
+                List<byte[]> rkPoints = new ArrayList<>(swps.length*2);
                 Map<RowKeyRange, List<ScanWithPlan>> crosses = new HashMap<>();
                 Map<ScanWithPlan, List<RowKeyRange>> scanSplits = new HashMap<>();
                 for (int i = 0; i < swps.length; i++) {
-                    rkPoints[i * 2] = swps[i].range.getStartRowKey();
-                    rkPoints[i * 2 + 1] = swps[i].range.getEndRowKey();
+                    //rkPoints[i * 2] = swps[i].range.getStartRowKey();
+                    //rkPoints[i * 2 + 1] = swps[i].range.getEndRowKey();
+                  rkPoints.set(i*2, swps[i].range.getStartRowKey());
+                  rkPoints.set(i*2+1, swps[i].range.getEndRowKey());
                 }
 
               //对row key point排序并去重，构造出key range段
-              Arrays.sort(rkPoints, Bytes.BYTES_COMPARATOR);
+              Collections.sort(rkPoints, Bytes.BYTES_COMPARATOR);
               List<RowKeyRange> origRangeList = new ArrayList<>();
-              for(int i=0; i<rkPoints.length-1; i++){
-                if(Bytes.compareTo(rkPoints[i+1], rkPoints[i])>0) {
-                  origRangeList.add(new RowKeyRange(rkPoints[i],rkPoints[i+1]));
+              for(int i=0; i<rkPoints.size()-1; i++){
+                if(Bytes.compareTo(rkPoints.get(i+1), rkPoints.get(i))>0) {
+                  origRangeList.add(new RowKeyRange(rkPoints.get(i),rkPoints.get(i+1)));
                 }
               }
               RowKeyRange [] ranges=origRangeList.toArray(new RowKeyRange[origRangeList.size()]);
