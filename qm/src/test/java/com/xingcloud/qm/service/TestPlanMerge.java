@@ -60,29 +60,6 @@ public class TestPlanMerge {
     }
   }
 
-  @Test
-  public void testIdenticalPlan() throws Exception {
-    doTestMerge("/plans/common.day.noseg.json", "/plans/common.day.noseg.json");
-  }
-
-  @Test
-  public void testPlan0() throws Exception {
-    doTestMerge("/plans/common.day.noseg.json", "/plans/common.day.withseg.json");
-  }
-
-  @Test
-  public void testPlan6() throws Exception {
-    doTestMerge("/plans/common.day.noseg.json",
-      "/plans/common.day.withseg.json",
-      "/plans/common.hour.noseg.json",
-      "/plans/common.hour.withseg.json",
-      "/plans/groupby.event.noseg.json",
-      "/plans/groupby.event.withseg.json",
-      "/plans/groupby.prop.noseg.json",
-      "/plans/groupby.prop.withseg.json"
-    );
-  }
-
   //same plan
   @Test
   public void testCase0() throws Exception {
@@ -136,8 +113,8 @@ public class TestPlanMerge {
         path = origDir + "/" + path;
       planList.add(Utils.readPlan(path, c));
     }
-    String outputDirs[] = {"/home/yb/workspace/gitdata/incubator-drill/sandbox/prototype/exec/java-exec/src/test/resources/qmplans",
-      origDirFile.getAbsolutePath()};
+    String outputDirs[] = {"/home/yb/workspace/gitdata/incubator-drill/sandbox/prototype/exec/java-exec/src/test/resources/qmplans"
+      };
     testPlans(planList, outputDirs);
   }
 
