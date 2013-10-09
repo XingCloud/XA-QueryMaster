@@ -595,8 +595,8 @@ public class LogicalPlanUtil {
     String startRkStr, endRkStr;
 
     public RowKeyRange(String srk, String enk) {
-      this.startRowKey = ByteUtils.toBytesBinary(srk);
-      this.endRowKey = ByteUtils.toBytesBinary(enk);
+      this.startRowKey = Bytes.toBytesBinary(srk);
+      this.endRowKey = Bytes.toBytesBinary(enk);
       this.startRkStr = srk;
       this.endRkStr = enk;
     }
