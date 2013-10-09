@@ -59,7 +59,14 @@ public class PlanMerge {
       }
     }
 
-    private Map<LogicalPlan, LogicalPlan> sortAndMergePlans(List<LogicalPlan> plans, DrillConfig config) throws Exception {
+  /**
+   * merge scan after slicing scan according to the row key range
+   * @param plans
+   * @param config
+   * @return
+   * @throws Exception
+   */
+  private Map<LogicalPlan, LogicalPlan> sortAndMergePlans(List<LogicalPlan> plans, DrillConfig config) throws Exception {
         Map<LogicalPlan, LogicalPlan> resultMap = new HashMap<>();
         /**
          * sort into sortedByProjectID, by projectID
@@ -78,6 +85,14 @@ public class PlanMerge {
         }
     };
 
+  /**
+   * Collect all the scans that belong to the same project to get a global row key range list, 
+   * then slice each scan into one or more smaller scans according to the row key range list. 
+   * @param origPlans the logical plan that original scan has been sliced by its selections(each day a selection)
+   * @param config
+   * @return plan with the most smallest granularity Scan
+   * @throws Exception
+   */  
     private Map<LogicalPlan, LogicalPlan> splitScanByRowKey(List<LogicalPlan> origPlans, DrillConfig config) throws Exception {
       //原始plan按project id分堆
       sortPlanByProjectId(origPlans);
@@ -100,20 +115,24 @@ public class PlanMerge {
                         (new ScanWithPlan[entry1.getValue().size()]);
                 Arrays.sort(swps, swpComparator);
 
-                byte[][] rkPoints = new byte[swps.length*2][];
+                //byte[][] rkPoints = new byte[swps.length*2][];
+                List<byte[]> rkPoints = new ArrayList<>(swps.length*2);
                 Map<RowKeyRange, List<ScanWithPlan>> crosses = new HashMap<>();
                 Map<ScanWithPlan, List<RowKeyRange>> scanSplits = new HashMap<>();
                 for (int i = 0; i < swps.length; i++) {
-                    rkPoints[i * 2] = swps[i].range.getStartRowKey();
-                    rkPoints[i * 2 + 1] = swps[i].range.getEndRowKey();
+                    //rkPoints[i * 2] = swps[i].range.getStartRowKey();
+                    //rkPoints[i * 2 + 1] = swps[i].range.getEndRowKey();
+                  rkPoints.add(swps[i].range.getStartRowKey());
+                  rkPoints.add(swps[i].range.getEndRowKey());
                 }
 
               //对row key point排序并去重，构造出key range段
-              Arrays.sort(rkPoints, Bytes.BYTES_COMPARATOR);
+              Collections.sort(rkPoints, Bytes.BYTES_COMPARATOR);
               List<RowKeyRange> origRangeList = new ArrayList<>();
-              for(int i=0; i<rkPoints.length-1; i++){
-                if(Bytes.compareTo(rkPoints[i+1], rkPoints[i])>0) {
-                  origRangeList.add(new RowKeyRange(rkPoints[i],rkPoints[i+1]));
+              // pick row key ranges for every scan and reverse
+              for(int i=0; i<rkPoints.size()-1; i++){
+                if(Bytes.compareTo(rkPoints.get(i+1), rkPoints.get(i))>0) {
+                  origRangeList.add(new RowKeyRange(rkPoints.get(i),rkPoints.get(i+1)));
                 }
               }
               RowKeyRange [] ranges=origRangeList.toArray(new RowKeyRange[origRangeList.size()]);
@@ -146,6 +165,8 @@ public class PlanMerge {
               logger.info("rkPoint sort using "+(t2-t1)+" ms");
 
               t1 = System.currentTimeMillis();
+              //crosses: range => scans; scanSplits: scan => ranges
+              //slice scan to union(smaller scans)
               for (Map.Entry<ScanWithPlan, List<RowKeyRange>> entry2 : scanSplits.entrySet()) {
                 ScanWithPlan swp = entry2.getKey();
                 List<RowKeyRange> rangeList = entry2.getValue();
@@ -209,6 +230,7 @@ public class PlanMerge {
             }
             long endTime = System.currentTimeMillis();
             logger.info("sort rkPoints and produce subsitute lp  using " + (endTime-srt) + " ms");
+            //substitude the big scan with the union
             for (LogicalPlan plan : sortedByProjectID.get(projectId)) {
               List<LogicalOperator> operators = plan.getSortedOperators();
               Set<ScanWithPlan> swps = ctx.plan2Swps.get(plan);
@@ -237,7 +259,14 @@ public class PlanMerge {
     }
 
 
-    private Map<LogicalPlan, LogicalPlan> mergeToBigScan(List<LogicalPlan> plans, DrillConfig config) throws Exception {
+  /**
+   * merge all the scans that belong to the same project to a UnionedScan
+   * @param plans
+   * @param config
+   * @return
+   * @throws Exception
+   */
+  private Map<LogicalPlan, LogicalPlan> mergeToBigScan(List<LogicalPlan> plans, DrillConfig config) throws Exception {
         Map<LogicalPlan, LogicalPlan> result = new HashMap<LogicalPlan, LogicalPlan>();
         sortPlanByProjectId(plans);
         Map<String, ProjectMergeContext> projectCtxMap = splitByTableName();
@@ -247,6 +276,13 @@ public class PlanMerge {
     }
 
 
+  /**
+   * merge all the scans that belong to the same project to a UnionedScan, invoked by mergeToBigScan
+   * @param projectCtxMap
+   * @param config
+   * @return plans with UnionedScan
+   * @throws IOException
+   */  
     private Map<LogicalPlan, LogicalPlan> producePlansWithUniondScan(Map<String, ProjectMergeContext> projectCtxMap, DrillConfig config) throws IOException {
         Map<LogicalPlan, LogicalPlan> result = new HashMap<>();
         for (Map.Entry<String, List<LogicalPlan>> entry : sortedByProjectID.entrySet()) {
@@ -271,7 +307,15 @@ public class PlanMerge {
         return result;
     }
 
-    private LogicalPlan produceBigScan(Set<LogicalPlan> plans, ProjectMergeContext projectCtx, DrillConfig config) throws IOException {
+  /**
+   * produce UnionedScan for one project, invoked by producePlansWithUniondScan
+   * @param plans
+   * @param projectCtx
+   * @param config
+   * @return
+   * @throws IOException
+   */
+  private LogicalPlan produceBigScan(Set<LogicalPlan> plans, ProjectMergeContext projectCtx, DrillConfig config) throws IOException {
 
         List<LogicalOperator> roots = new ArrayList<>();
         for (LogicalPlan plan : plans) {
@@ -382,6 +426,14 @@ public class PlanMerge {
         return new LogicalPlan(head, se, operators);
     }
 
+  /**
+   * Slice the scan that has multi projections into one or more smaller scans, one smaller scan corresponding to one projection.
+   * The projections of a scan were generated by qm according to the original star/end row key and events that related.   
+   * @param plans
+   * @param config
+   * @return original logicplan => tranlated logicalplan
+   * @throws IOException
+   */
     public Map<LogicalPlan, LogicalPlan> splitBigScan(List<LogicalPlan> plans, DrillConfig config) throws IOException {
         splitedPlans = new ArrayList<>();
         splitedPlan2Orig = new HashMap<>();
@@ -409,6 +461,7 @@ public class PlanMerge {
                     }
                     if(childScans.size() < 2) continue;
                     operators.addAll(childScans);
+                    // construct the union
                     Union union = new Union(childScans.toArray(new LogicalOperator[childScans.size()]), false);
                     scanReplaceMap.put(origScan, union);
                     for (LogicalOperator parent : LogicalPlanUtil.getParents(origScan, plan)) {
@@ -476,7 +529,11 @@ public class PlanMerge {
     }
 
 
-    private void sortPlanByProjectId(List<LogicalPlan> plans) {
+  /**
+   * sort the plans by project
+   * @param plans
+   */
+  private void sortPlanByProjectId(List<LogicalPlan> plans) {
         sortedByProjectID = new HashMap<String, List<LogicalPlan>>();
         for (LogicalPlan plan : plans) {
             String projectID = getProjectID(plan);
@@ -489,7 +546,12 @@ public class PlanMerge {
         }
     }
 
-    private Map<String, ProjectMergeContext> splitByTableName() throws Exception {
+  /**
+   *
+   * @return map: projectID => ProjectMergeContext
+   * @throws Exception
+   */
+  private Map<String, ProjectMergeContext> splitByTableName() throws Exception {
         Map<String, ProjectMergeContext> projectCtxMap = new HashMap<String, ProjectMergeContext>();
         for (Map.Entry<String, List<LogicalPlan>> entry : sortedByProjectID.entrySet()) {
           String project = entry.getKey();
@@ -577,7 +639,12 @@ public class PlanMerge {
         return result;
     }
 
-    private Map<LogicalPlan, LogicalPlan> mergePlans(Map<String, ProjectMergeContext> projectCtxMap) {
+  /**
+   * merge scan after slicing scan according to the row key range
+   * @param projectCtxMap
+   * @return
+   */
+  private Map<LogicalPlan, LogicalPlan> mergePlans(Map<String, ProjectMergeContext> projectCtxMap) {
         Map<LogicalPlan, LogicalPlan> mergeResult = new HashMap<>();
         for (Map.Entry<String, List<LogicalPlan>> entry : sortedByProjectID.entrySet()) {
             String project = entry.getKey();

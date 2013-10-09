@@ -172,8 +172,7 @@ public class QueryMaster implements QueryListener {
         logger.warn("execution failed!", basicQuery.e);
         if (USING_CACHE) {
           try {
-            XCacheOperator cacheOperator = RedisXCacheOperator.getInstance();
-            cacheOperator.putExceptionCache(queryID);
+            RedisXCacheOperator.getInstance().putExceptionCache(queryID);
             logger.info("[X-CACHE] - Exception placeholder of {} has been added to main cache.", key);
           } catch (XCacheException e) {
             e.printStackTrace();
@@ -370,12 +369,12 @@ public class QueryMaster implements QueryListener {
           for (String basicQueryID : planSubmission.originalSubmissions) {
             BasicQuerySubmission basicSubmission = (BasicQuerySubmission) submitted.get(basicQueryID);
             basicSubmission.e = planSubmission.e;
+            //Drill-bit 返回empty set
             if (basicSubmission.e == null) {
               basicSubmission.value = new ResultTable();
+              basicSubmission.value.put("XA-NA", new ResultRow(0, 0, 0));
               logger.info("PlanSubmission: {} completed with empty result.", queryID);
-//              basicSubmission.e = new NullPointerException("haven't received any results for " + basicQueryID + "!");
             }
-            //basicSubmission.value=new ResultTable();
             QueryMaster.this.onQueryResultReceived(basicQueryID, basicSubmission);
           }
         } else {
@@ -385,9 +384,10 @@ public class QueryMaster implements QueryListener {
             BasicQuerySubmission basicSubmission = (BasicQuerySubmission) submitted.get(basicQueryID);
             basicSubmission.value = value;
             if (value == null) {
-//              basicSubmission.e = new NullPointerException("haven't received any results for " + basicQueryID + "!");
+              //Drill-bit 返回empty set
               logger.info("PlanSubmission: {} completed with empty result.", queryID);
               basicSubmission.value = new ResultTable();
+              basicSubmission.value.put("XA-NA", new ResultRow(0, 0, 0));
             }
             QueryMaster.this.onQueryResultReceived(basicQueryID, basicSubmission);
           }
