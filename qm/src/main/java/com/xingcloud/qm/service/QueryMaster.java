@@ -172,8 +172,7 @@ public class QueryMaster implements QueryListener {
         logger.warn("execution failed!", basicQuery.e);
         if (USING_CACHE) {
           try {
-            XCacheOperator cacheOperator = RedisXCacheOperator.getInstance();
-            cacheOperator.putExceptionCache(queryID);
+            RedisXCacheOperator.getInstance().putExceptionCache(queryID);
             logger.info("[X-CACHE] - Exception placeholder of {} has been added to main cache.", key);
           } catch (XCacheException e) {
             e.printStackTrace();
