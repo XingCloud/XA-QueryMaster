@@ -30,6 +30,9 @@ public class PlanWriter {
   private static final String target = "target.json";
   private static final String source = "source.json";
 
+  private String ymd;
+  private String hms;
+
   private String planDir;
   private String targetFilePath;
   private String sourceFilePath;
@@ -37,9 +40,14 @@ public class PlanWriter {
 
   public PlanWriter(long ts, DrillConfig config) {
     String formatTS = format.format(new Date(ts));
-    this.planDir = basePath + formatTS + "/";
+    String[] split = formatTS.split("-");
+    ymd = split[0];
+    hms = split[1];
+    this.planDir = basePath + ymd + "/" + hms + "/";
     File dir = new File(planDir);
-    dir.mkdir();
+    if (!dir.exists()) {
+      dir.mkdir();
+    }
     targetFilePath = planDir + target;
     sourceFilePath = planDir + source;
     this.config = config;

@@ -36,6 +36,8 @@ public class QueryBossServlet extends HessianServlet implements Submit {
             return false;
           }
         } catch (IOException e) {
+          LOGGER.error("Parse logical plan error [" + cacheKey + "]", e);
+          e.printStackTrace();
           throw new XRemoteQueryException(e);
         }
       default:
