@@ -43,11 +43,18 @@ public class PlanWriter {
     String[] split = formatTS.split("-");
     ymd = split[0];
     hms = split[1];
-    this.planDir = basePath + ymd + "/" + hms + "/";
+    this.planDir = basePath + ymd + "/";
     File dir = new File(planDir);
     if (!dir.exists()) {
       dir.mkdir();
     }
+
+    this.planDir += hms + "/";
+    dir = new File(planDir);
+    if (!dir.exists()) {
+      dir.mkdir();
+    }
+
     targetFilePath = planDir + target;
     sourceFilePath = planDir + source;
     this.config = config;
