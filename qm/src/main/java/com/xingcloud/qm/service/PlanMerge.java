@@ -53,9 +53,7 @@ public class PlanMerge {
 
     public static void transferPlan(List<LogicalPlan> plans, DrillConfig config) throws Exception {
       for(LogicalPlan plan : plans){
-        long st = System.currentTimeMillis();
         LogicalPlanUtil.transferPlan(plan, config);
-        logger.debug("transfer one plan using " + (System.currentTimeMillis() - st) + " ms");
       }
     }
 

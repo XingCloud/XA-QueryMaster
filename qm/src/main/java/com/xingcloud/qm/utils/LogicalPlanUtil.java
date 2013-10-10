@@ -123,16 +123,16 @@ public class LogicalPlanUtil {
       if (range != null) {
         String eventFrom = range.getFrom().nameRowkeyStyle();
         String eventTo = range.getTo().nameRowkeyStyle();
-        srk = date + Bytes.toStringBinary(Bytes.toBytes(eventFrom)) + QueryMasterConstant.START_KEY_TAIL;
-        erk = date + Bytes.toStringBinary(Bytes.toBytes(eventTo)) + QueryMasterConstant.END_KEY_TAIL;
+        srk = date + eventFrom + QueryMasterConstant.START_KEY_TAIL;
+        erk = date + eventTo + QueryMasterConstant.END_KEY_TAIL;
       } else {
         srk = date + QueryMasterConstant.NA_START_KEY;
         erk = date + QueryMasterConstant.NA_END_KEY;
       }
     } else {
       //已经是具体事件
-      srk = date + Bytes.toStringBinary(Bytes.toBytes(eventFilter)) + QueryMasterConstant.START_KEY_TAIL;
-      erk = date + Bytes.toStringBinary(Bytes.toBytes(eventFilter)) + QueryMasterConstant.END_KEY_TAIL;
+      srk = date + eventFilter + QueryMasterConstant.START_KEY_TAIL;
+      erk = date + eventFilter + QueryMasterConstant.END_KEY_TAIL;
     }
 
     return new RowKeyRange(srk, erk);
@@ -595,8 +595,8 @@ public class LogicalPlanUtil {
     String startRkStr, endRkStr;
 
     public RowKeyRange(String srk, String enk) {
-      this.startRowKey = ByteUtils.toBytesBinary(srk);
-      this.endRowKey = ByteUtils.toBytesBinary(enk);
+      this.startRowKey = Bytes.toBytesBinary(srk);
+      this.endRowKey = Bytes.toBytesBinary(enk);
       this.startRkStr = srk;
       this.endRkStr = enk;
     }
