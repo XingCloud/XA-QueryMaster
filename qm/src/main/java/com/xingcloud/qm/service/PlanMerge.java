@@ -346,6 +346,17 @@ public class PlanMerge {
                     jsonArray.add(node);
                 }
             }
+
+            for(int i=1;i<jsonArray.size();i++){
+               byte[] srtRk=Bytes.toBytesBinary(jsonArray.get(i).get(SELECTION_KEY_WORD_ROWKEY).get(SELECTION_KEY_WORD_ROWKEY_START).textValue());
+               byte[] prevEndRk=Bytes.toBytesBinary(jsonArray.get(i-1).get(SELECTION_KEY_WORD_ROWKEY).get(SELECTION_KEY_WORD_ROWKEY_END).textValue());
+               if(Bytes.compareTo(prevEndRk,srtRk)>0)
+               {
+                 logger.info("rk sort error exists.");
+                 logger.info("the srtRk "+Bytes.toStringBinary(srtRk)+" the endRk "+jsonArray.get(i).get(SELECTION_KEY_WORD_ROWKEY).get(SELECTION_KEY_WORD_ROWKEY_END).textValue());
+                 logger.info("prev srtRk "+Bytes.toStringBinary(prevEndRk)+" the endRk "+jsonArray.get(i-1).get(SELECTION_KEY_WORD_ROWKEY).get(SELECTION_KEY_WORD_ROWKEY_END).textValue());
+               }
+            }
             String selectionStr = mapper.writeValueAsString(jsonArray);
             JSONOptions selection = mapper.readValue(selectionStr, JSONOptions.class);
             UnionedScan unionedScan = new UnionedScan(swpArr[0].scan.getStorageEngine(), selection, swpArr[0].scan.getOutputReference());

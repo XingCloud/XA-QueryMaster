@@ -102,6 +102,11 @@ public class TestPlanMerge {
     String origDir="/allevent_plans";
     testCase(origDir);
   }
+  @Test
+  public void testCaseRandom() throws Exception {
+    String origDir="/random_plans";
+    testCase(origDir);
+  }
 
 
   public void testCase(String origDir) throws Exception {
