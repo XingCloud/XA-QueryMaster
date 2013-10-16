@@ -88,7 +88,11 @@ public class RecordParser {
         if(demensionVector != null){
           Object demension = demensionVector.getAccessor().getObject(i) ;
           if(demension != null){
-            demesionKey = String.valueOf(demension);
+            if(demension instanceof  byte[]){
+              demesionKey = new String((byte[]) demension);
+            }else{
+              demesionKey = String.valueOf(demension);
+            }
           } else{
             demesionKey = "XA-NA" ;
           }
