@@ -21,4 +21,11 @@ public class ResultRow {
     this.userNum = userNum;
     this.sampleRate = sampleRate;
   }
+
+  public void add(ResultRow rr) {
+    this.count += rr.count;
+    this.sum += rr.sum;
+    this.userNum += rr.userNum;
+    this.sampleRate += rr.sampleRate;
+  }
 }

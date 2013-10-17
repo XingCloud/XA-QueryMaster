@@ -1,6 +1,12 @@
 package com.xingcloud.qm.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.common.base.Charsets;
+import com.google.common.io.Files;
+import com.xingcloud.qm.remote.QueryNode;
 import com.xingcloud.qm.utils.GraphVisualize;
+import com.xingcloud.qm.utils.LogicalPlanUtil;
+import com.xingcloud.qm.utils.QueryMasterConstant;
 import com.xingcloud.qm.utils.Utils;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.logical.LogicalPlan;
@@ -10,7 +16,9 @@ import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.Writer;
+import java.nio.charset.Charset;
 import java.util.*;
 
 public class TestPlanMerge {
@@ -108,6 +116,30 @@ public class TestPlanMerge {
     testCase(origDir);
   }
 
+  @Test
+  public void testAddUidInfo() {
+    int startBucketPos = 0;
+    for (int i = 0; i < 1; i++) {
+      int offset = QueryMasterConstant.SAMPLING_ARRAY[i];
+
+      try {
+        //把采样的uid信息加入到logical plan中
+        String originPlanStr = Files.toString(FileUtils.getResourceAsFile("/qmplans/1.json"), Charsets.UTF_8);
+        LogicalPlan plan = c.getMapper().readValue(originPlanStr, LogicalPlan.class);
+        LogicalPlanUtil.addUidRangeInfo(plan, startBucketPos, offset);
+        String planStr = c.getMapper().writeValueAsString(plan);
+        System.out.println(planStr);
+      } catch (JsonProcessingException e) {
+        e.printStackTrace();
+        return;
+      } catch (IOException e) {
+        e.printStackTrace();
+        return;
+      }
+
+    }
+  }
+
 
   public void testCase(String origDir) throws Exception {
     List<LogicalPlan> planList = new ArrayList<>();
@@ -118,7 +150,7 @@ public class TestPlanMerge {
         path = origDir + "/" + path;
       planList.add(Utils.readPlan(path, c));
     }
-    String outputDirs[] = {"/home/yb/workspace/gitdata/incubator-drill/sandbox/prototype/exec/java-exec/src/test/resources/qmplans"
+    String outputDirs[] = {"/Users/snake/IdeaProjects/query_master/XA-QueryMaster/qm/src/test/resources/qmplans/"
       };
     testPlans(planList, outputDirs);
   }

@@ -3,6 +3,7 @@ package com.xingcloud.qm.service;
 import com.xingcloud.qm.result.ResultTable;
 import org.apache.drill.common.logical.LogicalPlan;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -17,8 +18,13 @@ public class PlanSubmission extends QuerySubmission {
   
   //得到的结果。可能包含多个queryID对应的查询结果。
   public Map<String, ResultTable> queryID2Table;
-  
-  public Set<String> originalSubmissions = new HashSet<>();
+
+  //记录queryID和对应的原始logical plan
+  public Map<String, LogicalPlan> queryIdToPlan = new HashMap<>();
+  //是否需要采样
+  public boolean needSample = true;
+  //是否全部sub plan都满足采样阈值，查询结束
+  public boolean allFinish = false;
 
   /**
    * construct from LogicalPlan, submission id, project id.
@@ -57,11 +63,12 @@ public class PlanSubmission extends QuerySubmission {
 
   public void absorbIDCost(QuerySubmission submission){
     if(submission instanceof PlanSubmission){
-      this.originalSubmissions.addAll(((PlanSubmission)submission).originalSubmissions);
+      Map<String, LogicalPlan> otherSL = ((PlanSubmission) submission).queryIdToPlan;
+      queryIdToPlan.putAll(otherSL);
     }else{
-      this.originalSubmissions.add(submission.id);
-    }    
-    this.cost += submission.cost;    
+      queryIdToPlan.put(submission.id, submission.plan);
+    }
+    this.cost += submission.cost;
   }
 
   public void release(){

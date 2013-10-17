@@ -13,7 +13,7 @@
     @id : 1,
     memo : "Table=age.ref",
     storageengine : "mysql",
-    selection : {
+    selection : [ {
       projections : [ {
         ref : "uid",
         expr : "uid"
@@ -22,7 +22,7 @@
         expr : "val"
       } ],
       table : "age.ref"
-    },
+    } ],
     ref : "user"
   }, {
     op : "scan",

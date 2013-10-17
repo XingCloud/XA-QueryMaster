@@ -20,6 +20,7 @@ import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.common.logical.data.*;
 import org.apache.drill.common.util.Selections;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.Pair;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -369,7 +370,7 @@ public class LogicalPlanUtil {
     FunctionCall baseFilterExpr = (FunctionCall) config.getMapper().readValue(baseFilterExprNode.traverse(), LogicalExpression.class);
     JsonNode fitlerExpr = scan.getSelection().getRoot().get(0).get(SELECTION_KEY_WORD_FILTER).get(SELECTION_KEY_WORD_FILTER_EXPRESSION);
     Map<String, UnitFunc> filterFuncMap = parseFilterExpr(fitlerExpr, config);
-    String eventFilter=getEventFilter(filterFuncMap);
+    String eventFilter = getEventFilter(filterFuncMap);
     if(eventFilter.endsWith("."))
       eventFilter=eventFilter.substring(0,eventFilter.length()-1);
     while(eventFilter.endsWith(".*"))
@@ -641,6 +642,75 @@ public class LogicalPlanUtil {
     }
   }
 
+  public static Pair<Long, Long> getLocalSEUidOfBucket(int startBucketPos, int offsetBucketLen) {
+    long startBucket = startBucketPos;
+    startBucket = startBucket << 32;
+    long endBucket = 0;
+    if (startBucket + offsetBucketLen >= 255) {
+      endBucket = (1l << 40) - 1l;
+    } else {
+      endBucket = startBucketPos + offsetBucketLen;
+      endBucket = endBucket << 32;
+    }
+
+    return new Pair(startBucket, endBucket);
+  }
+
+
+  /**
+   * 增加uid range信息到scan(storage engine为mysql和hbase)
+   * @param mergedPlan
+   * @param startBucketPos
+   * @param offsetBucketLen
+   * @throws IOException
+   */
+  public static void addUidRangeInfo(LogicalPlan mergedPlan, int startBucketPos, int offsetBucketLen) throws IOException {
+    DrillConfig config = DrillConfig.create();
+    Pair<Long, Long> uidRange = getLocalSEUidOfBucket(startBucketPos, offsetBucketLen);
+    Collection<SourceOperator> leaves = mergedPlan.getGraph().getLeaves();
+    for (SourceOperator leaf : leaves) {
+      if (leaf instanceof Scan) {
+        JSONOptions selections = ((Scan) leaf).getSelection();
+        ObjectMapper mapper = config.getMapper();
+        List<Map<String, Object>> selectionsModel = new ArrayList<>();
+        for(JsonNode selection : selections.getRoot()) {
+          Map<String, Object> map = new HashMap<>(4);
+          if (((Scan) leaf).getStorageEngine().equals(QueryMasterConstant.STORAGE_ENGINE.hbase.name())) {
+            Map<String, Object> rowkeyRangeMap = new HashMap<>(2);
+            JsonNode rkRange = selection.get(SELECTION_KEY_WORD_ROWKEY);
+            String startRK = rkRange.get(SELECTION_KEY_WORD_ROWKEY_START).textValue();
+            String endRK = rkRange.get(SELECTION_KEY_WORD_ROWKEY_END).textValue();
+            startRK = startRK.substring(0, startRK.length() - QueryMasterConstant.START_KEY_TAIL.length());
+            endRK = endRK.substring(0, endRK.length() - QueryMasterConstant.END_KEY_TAIL.length());
+            startRK = startRK + Bytes.toStringBinary(Bytes.toBytes(uidRange.getFirst()));
+            endRK = endRK + Bytes.toStringBinary(Bytes.toBytes(uidRange.getSecond()));
+            rowkeyRangeMap.put(SELECTION_KEY_WORD_ROWKEY_START, startRK);
+            rowkeyRangeMap.put(SELECTION_KEY_WORD_ROWKEY_END, endRK);
+            map.put(SELECTION_KEY_WORD_ROWKEY, rowkeyRangeMap);
+            map.put(SELECTION_KEY_WORD_FILTERS, selection.get(SELECTION_KEY_WORD_FILTERS));
+
+          } else if (((Scan) leaf).getStorageEngine().equals(QueryMasterConstant.STORAGE_ENGINE.mysql.name())) {
+            //Mysql把uid range信息加入到filter里（expression符合drill的logical expression规则）
+            JsonNode filter = selection.get(SELECTION_KEY_WORD_FILTER);
+            String uidRangeStr = "( (uid) >= (" + uidRange.getFirst() + ") ) && ( (uid) < (" + uidRange.getSecond() + ") )";
+            if (filter != null) {
+              String filterStr = filter.asText() + " && " + uidRangeStr;
+              map.put(SELECTION_KEY_WORD_FILTER, filterStr);
+            } else {
+              map.put(SELECTION_KEY_WORD_FILTER, uidRangeStr);
+            }
+
+          }
+          map.put(SELECTION_KEY_WORD_TABLE, selection.get(SELECTION_KEY_WORD_TABLE));
+          map.put(SELECTION_KEY_WORD_PROJECTIONS, selection.get(SELECTION_KEY_WORD_PROJECTIONS));
+          selectionsModel.add(map);
+        }
+        String s = mapper.writeValueAsString(selectionsModel);
+        JSONOptions selectionWithUidRange = mapper.readValue(s, JSONOptions.class);
+        ((Scan) leaf).setSelection(selectionWithUidRange);
+      }
+    }
+  }
 
 
 }

@@ -14,6 +14,7 @@ import com.xingcloud.qm.utils.QueryMasterConstant;
 import org.apache.drill.common.JSONOptions;
 import org.apache.drill.common.PlanProperties;
 import org.apache.drill.common.config.DrillConfig;
+import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.apache.drill.common.graph.AdjacencyList;
 import org.apache.drill.common.graph.Edge;
 import org.apache.drill.common.logical.LogicalPlan;
@@ -113,13 +114,10 @@ public class PlanMerge {
                         (new ScanWithPlan[entry1.getValue().size()]);
                 Arrays.sort(swps, swpComparator);
 
-                //byte[][] rkPoints = new byte[swps.length*2][];
                 List<byte[]> rkPoints = new ArrayList<>(swps.length*2);
                 Map<RowKeyRange, List<ScanWithPlan>> crosses = new HashMap<>();
                 Map<ScanWithPlan, List<RowKeyRange>> scanSplits = new HashMap<>();
                 for (int i = 0; i < swps.length; i++) {
-                    //rkPoints[i * 2] = swps[i].range.getStartRowKey();
-                    //rkPoints[i * 2 + 1] = swps[i].range.getEndRowKey();
                   rkPoints.add(swps[i].range.getStartRowKey());
                   rkPoints.add(swps[i].range.getEndRowKey());
                 }
@@ -153,7 +151,7 @@ public class PlanMerge {
                             rangeList = new ArrayList<>();
                             scanSplits.put(swps[j], rangeList);
                         }
-                          rangeList.add(ranges[i]);
+                        rangeList.add(ranges[i]);
                       }else if(!intoScan){
                           index++;
                       }
@@ -183,14 +181,16 @@ public class PlanMerge {
                   String srk = rkNode.get(SELECTION_KEY_WORD_ROWKEY_START).textValue();
                   String enk = rkNode.get(SELECTION_KEY_WORD_ROWKEY_END).textValue();
                   if(srk.equals(enk)) {
-                    logger.error("Start key equals to end key. " + srk);
+                    String msg = "Start key equals to end key. " + srk;
+                    logger.error(msg);
+                    throw new DrillRuntimeException(msg);
                   }
                   if (swpList.size() == 1) {
                     unionInputs.add(baseScan);
                     operators.add(baseScan);
                   } else {
                       operators.add(baseScan);
-                      Filter filter = LogicalPlanUtil.getFilter(baseScan,swp.scan, config);
+                      Filter filter = LogicalPlanUtil.getFilter(baseScan, swp.scan, config);
                     if (filter != null) {
                       filter.setInput(baseScan);
                       if (LogicalPlanUtil.getProjectionEntry(swp.scan, config).size() <

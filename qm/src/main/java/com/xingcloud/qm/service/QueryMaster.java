@@ -311,7 +311,7 @@ public class QueryMaster implements QueryListener {
               }
               PlanSubmission plan = mergedSubmissions.next();
               if (logger.isDebugEnabled()) {
-                logger.debug("PlanSubmission {} submitted: {}", plan.id, plan.originalSubmissions.toString());
+                logger.debug("PlanSubmission {} submitted: {}", plan.id, plan.queryIdToPlan.toString());
               }
               doSubmitExecution(plan);
             }
@@ -359,15 +359,17 @@ public class QueryMaster implements QueryListener {
     public void onQueryResultReceived(String queryID, QuerySubmission query) {
       if (query instanceof PlanSubmission) {
         PlanSubmission planSubmission = (PlanSubmission) query;
-        //修改scheduler计数器
-        executing.decrementAndGet();
-        getProjectCounter(planSubmission.projectID).decrementAndGet();
+        //所有sub plan查询结束，修改scheduler计数器
+        if (((PlanSubmission) query).allFinish) {
+          executing.decrementAndGet();
+          getProjectCounter(planSubmission.projectID).decrementAndGet();
+        }
 
         // 分发数据
-        if (planSubmission.e != null || planSubmission.getValues() == null || planSubmission.getValues().size() == 0) {
+        if (planSubmission.e != null || planSubmission.getValues() == null || (planSubmission.getValues().size() == 0 && planSubmission.allFinish)) {
           logger.debug("PlanSubmission: {} completed.", queryID);
           //出错处理
-          for (String basicQueryID : planSubmission.originalSubmissions) {
+          for (String basicQueryID : planSubmission.queryIdToPlan.keySet()) {
             BasicQuerySubmission basicSubmission = (BasicQuerySubmission) submitted.get(basicQueryID);
             basicSubmission.e = planSubmission.e;
             //Drill-bit 返回empty set
@@ -380,7 +382,7 @@ public class QueryMaster implements QueryListener {
           }
         } else {
           Map<String, ResultTable> materializedRecords = planSubmission.getValues();
-          for (String basicQueryID : planSubmission.originalSubmissions) {
+          for (String basicQueryID : planSubmission.queryIdToPlan.keySet()) {
             ResultTable value = materializedRecords.get(basicQueryID);
             BasicQuerySubmission basicSubmission = (BasicQuerySubmission) submitted.get(basicQueryID);
             basicSubmission.value = value;
@@ -394,6 +396,13 @@ public class QueryMaster implements QueryListener {
           }
         }
       }
+    }
+  }
+
+  public void clearSubmittedTag(PlanSubmission planSubmission) {
+    for (String basicQueryID : planSubmission.queryIdToPlan.keySet()) {
+      logger.warn("Force to remove basic query id: " + basicQueryID);
+      submitted.remove(basicQueryID);
     }
   }
 

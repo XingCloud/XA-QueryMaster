@@ -39,7 +39,13 @@ public class QueryMasterConstant {
   public static final String HBASE = "hbase";
   public static final String DEU = "deu";
 
+  public static enum STORAGE_ENGINE {
+    mysql, hbase
+  };
+  public static final int[] SAMPLING_ARRAY = {1, 2, 4, 8, 16, 32, 64, 64, 65};
+  public static final int TOTAL_BUCKET_NUM = 256;
 
+  public static final int SAMPLING_THRESHOLD = 500;
 
 
 }
