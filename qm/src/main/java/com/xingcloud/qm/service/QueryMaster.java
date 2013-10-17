@@ -274,7 +274,9 @@ public class QueryMaster implements QueryListener {
             totalCost += submission.cost;
             pickedSubmissions.add(submission);
             pickedPlans.add(submission.plan);
-            id2Origin.put(submission.id, LogicalPlanUtil.copyPlan(submission.plan));
+            if (!(submission instanceof PlanSubmission)) {
+              id2Origin.put(submission.id, LogicalPlanUtil.copyPlan(submission.plan));
+            }
           }
 
           Map<LogicalPlan, LogicalPlan> origin2Merged = null;
@@ -374,6 +376,10 @@ public class QueryMaster implements QueryListener {
           logger.info("PlanSubmission: {} completed.", queryID);
           //出错处理
           for (String basicQueryID : planSubmission.queryIdToPlan.keySet()) {
+            if (planSubmission.finishedIDSet.contains(basicQueryID)) {
+              continue;
+            }
+            //未完成或查询到的请求
             BasicQuerySubmission basicSubmission = (BasicQuerySubmission) submitted.get(basicQueryID);
             basicSubmission.e = planSubmission.e;
             //Drill-bit 返回empty set
@@ -386,7 +392,7 @@ public class QueryMaster implements QueryListener {
           }
         } else {
           Map<String, ResultTable> materializedRecords = planSubmission.getValues();
-          for (String basicQueryID : planSubmission.queryIdToPlan.keySet()) {
+          for (String basicQueryID : planSubmission.queryID2Table.keySet()) {
             ResultTable value = materializedRecords.get(basicQueryID);
             BasicQuerySubmission basicSubmission = (BasicQuerySubmission) submitted.get(basicQueryID);
             basicSubmission.value = value;

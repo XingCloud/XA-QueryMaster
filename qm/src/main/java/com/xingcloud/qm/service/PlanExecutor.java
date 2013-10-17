@@ -137,6 +137,8 @@ public class PlanExecutor {
         }
         if (!needNextRound) {
           //采样结果已经达到阈值
+          //把query id加入到已完成id集合
+          submission.finishedIDSet.add(queryID);
           List<ResultTable> sampleResFor1Qid = sampleRes.get(queryID);
           //合并采样结果
           ResultTable rtFinal = new ResultTable();
@@ -164,7 +166,6 @@ public class PlanExecutor {
       for (String queryID : removeList) {
         logger.info(queryID + " isn't satisfied uid number of " + QueryMasterConstant.SAMPLING_THRESHOLD);
         submission.queryID2Table.remove(queryID);
-        submission.queryIdToPlan.remove(queryID);
       }
       return nextRoundPlan;
     }

@@ -28,6 +28,8 @@ public class PlanSubmission extends QuerySubmission {
   public boolean needSample = true;
   //是否全部sub plan都满足采样阈值，查询结束
   public boolean allFinish = false;
+  //以查询结束的query id集合（采样符合阈值）
+  public Set<String> finishedIDSet = new HashSet<>();
 
   /**
    * construct from LogicalPlan, submission id, project id.
