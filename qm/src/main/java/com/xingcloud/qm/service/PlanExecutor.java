@@ -171,16 +171,16 @@ public class PlanExecutor {
       if (oneQueryUidMap == null) {
         oneQueryUidMap = new HashMap<>();
         oneQueryUidMap.put(key, uidNum);
-        return uidNum > QueryMasterConstant.SAMPLING_THRESHOLD;
+        return uidNum < QueryMasterConstant.SAMPLING_THRESHOLD;
       }
       Long uidNumCurrent = oneQueryUidMap.get(key);
       if (uidNumCurrent == null) {
         oneQueryUidMap.put(key, uidNum);
-        return uidNum > QueryMasterConstant.SAMPLING_THRESHOLD;
+        return uidNum < QueryMasterConstant.SAMPLING_THRESHOLD;
       }
       uidNumCurrent += uidNum;
       oneQueryUidMap.put(key, uidNumCurrent);
-      return uidNumCurrent > QueryMasterConstant.SAMPLING_THRESHOLD;
+      return uidNumCurrent < QueryMasterConstant.SAMPLING_THRESHOLD;
     }
 
     /**
