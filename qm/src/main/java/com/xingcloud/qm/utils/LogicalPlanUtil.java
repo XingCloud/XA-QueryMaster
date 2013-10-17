@@ -676,12 +676,15 @@ public class LogicalPlanUtil {
             JsonNode rkRange = selection.get(SELECTION_KEY_WORD_ROWKEY);
             String startRK = rkRange.get(SELECTION_KEY_WORD_ROWKEY_START).textValue();
             String endRK = rkRange.get(SELECTION_KEY_WORD_ROWKEY_END).textValue();
-            startRK = startRK.substring(0, startRK.length() - QueryMasterConstant.START_KEY_TAIL.length() + 1);
-            endRK = endRK.substring(0, endRK.length() - QueryMasterConstant.END_KEY_TAIL.length() + 1);
-            startRK = startRK + Bytes.toStringBinary(Arrays.copyOfRange(Bytes.toBytes(uidRange.getFirst()), 3, 8));
-            endRK = endRK + Bytes.toStringBinary(Arrays.copyOfRange(Bytes.toBytes(uidRange.getSecond()), 3, 8));
-            ((ObjectNode)rkRange).put(SELECTION_KEY_WORD_ROWKEY_START,startRK);
-            ((ObjectNode)rkRange).put(SELECTION_KEY_WORD_ROWKEY_END,endRK);
+            startRK = startRK.substring(0, startRK.length() - QueryMasterConstant.START_KEY_TAIL.length());
+            endRK = endRK.substring(0, endRK.length() - QueryMasterConstant.END_KEY_TAIL.length());
+
+            startRK = startRK + QueryMasterConstant.XFF
+                    + Bytes.toStringBinary(Arrays.copyOfRange(Bytes.toBytes(uidRange.getFirst()), 3, 8));
+            endRK = endRK + QueryMasterConstant.XFF
+                    + Bytes.toStringBinary(Arrays.copyOfRange(Bytes.toBytes(uidRange.getSecond()), 3, 8));
+            ((ObjectNode)rkRange).put(SELECTION_KEY_WORD_ROWKEY_START, startRK);
+            ((ObjectNode)rkRange).put(SELECTION_KEY_WORD_ROWKEY_END, endRK);
           } else if (((Scan) leaf).getStorageEngine().equals(QueryMasterConstant.STORAGE_ENGINE.mysql.name())) {
             //Mysql把uid range信息加入到filter里（expression符合drill的logical expression规则）
             JsonNode filter = selection.get(SELECTION_KEY_WORD_FILTER);

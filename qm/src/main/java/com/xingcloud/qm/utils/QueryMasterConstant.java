@@ -39,6 +39,8 @@ public class QueryMasterConstant {
   public static final String HBASE = "hbase";
   public static final String DEU = "deu";
 
+  public static final String XFF = "\\xFF";
+
   public static enum STORAGE_ENGINE {
     mysql, hbase
   };
