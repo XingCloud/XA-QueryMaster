@@ -29,6 +29,7 @@ public class PlanWriter {
   private final SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd-hhmmss");
   private static final String target = "target.json";
   private static final String source = "source.json";
+  private static final String uidRange = "uid_range.json";
 
   private String ymd;
   private String hms;
@@ -36,6 +37,7 @@ public class PlanWriter {
   private String planDir;
   private String targetFilePath;
   private String sourceFilePath;
+  private String uidRangeFilePath;
   private DrillConfig config;
 
   public PlanWriter(long ts, DrillConfig config) {
@@ -57,6 +59,7 @@ public class PlanWriter {
 
     targetFilePath = planDir + target;
     sourceFilePath = planDir + source;
+    uidRangeFilePath = planDir + uidRange;
     this.config = config;
   }
 
@@ -96,6 +99,23 @@ public class PlanWriter {
       }
     }
     logger.info("Write merged plan taken " + (System.nanoTime()-st)/1.0e9 + " sec");
+  }
+
+  public void writeUidRangePlan(String uidRangePlan) throws IOException {
+    long st = System.nanoTime();
+    File uidRangeFile = new File(uidRangeFilePath);
+    Writer uidRangeWriter = null;
+    try {
+      uidRangeWriter = new FileWriter(uidRangeFile);
+      uidRangeWriter.write(uidRangePlan);
+      uidRangeWriter.write("\n");
+    } finally {
+      if (uidRangeWriter != null) {
+        uidRangeWriter.flush();
+        uidRangeWriter.close();
+      }
+    }
+    logger.info("Write merged plan with uid range taken " + (System.nanoTime()-st)/1.0e9 + " sec");
   }
 
 }

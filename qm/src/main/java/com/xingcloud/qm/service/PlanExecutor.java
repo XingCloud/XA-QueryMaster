@@ -7,6 +7,7 @@ import com.xingcloud.qm.result.ResultRow;
 import com.xingcloud.qm.result.ResultTable;
 import com.xingcloud.qm.utils.GraphVisualize;
 import com.xingcloud.qm.utils.LogicalPlanUtil;
+import com.xingcloud.qm.utils.PlanWriter;
 import com.xingcloud.qm.utils.QueryMasterConstant;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.exceptions.DrillRuntimeException;
@@ -204,6 +205,13 @@ public class PlanExecutor {
         //把采样的uid信息加入到logical plan中
         LogicalPlanUtil.addUidRangeInfo(submission.plan, startBucketPos, offset);
         planString = submission.plan.toJsonString(QueryNode.LOCAL_DEFAULT_DRILL_CONFIG);
+        PlanWriter pw = null;
+        boolean writePlan = QMConfig.conf().getBoolean(QMConfig.WRITE_PLAN, false);
+        if (writePlan) {
+          pw = new PlanWriter(System.currentTimeMillis(), DrillConfig.create());
+          pw.writeUidRangePlan(planString);
+        }
+
       } catch (JsonProcessingException e) {
         e.printStackTrace();
         return;
