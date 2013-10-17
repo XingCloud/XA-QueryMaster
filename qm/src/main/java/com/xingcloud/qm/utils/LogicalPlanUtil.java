@@ -1,5 +1,6 @@
 package com.xingcloud.qm.utils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -711,6 +712,21 @@ public class LogicalPlanUtil {
         }
       }
     }
+  }
+
+  public static LogicalPlan copyPlan(LogicalPlan plan) {
+    DrillConfig c = DrillConfig.create();
+    String planJson = null;
+    LogicalPlan copy = null;
+    try {
+      planJson = plan.toJsonString(c);
+      copy = c.getMapper().readValue(planJson, LogicalPlan.class);
+    } catch (JsonProcessingException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    } catch (IOException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
+    return copy;
   }
 
 

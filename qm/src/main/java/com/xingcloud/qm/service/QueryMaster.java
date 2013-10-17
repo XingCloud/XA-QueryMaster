@@ -10,6 +10,7 @@ import com.xingcloud.qm.config.QMConfig;
 import com.xingcloud.qm.exceptions.XRemoteQueryException;
 import com.xingcloud.qm.result.ResultRow;
 import com.xingcloud.qm.result.ResultTable;
+import com.xingcloud.qm.utils.LogicalPlanUtil;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.slf4j.Logger;
@@ -273,8 +274,7 @@ public class QueryMaster implements QueryListener {
             totalCost += submission.cost;
             pickedSubmissions.add(submission);
 
-            LogicalPlan planCopy = new LogicalPlan(submission.plan.getProperties(),
-                    submission.plan.getStorageEngines(), submission.plan.getSortedOperators());
+            LogicalPlan planCopy = LogicalPlanUtil.copyPlan(submission.plan);
             pickedPlans.add(planCopy);
           }
 
