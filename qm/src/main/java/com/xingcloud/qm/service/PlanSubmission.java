@@ -66,7 +66,8 @@ public class PlanSubmission extends QuerySubmission {
       Map<String, LogicalPlan> otherSL = ((PlanSubmission) submission).queryIdToPlan;
       queryIdToPlan.putAll(otherSL);
     }else{
-      queryIdToPlan.put(submission.id, submission.plan);
+      queryIdToPlan.put(submission.id, new LogicalPlan(submission.plan.getProperties(),
+              submission.plan.getStorageEngines(), submission.plan.getSortedOperators()));
     }
     this.cost += submission.cost;
   }
