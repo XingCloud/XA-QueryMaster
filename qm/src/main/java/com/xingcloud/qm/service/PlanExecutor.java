@@ -81,6 +81,7 @@ public class PlanExecutor {
           queryOneTime(startBucketPos, offset);
           startBucketPos += offset;
           List<LogicalPlan> nextRoundPlan = getNextRoundPlan(sampleRes, uidNumMap);
+          logger.info("Next round plan number: " + nextRoundPlan.size());
           try {
             //全部plan符合采样阈值
             if (nextRoundPlan.size() == 0) {
@@ -161,6 +162,7 @@ public class PlanExecutor {
       }
 
       for (String queryID : removeList) {
+        logger.info(queryID + " isn't satisfied uid number of " + QueryMasterConstant.SAMPLING_THRESHOLD);
         submission.queryID2Table.remove(queryID);
       }
       return nextRoundPlan;

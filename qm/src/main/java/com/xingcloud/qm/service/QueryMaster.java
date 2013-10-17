@@ -367,7 +367,7 @@ public class QueryMaster implements QueryListener {
 
         // 分发数据
         if (planSubmission.e != null || planSubmission.getValues() == null || (planSubmission.getValues().size() == 0 && planSubmission.allFinish)) {
-          logger.debug("PlanSubmission: {} completed.", queryID);
+          logger.info("PlanSubmission: {} completed.", queryID);
           //出错处理
           for (String basicQueryID : planSubmission.queryIdToPlan.keySet()) {
             BasicQuerySubmission basicSubmission = (BasicQuerySubmission) submitted.get(basicQueryID);
