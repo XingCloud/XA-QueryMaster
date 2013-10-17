@@ -164,6 +164,7 @@ public class PlanExecutor {
       for (String queryID : removeList) {
         logger.info(queryID + " isn't satisfied uid number of " + QueryMasterConstant.SAMPLING_THRESHOLD);
         submission.queryID2Table.remove(queryID);
+        submission.queryIdToPlan.remove(queryID);
       }
       return nextRoundPlan;
     }
