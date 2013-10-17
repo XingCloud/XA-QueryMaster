@@ -123,7 +123,7 @@ public class PlanExecutor {
           needNextRound = checkUidNum(uidNum, uidNumMap, queryID, key);
           if (needNextRound) {
             LogicalPlan plan = submission.queryIdToPlan.get(queryID);
-            nextRoundPlan.add(plan);
+            nextRoundPlan.add(LogicalPlanUtil.copyPlan(plan));
             //记录此次结果
             if (resList == null) {
               resList = new ArrayList<>();

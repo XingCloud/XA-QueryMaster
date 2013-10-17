@@ -65,12 +65,6 @@ public class PlanSubmission extends QuerySubmission {
   }
 
   public void absorbIDCost(QuerySubmission submission){
-    if(submission instanceof PlanSubmission){
-      Map<String, LogicalPlan> otherSL = ((PlanSubmission) submission).queryIdToPlan;
-      queryIdToPlan.putAll(otherSL);
-    }else{
-      queryIdToPlan.put(submission.id, submission.plan);
-    }
     this.cost += submission.cost;
   }
 
@@ -80,6 +74,10 @@ public class PlanSubmission extends QuerySubmission {
 
   public Map<String, ResultTable> getValues() {
     return queryID2Table;
+  }
+
+  public void addOriginPlan(String id, LogicalPlan plan) {
+    queryIdToPlan.put(id, plan);
   }
   
   

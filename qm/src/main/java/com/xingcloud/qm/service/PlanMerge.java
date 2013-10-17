@@ -1025,7 +1025,7 @@ public class PlanMerge {
       Map<LogicalPlan, LogicalPlan> result = new HashMap<>();
       for (Map.Entry<LogicalPlan, LogicalPlan> entry : splitBigPlanMap.entrySet()) {
           LogicalPlan orig = entry.getKey();
-          LogicalPlan splitBigScanResultPlan = splitBigPlanMap.get(entry.getKey());
+          LogicalPlan splitBigScanResultPlan = entry.getValue();
           LogicalPlan splitRkResultPlan = splitRkPlanMap.get(splitBigScanResultPlan);
           LogicalPlan mergePlanResultPlan = mergePlanMap.get(splitRkResultPlan);
           LogicalPlan mergeToTableScanResultPlan = mergeToTableScanMap.get(mergePlanResultPlan);

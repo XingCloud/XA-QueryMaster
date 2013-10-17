@@ -268,20 +268,18 @@ public class QueryMaster implements QueryListener {
           List<QuerySubmission> pickedSubmissions = new ArrayList<>();
           List<LogicalPlan> pickedPlans = new ArrayList<>();
           int totalCost = 0;
-
+          Map<String, LogicalPlan> id2Origin = new HashMap<>();
           for (int i = 0; projectSubmissions.size() > 0 && i < MAX_BATCHMERGE && totalCost < MAX_BATCHCOST; i++) {
             QuerySubmission submission = projectSubmissions.pollFirst();
             totalCost += submission.cost;
             pickedSubmissions.add(submission);
-
-            LogicalPlan planCopy = LogicalPlanUtil.copyPlan(submission.plan);
-            pickedPlans.add(planCopy);
+            pickedPlans.add(submission.plan);
+            id2Origin.put(submission.id, LogicalPlanUtil.copyPlan(submission.plan));
           }
 
           Map<LogicalPlan, LogicalPlan> origin2Merged = null;
           try {
             origin2Merged = PlanMerge.sortAndMerge(pickedPlans, config);
-            int executed = 0;
 
             //建立合并后的plan和原始用户提交的BasicQuerySubmission之间的对应关系
             Map<LogicalPlan, PlanSubmission> mergedPlan2Submissions = new HashMap<>();
@@ -294,7 +292,9 @@ public class QueryMaster implements QueryListener {
                   mergedPlan2Submissions.put(to, (PlanSubmission) submission);
                 } else {
                   //第一次被合并的plan，会变成PlanSubmission
-                  mergedPlan2Submissions.put(to, new PlanSubmission(submission, projectID));
+                  PlanSubmission planSubmission = new PlanSubmission(submission, projectID);
+                  planSubmission.addOriginPlan(submission.id, id2Origin.get(submission.id));
+                  mergedPlan2Submissions.put(to, planSubmission);
                 }
               } else {//newly merged plan
                 PlanSubmission mergedSubmission = mergedPlan2Submissions.get(to);
@@ -304,6 +304,7 @@ public class QueryMaster implements QueryListener {
                 }
                 //mark submission merge
                 (mergedSubmission).absorbIDCost(submission);
+                mergedSubmission.addOriginPlan(submission.id, id2Origin.get(submission.id));
               }
             }
 
