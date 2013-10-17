@@ -109,6 +109,7 @@ public class PlanExecutor {
      */
     public List<LogicalPlan> getNextRoundPlan(Map<String, List<ResultTable>> sampleRes, Map<String, Map<String, Long>> uidNumMap) {
       List<LogicalPlan> nextRoundPlan = new ArrayList<>();
+      List<String> removeList = new ArrayList<>();
       for (Map.Entry<String, ResultTable> entry : submission.queryID2Table.entrySet()) {
         String queryID = entry.getKey();
         ResultTable rt = entry.getValue();
@@ -129,7 +130,7 @@ public class PlanExecutor {
             }
             resList.add(rt);
             //结果集中只包含满足条件可以更新缓存的查询结果
-            submission.queryID2Table.remove(queryID);
+            removeList.add(queryID);
             break;
           }
         }
@@ -157,6 +158,10 @@ public class PlanExecutor {
             rr.count = (long) (rr.count/rr.sampleRate);
           }
         }
+      }
+
+      for (String queryID : removeList) {
+        submission.queryID2Table.remove(queryID);
       }
       return nextRoundPlan;
     }
