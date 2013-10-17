@@ -669,6 +669,7 @@ public class LogicalPlanUtil {
     Collection<SourceOperator> leaves = mergedPlan.getGraph().getLeaves();
     for (SourceOperator leaf : leaves) {
       if (leaf instanceof Scan) {
+        logger.info("------ Add uid range info into " + leaf);
         JSONOptions selections = ((Scan) leaf).getSelection();
         for(JsonNode selection : selections.getRoot()) {
           if (((Scan) leaf).getStorageEngine().equals(QueryMasterConstant.STORAGE_ENGINE.hbase.name())) {
