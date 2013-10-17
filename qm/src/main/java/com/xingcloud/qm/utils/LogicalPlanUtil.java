@@ -689,7 +689,9 @@ public class LogicalPlanUtil {
               String filterStr = filter.asText() + " && " + uidRangeStr;
               ((ObjectNode)filter).put(SELECTION_KEY_WORD_FILTER,filterStr);
             } else {
+              filter=new ObjectNode(JsonNodeFactory.instance);
               ((ObjectNode)filter).put(SELECTION_KEY_WORD_FILTER, uidRangeStr);
+              ((ObjectNode)selection).put(SELECTION_KEY_WORD_FILTER,filter);
             }
           }
         }
