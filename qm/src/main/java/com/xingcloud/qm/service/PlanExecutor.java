@@ -73,14 +73,14 @@ public class PlanExecutor {
 
     public void _run() throws Exception {
       if (submission.needSample) {
-        Map<String, List<ResultTable>> samplingResult = new HashMap<>();  //存储每轮采样结果
+        Map<String, List<ResultTable>> sampleRes = new HashMap<>();  //存储每轮采样结果
         Map<String, Map<String, Long>> uidNumMap = new HashMap<>(); //记录目前已查询到的uid数量
         int startBucketPos = 0;
         for (int i = 0; i < QueryMasterConstant.SAMPLING_ARRAY.length; i++) {
           int offset = QueryMasterConstant.SAMPLING_ARRAY[i];
           queryOneTime(startBucketPos, offset);
           startBucketPos += offset;
-          List<LogicalPlan> nextRoundPlan = getNextRoundPlan(samplingResult, uidNumMap);
+          List<LogicalPlan> nextRoundPlan = getNextRoundPlan(sampleRes, uidNumMap);
           try {
             //全部plan符合采样阈值
             if (nextRoundPlan.size() == 0) {
@@ -104,10 +104,10 @@ public class PlanExecutor {
 
     /**
      * 把达到uid阈值的查询结果通知更新缓存，剩下的查询重新进行plan merge并进行下一轮提交
-     * @param samplingResult  目前还没达到采样阈值plan的每轮采样查询结果
+     * @param sampleRes  目前还没达到采样阈值plan的每轮采样查询结果
      * @return  没有达到采样阈值需要进行下一轮查询的logical plan
      */
-    public List<LogicalPlan> getNextRoundPlan(Map<String, List<ResultTable>> samplingResult, Map<String, Map<String, Long>> uidNumMap) {
+    public List<LogicalPlan> getNextRoundPlan(Map<String, List<ResultTable>> sampleRes, Map<String, Map<String, Long>> uidNumMap) {
       List<LogicalPlan> nextRoundPlan = new ArrayList<>();
       for (Map.Entry<String, ResultTable> entry : submission.queryID2Table.entrySet()) {
         String queryID = entry.getKey();
@@ -117,7 +117,7 @@ public class PlanExecutor {
           String key = subEntry.getKey();
           ResultRow rr = subEntry.getValue();
           long uidNum = rr.userNum;
-          List<ResultTable> resList = samplingResult.get(queryID);
+          List<ResultTable> resList = sampleRes.get(queryID);
           needNextRound = checkUidNum(uidNum, uidNumMap, queryID, key);
           if (needNextRound) {
             LogicalPlan plan = submission.queryIdToPlan.get(queryID);
@@ -125,7 +125,7 @@ public class PlanExecutor {
             //记录此次结果
             if (resList == null) {
               resList = new ArrayList<>();
-              samplingResult.put(queryID, resList);
+              sampleRes.put(queryID, resList);
             }
             resList.add(rt);
             //结果集中只包含满足条件可以更新缓存的查询结果
@@ -135,16 +135,16 @@ public class PlanExecutor {
         }
         if (!needNextRound) {
           //采样结果已经达到阈值
-          List<ResultTable> samplingResults = samplingResult.get(queryID);
+          List<ResultTable> sampleResFor1Qid = sampleRes.get(queryID);
           //合并采样结果
           ResultTable rtFinal = new ResultTable();
-          if (samplingResult != null) {
-            for (int i=0; i<samplingResults.size(); i++) {
-              ResultTable rtTmp = samplingResults.get(i);
+          if (sampleResFor1Qid != null) {
+            for (int i=0; i<sampleResFor1Qid.size(); i++) {
+              ResultTable rtTmp = sampleResFor1Qid.get(i);
               rtFinal.add(rtTmp, QueryMasterConstant.SAMPLING_ARRAY[i]/(double)QueryMasterConstant.TOTAL_BUCKET_NUM);
             }
             //加上此轮采样查询结果
-            rtFinal.add(rt, QueryMasterConstant.SAMPLING_ARRAY[samplingResult.size()]/(double)QueryMasterConstant.TOTAL_BUCKET_NUM);
+            rtFinal.add(rt, QueryMasterConstant.SAMPLING_ARRAY[sampleRes.size()]/(double)QueryMasterConstant.TOTAL_BUCKET_NUM);
           } else {
             //第一轮采样查询就满足阈值条件
             rtFinal = rt;
