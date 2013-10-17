@@ -272,7 +272,10 @@ public class QueryMaster implements QueryListener {
             QuerySubmission submission = projectSubmissions.pollFirst();
             totalCost += submission.cost;
             pickedSubmissions.add(submission);
-            pickedPlans.add(submission.plan);
+
+            LogicalPlan planCopy = new LogicalPlan(submission.plan.getProperties(),
+                    submission.plan.getStorageEngines(), submission.plan.getSortedOperators());
+            pickedPlans.add(planCopy);
           }
 
           Map<LogicalPlan, LogicalPlan> origin2Merged = null;

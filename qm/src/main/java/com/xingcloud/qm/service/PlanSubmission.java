@@ -69,17 +69,7 @@ public class PlanSubmission extends QuerySubmission {
       Map<String, LogicalPlan> otherSL = ((PlanSubmission) submission).queryIdToPlan;
       queryIdToPlan.putAll(otherSL);
     }else{
-      try {
-        DrillConfig config = DrillConfig.create();
-        String planJson = submission.plan.toJsonString(config);
-        LogicalPlan planCopy = config.getMapper().readValue(planJson, LogicalPlan.class);
-        queryIdToPlan.put(submission.id, planCopy);
-      } catch (JsonProcessingException e1) {
-        e1.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-      } catch (IOException e1) {
-        e1.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-      }
-
+      queryIdToPlan.put(submission.id, submission.plan);
     }
     this.cost += submission.cost;
   }
