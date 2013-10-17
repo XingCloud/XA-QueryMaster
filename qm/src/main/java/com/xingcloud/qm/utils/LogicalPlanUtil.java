@@ -671,8 +671,10 @@ public class LogicalPlanUtil {
       if (leaf instanceof Scan) {
         logger.info("------ Add uid range info into " + leaf);
         JSONOptions selections = ((Scan) leaf).getSelection();
-        for(JsonNode selection : selections.getRoot()) {
-          if (((Scan) leaf).getStorageEngine().equals(QueryMasterConstant.STORAGE_ENGINE.hbase.name())) {
+        ArrayNode selectionNodes = (ArrayNode)selections.getRoot();
+        if (((Scan) leaf).getStorageEngine().equals(QueryMasterConstant.STORAGE_ENGINE.hbase.name())) {
+          int i = 0;
+          for (JsonNode selection : selectionNodes) {
             JsonNode rkRange = selection.get(SELECTION_KEY_WORD_ROWKEY);
             String startRK = rkRange.get(SELECTION_KEY_WORD_ROWKEY_START).textValue();
             String endRK = rkRange.get(SELECTION_KEY_WORD_ROWKEY_END).textValue();
@@ -681,11 +683,19 @@ public class LogicalPlanUtil {
 
             startRK = startRK + QueryMasterConstant.XFF
                     + Bytes.toStringBinary(Arrays.copyOfRange(Bytes.toBytes(uidRange.getFirst()), 3, 8));
-            endRK = endRK + QueryMasterConstant.XFF
-                    + Bytes.toStringBinary(Arrays.copyOfRange(Bytes.toBytes(uidRange.getSecond()), 3, 8));
+            if (i != selectionNodes.size()-1) {
+              endRK = endRK + QueryMasterConstant.XFF
+                    + Bytes.toStringBinary(Arrays.copyOfRange(Bytes.toBytes(uidRange.getFirst()), 3, 8));
+            } else {
+              endRK = endRK + QueryMasterConstant.XFF
+                      + Bytes.toStringBinary(Arrays.copyOfRange(Bytes.toBytes(uidRange.getSecond()), 3, 8));
+            }
             ((ObjectNode)rkRange).put(SELECTION_KEY_WORD_ROWKEY_START, startRK);
             ((ObjectNode)rkRange).put(SELECTION_KEY_WORD_ROWKEY_END, endRK);
-          } else if (((Scan) leaf).getStorageEngine().equals(QueryMasterConstant.STORAGE_ENGINE.mysql.name())) {
+            i++;
+          }
+        } else if (((Scan) leaf).getStorageEngine().equals(QueryMasterConstant.STORAGE_ENGINE.mysql.name())) {
+          for (JsonNode selection : selectionNodes) {
             //Mysql把uid range信息加入到filter里（expression符合drill的logical expression规则）
             JsonNode filter = selection.get(SELECTION_KEY_WORD_FILTER);
             String uidRangeStr = "( (uid) >= (" + uidRange.getFirst() + ") ) && ( (uid) < (" + uidRange.getSecond() + ") )";
@@ -702,4 +712,6 @@ public class LogicalPlanUtil {
       }
     }
   }
+
+
 }
