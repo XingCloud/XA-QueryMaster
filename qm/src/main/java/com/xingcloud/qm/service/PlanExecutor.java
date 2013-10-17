@@ -150,7 +150,7 @@ public class PlanExecutor {
               rtFinal.add(rtTmp, QueryMasterConstant.SAMPLING_ARRAY[i]/(double)QueryMasterConstant.TOTAL_BUCKET_NUM);
             }
             //加上此轮采样查询结果
-            rtFinal.add(rt, QueryMasterConstant.SAMPLING_ARRAY[sampleRes.size()]/(double)QueryMasterConstant.TOTAL_BUCKET_NUM);
+            rtFinal.add(rt, QueryMasterConstant.SAMPLING_ARRAY[sampleResFor1Qid.size()]/(double)QueryMasterConstant.TOTAL_BUCKET_NUM);
           } else {
             //第一轮采样查询就满足阈值条件
             rtFinal = rt;
