@@ -679,9 +679,13 @@ public class LogicalPlanUtil {
             String startRK = rkRange.get(SELECTION_KEY_WORD_ROWKEY_START).textValue();
             String endRK = rkRange.get(SELECTION_KEY_WORD_ROWKEY_END).textValue();
             byte[] srk = Bytes.toBytesBinary(startRK);
+            logger.info("Origin: " + Bytes.toStringBinary(srk));
             changeUidBytes(srk, uidRange);
+            logger.info("Change to: " + Bytes.toStringBinary(srk));
             byte[] erk = Bytes.toBytesBinary(endRK);
+            logger.info("Origin: " + Bytes.toStringBinary(erk));
             changeUidBytes(erk, uidRange);
+            logger.info("Change to: " + Bytes.toStringBinary(erk));
 
             ((ObjectNode)rkRange).put(SELECTION_KEY_WORD_ROWKEY_START, Bytes.toStringBinary(srk));
             ((ObjectNode)rkRange).put(SELECTION_KEY_WORD_ROWKEY_END, Bytes.toStringBinary(erk));
