@@ -726,9 +726,9 @@ public class LogicalPlanUtil {
 
   public static void changeUidBytes(byte[] rk, Pair<byte[], byte[]> uidRange) {
     if (Bytes.compareTo(rk, rk.length-5, rk.length, QueryMasterConstant.MIN_UID_BYTES, 0, 5) == 0) {
-      System.arraycopy(uidRange.getFirst(), 0, rk, rk.length-5, 5);
+      System.arraycopy(uidRange.getFirst(), 3, rk, rk.length-5, 5);
     } else {
-      System.arraycopy(uidRange.getSecond(), 0, rk, rk.length-5, 5);
+      System.arraycopy(uidRange.getSecond(), 3, rk, rk.length-5, 5);
     }
   }
 
