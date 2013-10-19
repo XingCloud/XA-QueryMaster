@@ -30,8 +30,10 @@ public class QueryMasterConstant {
   public static final String EVENT5 = "event5";
 
   public static final String DATE = "date";
-  public static final String START_KEY_TAIL = "\\xFF\\x00\\x00\\x00\\x00\\x00";
-  public static final String END_KEY_TAIL = "\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF";
+  public static final String MIN_UID = "\\x00\\x00\\x00\\x00\\x00";
+  public static final byte[] MIN_UID_BYTES = {0,0,0,0,0};
+  public static final String MAX_UID = "\\xFF\\xFF\\xFF\\xFF\\xFF";
+  public static final byte[] MAX_UID_BYTES = {-1,-1,-1,-1,-1};
 
   public static final String NA_START_KEY = "\\x00\\x00\\x00"+"\\xFF\\x00\\x00\\x00\\x00\\x00";
   public static final String NA_END_KEY = "\\x00\\x00\\x00"+"\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF";
@@ -40,6 +42,7 @@ public class QueryMasterConstant {
   public static final String DEU = "deu";
 
   public static final String XFF = "\\xFF";
+  public static final byte[] XFF_BYTES = {-1};
 
   public static enum STORAGE_ENGINE {
     mysql, hbase

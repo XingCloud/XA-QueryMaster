@@ -125,16 +125,16 @@ public class LogicalPlanUtil {
       if (range != null) {
         String eventFrom = range.getFrom().nameRowkeyStyle();
         String eventTo = range.getTo().nameRowkeyStyle();
-        srk = date + eventFrom + QueryMasterConstant.START_KEY_TAIL;
-        erk = date + eventTo + QueryMasterConstant.END_KEY_TAIL;
+        srk = date + eventFrom + QueryMasterConstant.XFF + QueryMasterConstant.MIN_UID;
+        erk = date + eventTo + QueryMasterConstant.XFF + QueryMasterConstant.MAX_UID;
       } else {
         srk = date + QueryMasterConstant.NA_START_KEY;
         erk = date + QueryMasterConstant.NA_END_KEY;
       }
     } else {
       //已经是具体事件
-      srk = date + eventFilter + QueryMasterConstant.START_KEY_TAIL;
-      erk = date + eventFilter + QueryMasterConstant.END_KEY_TAIL;
+      srk = date + eventFilter + QueryMasterConstant.XFF + QueryMasterConstant.MIN_UID;
+      erk = date + eventFilter + QueryMasterConstant.XFF + QueryMasterConstant.MAX_UID;
     }
 
     return new RowKeyRange(srk, erk);
@@ -643,7 +643,7 @@ public class LogicalPlanUtil {
     }
   }
 
-  public static Pair<Long, Long> getLocalSEUidOfBucket(int startBucketPos, int offsetBucketLen) {
+  public static Pair<byte[], byte[]> getLocalSEUidOfBucket(int startBucketPos, int offsetBucketLen) {
     long startBucket = startBucketPos;
     startBucket = startBucket << 32;
     long endBucket = 0;
@@ -654,7 +654,7 @@ public class LogicalPlanUtil {
       endBucket = endBucket << 32;
     }
 
-    return new Pair(startBucket, endBucket);
+    return new Pair(Bytes.toBytes(startBucket), Bytes.toBytes(endBucket));
   }
 
 
@@ -666,7 +666,7 @@ public class LogicalPlanUtil {
    * @throws IOException
    */
   public static void addUidRangeInfo(LogicalPlan mergedPlan, int startBucketPos, int offsetBucketLen) throws IOException {
-    Pair<Long, Long> uidRange = getLocalSEUidOfBucket(startBucketPos, offsetBucketLen);
+    Pair<byte[], byte[]> uidRange = getLocalSEUidOfBucket(startBucketPos, offsetBucketLen);
     Collection<SourceOperator> leaves = mergedPlan.getGraph().getLeaves();
     for (SourceOperator leaf : leaves) {
       if (leaf instanceof Scan) {
@@ -674,26 +674,17 @@ public class LogicalPlanUtil {
         JSONOptions selections = ((Scan) leaf).getSelection();
         ArrayNode selectionNodes = (ArrayNode)selections.getRoot();
         if (((Scan) leaf).getStorageEngine().equals(QueryMasterConstant.STORAGE_ENGINE.hbase.name())) {
-          int i = 0;
           for (JsonNode selection : selectionNodes) {
             JsonNode rkRange = selection.get(SELECTION_KEY_WORD_ROWKEY);
             String startRK = rkRange.get(SELECTION_KEY_WORD_ROWKEY_START).textValue();
             String endRK = rkRange.get(SELECTION_KEY_WORD_ROWKEY_END).textValue();
-            startRK = startRK.substring(0, startRK.length() - QueryMasterConstant.START_KEY_TAIL.length());
-            endRK = endRK.substring(0, endRK.length() - QueryMasterConstant.END_KEY_TAIL.length());
+            byte[] srk = Bytes.toBytesBinary(startRK);
+            changeUidBytes(srk, uidRange);
+            byte[] erk = Bytes.toBytesBinary(endRK);
+            changeUidBytes(erk, uidRange);
 
-            startRK = startRK + QueryMasterConstant.XFF
-                    + Bytes.toStringBinary(Arrays.copyOfRange(Bytes.toBytes(uidRange.getFirst()), 3, 8));
-            if (i != selectionNodes.size()-1) {
-              endRK = endRK + QueryMasterConstant.XFF
-                    + Bytes.toStringBinary(Arrays.copyOfRange(Bytes.toBytes(uidRange.getFirst()), 3, 8));
-            } else {
-              endRK = endRK + QueryMasterConstant.XFF
-                      + Bytes.toStringBinary(Arrays.copyOfRange(Bytes.toBytes(uidRange.getSecond()), 3, 8));
-            }
-            ((ObjectNode)rkRange).put(SELECTION_KEY_WORD_ROWKEY_START, startRK);
-            ((ObjectNode)rkRange).put(SELECTION_KEY_WORD_ROWKEY_END, endRK);
-            i++;
+            ((ObjectNode)rkRange).put(SELECTION_KEY_WORD_ROWKEY_START, Bytes.toStringBinary(srk));
+            ((ObjectNode)rkRange).put(SELECTION_KEY_WORD_ROWKEY_END, Bytes.toStringBinary(erk));
           }
         } else if (((Scan) leaf).getStorageEngine().equals(QueryMasterConstant.STORAGE_ENGINE.mysql.name())) {
           for (JsonNode selection : selectionNodes) {
@@ -729,5 +720,12 @@ public class LogicalPlanUtil {
     return copy;
   }
 
+  public static void changeUidBytes(byte[] rk, Pair<byte[], byte[]> uidRange) {
+    if (Bytes.compareTo(rk, rk.length-5, rk.length, QueryMasterConstant.MIN_UID_BYTES, 0, 5) == 0) {
+      System.arraycopy(uidRange.getFirst(), 0, rk, rk.length-5, 5);
+    } else {
+      System.arraycopy(uidRange.getSecond(), 0, rk, rk.length-5, 5);
+    }
+  }
 
 }
