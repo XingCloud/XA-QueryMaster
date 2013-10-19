@@ -106,7 +106,8 @@ public class RecordParser {
              out.put(currentQueryID,currentValue);
              currentValue = new ResultTable() ;
            }
-            currentQueryID = nextQueryID ;
+           currentQueryID = nextQueryID ;
+           logger.info("------ Receive " + currentQueryID);
         }
         currentValue.put(demesionKey,new ResultRow(count,sum,user_num));
       }
