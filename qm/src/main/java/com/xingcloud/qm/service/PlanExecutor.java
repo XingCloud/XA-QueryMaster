@@ -78,11 +78,10 @@ public class PlanExecutor {
         int startBucketPos = 0;
         for (int i = 0; i < QueryMasterConstant.SAMPLING_ARRAY.length; i++) {
           int offset = QueryMasterConstant.SAMPLING_ARRAY[i];
-
           queryOneTime(startBucketPos, offset);
           startBucketPos += offset;
           List<LogicalPlan> nextRoundPlan = getNextRoundPlan(sampleRes, uidNumMap,
-                  i==QueryMasterConstant.SAMPLING_ARRAY.length-1);
+                  i==QueryMasterConstant.SAMPLING_ARRAY.length-1, startBucketPos);
           logger.info("Next round plan number: " + nextRoundPlan.size());
           try {
             //全部plan符合采样阈值
@@ -109,10 +108,11 @@ public class PlanExecutor {
      * 把达到uid阈值的查询结果通知更新缓存，剩下的查询重新进行plan merge并进行下一轮提交
      * @param sampleRes  目前还没达到采样阈值plan的每轮采样查询结果
      * @param lastRound  是否是最后一轮采样
+     * @param buckets 已经扫过的uid桶数（一共分为256个桶）
      * @return  没有达到采样阈值需要进行下一轮查询的logical plan
      */
     public List<LogicalPlan> getNextRoundPlan(Map<String, List<ResultTable>> sampleRes,
-                                              Map<String, Map<String, Long>> uidNumMap, boolean lastRound) {
+                                              Map<String, Map<String, Long>> uidNumMap, boolean lastRound, int buckets) {
       List<LogicalPlan> nextRoundPlan = new ArrayList<>();
       Set<String> removeList = new HashSet<>();
       for (Map.Entry<String, ResultTable> entry : submission.queryID2Table.entrySet()) {
@@ -122,9 +122,8 @@ public class PlanExecutor {
         for (Map.Entry<String, ResultRow> subEntry : rt.entrySet()) {
           String key = subEntry.getKey();
           ResultRow rr = subEntry.getValue();
-          long uidNum = rr.userNum;
           List<ResultTable> resList = sampleRes.get(queryID);
-          needNextRound = !lastRound && checkUidNum(uidNum, uidNumMap, queryID, key);
+          needNextRound = !lastRound && checkUidNum(rr.userNum, uidNumMap, queryID, key);
           if (needNextRound) {
             LogicalPlan plan = submission.queryIdToPlan.get(queryID);
             nextRoundPlan.add(LogicalPlanUtil.copyPlan(plan));
@@ -149,21 +148,18 @@ public class PlanExecutor {
           if (sampleResFor1Qid != null) {
             for (int i=0; i<sampleResFor1Qid.size(); i++) {
               ResultTable rtTmp = sampleResFor1Qid.get(i);
-              rtFinal.add(rtTmp, QueryMasterConstant.SAMPLING_ARRAY[i]/(double)QueryMasterConstant.TOTAL_BUCKET_NUM);
+              rtFinal.add(rtTmp);
             }
             //加上此轮采样查询结果
-            rtFinal.add(rt, QueryMasterConstant.SAMPLING_ARRAY[sampleResFor1Qid.size()]/(double)QueryMasterConstant.TOTAL_BUCKET_NUM);
+            rtFinal.add(rt);
           } else {
             //第一轮采样查询就满足阈值条件
             rtFinal = rt;
           }
-          //结果值除以采样率得到最终值
-          Collection<ResultRow> rows = rtFinal.values();
-          for (ResultRow rr : rows) {
-            rr.userNum = (long) (rr.userNum/rr.sampleRate);
-            rr.sum = (long) (rr.sum/rr.sampleRate);
-            rr.count = (long) (rr.count/rr.sampleRate);
-          }
+          //设置采样率
+          double finalRate = buckets/256.0;
+          rtFinal.setSampleRate(finalRate);
+          logger.info(queryID + " set sample rate to "  + finalRate);
         }
       }
 

@@ -644,15 +644,14 @@ public class LogicalPlanUtil {
   }
 
   public static Pair<byte[], byte[]> getLocalSEUidOfBucket(int startBucketPos, int offsetBucketLen) {
-    long startBucket = startBucketPos;
     long endBucket = 0;
-    if (startBucket + offsetBucketLen >= 255) {
+    if (startBucketPos + offsetBucketLen >= 255) {
       endBucket = (1l << 40) - 1l;
     } else {
       endBucket = startBucketPos + offsetBucketLen;
       endBucket = endBucket << 32;
     }
-    startBucket = startBucket << 32;
+    long startBucket = startBucketPos << 32;
     return new Pair(Bytes.toBytes(startBucket), Bytes.toBytes(endBucket));
   }
 

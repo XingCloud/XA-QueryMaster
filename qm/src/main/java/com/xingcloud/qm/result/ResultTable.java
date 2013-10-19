@@ -95,7 +95,7 @@ public class ResultTable implements Map<String, ResultRow> {
     return out;
   }
 
-  public void add(ResultTable another, double sampleRate) {
+  public void add(ResultTable another) {
     Map<String, ResultRow> anoRl = another.resultLines;
     for (Map.Entry<String, ResultRow> entry : anoRl.entrySet()) {
       String key = entry.getKey();
@@ -107,13 +107,12 @@ public class ResultTable implements Map<String, ResultRow> {
         resultLines.put(key, rr);
       }
     }
-    //更新采样率(在another里没有出现的key)
-    Set<String> currentKeys = new HashSet<>(resultLines.keySet());
-    Set<String> anotherKeys = another.resultLines.keySet();
-    currentKeys.removeAll(anotherKeys);
-    for (String key : currentKeys) {
-      ResultRow rr = resultLines.get(key);
-      rr.sampleRate += sampleRate;
+  }
+
+  public void setSampleRate(double sampleRate) {
+    for (Entry<String, ResultRow> entry : resultLines.entrySet()) {
+      ResultRow rr = entry.getValue();
+      rr.sampleRate = sampleRate;
     }
   }
 }
