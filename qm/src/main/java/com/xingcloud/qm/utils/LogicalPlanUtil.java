@@ -694,12 +694,13 @@ public class LogicalPlanUtil {
             JsonNode filter = selection.get(SELECTION_KEY_WORD_FILTER);
             String uidRangeStr = "( (uid) >= (" + uidRange.getFirst() + ") ) && ( (uid) < (" + uidRange.getSecond() + ") )";
             if (filter != null) {
-              String filterStr = filter.asText() + " && " + uidRangeStr;
-              ((ObjectNode)filter).put(SELECTION_KEY_WORD_FILTER,filterStr);
+              String expr = filter.get(SELECTION_KEY_WORD_FILTER_EXPRESSION).textValue();
+              expr = expr + " && " + uidRangeStr;
+              ((ObjectNode)filter).put(SELECTION_KEY_WORD_FILTER_EXPRESSION, expr);
             } else {
-              filter=new ObjectNode(JsonNodeFactory.instance);
-              ((ObjectNode)filter).put(SELECTION_KEY_WORD_FILTER, uidRangeStr);
-              ((ObjectNode)selection).put(SELECTION_KEY_WORD_FILTER,filter);
+              filter = new ObjectNode(JsonNodeFactory.instance);
+              ((ObjectNode)filter).put(SELECTION_KEY_WORD_FILTER_EXPRESSION, uidRangeStr);
+              ((ObjectNode)selection).put(SELECTION_KEY_WORD_FILTER, filter);
             }
           }
         }
