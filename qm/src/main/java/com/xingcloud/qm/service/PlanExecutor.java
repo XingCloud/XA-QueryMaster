@@ -78,9 +78,11 @@ public class PlanExecutor {
         int startBucketPos = 0;
         for (int i = 0; i < QueryMasterConstant.SAMPLING_ARRAY.length; i++) {
           int offset = QueryMasterConstant.SAMPLING_ARRAY[i];
+
           queryOneTime(startBucketPos, offset);
           startBucketPos += offset;
-          List<LogicalPlan> nextRoundPlan = getNextRoundPlan(sampleRes, uidNumMap, i==QueryMasterConstant.SAMPLING_ARRAY.length-1);
+          List<LogicalPlan> nextRoundPlan = getNextRoundPlan(sampleRes, uidNumMap,
+                  i==QueryMasterConstant.SAMPLING_ARRAY.length-1);
           logger.info("Next round plan number: " + nextRoundPlan.size());
           try {
             //全部plan符合采样阈值
@@ -112,7 +114,7 @@ public class PlanExecutor {
     public List<LogicalPlan> getNextRoundPlan(Map<String, List<ResultTable>> sampleRes,
                                               Map<String, Map<String, Long>> uidNumMap, boolean lastRound) {
       List<LogicalPlan> nextRoundPlan = new ArrayList<>();
-      List<String> removeList = new ArrayList<>();
+      Set<String> removeList = new HashSet<>();
       for (Map.Entry<String, ResultTable> entry : submission.queryID2Table.entrySet()) {
         String queryID = entry.getKey();
         ResultTable rt = entry.getValue();
@@ -169,6 +171,14 @@ public class PlanExecutor {
         logger.info(queryID + " isn't satisfied uid number of " + QueryMasterConstant.SAMPLING_THRESHOLD);
         submission.queryID2Table.remove(queryID);
       }
+
+      for (String queryID : submission.queryIdToPlan.keySet()) {
+        if (!submission.finishedIDSet.contains(queryID) && !removeList.contains(queryID)) {
+          logger.warn("Can't receive any result from drill-bit of " + queryID);
+          nextRoundPlan.add(submission.queryIdToPlan.get(queryID));
+        }
+      }
+
       return nextRoundPlan;
     }
 
