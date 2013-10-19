@@ -692,7 +692,8 @@ public class LogicalPlanUtil {
           for (JsonNode selection : selectionNodes) {
             //Mysql把uid range信息加入到filter里（expression符合drill的logical expression规则）
             JsonNode filter = selection.get(SELECTION_KEY_WORD_FILTER);
-            String uidRangeStr = "( (uid) >= (" + uidRange.getFirst() + ") ) && ( (uid) < (" + uidRange.getSecond() + ") )";
+            String uidRangeStr = "( (uid) >= (" + Bytes.toLong(uidRange.getFirst()) +
+                    ") ) && ( (uid) < (" + Bytes.toLong(uidRange.getSecond()) + ") )";
             if (filter != null) {
               String expr = filter.get(SELECTION_KEY_WORD_FILTER_EXPRESSION).textValue();
               expr = expr + " && " + uidRangeStr;
