@@ -386,7 +386,7 @@ public class QueryMaster implements QueryListener {
             if (basicSubmission.e == null) {
               basicSubmission.value = new ResultTable();
               basicSubmission.value.put("XA-NA", new ResultRow(0, 0, 0));
-              logger.info("PlanSubmission: {} completed with empty result.", queryID);
+              logger.info("PlanSubmission: {} completed with empty result.", basicQueryID);
             }
             QueryMaster.this.onQueryResultReceived(basicQueryID, basicSubmission);
           }
@@ -398,12 +398,25 @@ public class QueryMaster implements QueryListener {
             basicSubmission.value = value;
             if (value == null) {
               //Drill-bit 返回empty set
-              logger.info("PlanSubmission: {} completed with empty result.", queryID);
+              logger.info("PlanSubmission: {} completed with empty result.", basicQueryID);
               basicSubmission.value = new ResultTable();
               basicSubmission.value.put("XA-NA", new ResultRow(0, 0, 0));
             }
             QueryMaster.this.onQueryResultReceived(basicQueryID, basicSubmission);
           }
+          if (planSubmission.allFinish) {
+            //最后一轮需要把drill-bit没有返回的结果补0
+            Set<String> allQueryIds = planSubmission.queryIdToPlan.keySet();
+            allQueryIds.removeAll(planSubmission.finishedIDSet);
+            for (String basicQueryID : allQueryIds) {
+              BasicQuerySubmission basicSubmission = (BasicQuerySubmission) submitted.get(basicQueryID);
+              basicSubmission.value = new ResultTable();
+              basicSubmission.value.put("XA-NA", new ResultRow(0, 0, 0));
+              logger.info("PlanSubmission: {} completed with empty result.", basicQueryID);
+              QueryMaster.this.onQueryResultReceived(basicQueryID, basicSubmission);
+            }
+          }
+
         }
       }
     }
