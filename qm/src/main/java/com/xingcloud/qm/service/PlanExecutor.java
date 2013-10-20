@@ -122,12 +122,12 @@ public class PlanExecutor {
         for (Map.Entry<String, ResultRow> subEntry : rt.entrySet()) {
           String key = subEntry.getKey();
           ResultRow rr = subEntry.getValue();
-          List<ResultTable> resList = sampleRes.get(queryID);
           needNextRound = !lastRound && checkUidNum(rr.userNum, uidNumMap, queryID, key);
           if (needNextRound) {
             LogicalPlan plan = submission.queryIdToPlan.get(queryID);
             nextRoundPlan.add(LogicalPlanUtil.copyPlan(plan));
             //记录此次结果
+            List<ResultTable> resList = sampleRes.get(queryID);
             if (resList == null) {
               resList = new ArrayList<>();
               sampleRes.put(queryID, resList);
@@ -144,34 +144,30 @@ public class PlanExecutor {
           submission.finishedIDSet.add(queryID);
           List<ResultTable> sampleResFor1Qid = sampleRes.get(queryID);
           //合并采样结果
-          ResultTable rtFinal = new ResultTable();
           if (sampleResFor1Qid != null) {
             for (int i=0; i<sampleResFor1Qid.size(); i++) {
               ResultTable rtTmp = sampleResFor1Qid.get(i);
-              rtFinal.add(rtTmp);
+              rt.add(rtTmp);
             }
-            //加上此轮采样查询结果
-            rtFinal.add(rt);
-          } else {
-            //第一轮采样查询就满足阈值条件
-            rtFinal = rt;
           }
           //设置采样率
           double finalRate = buckets/256.0;
-          rtFinal.setSampleRate(finalRate);
+          rt.setSampleRate(finalRate);
           logger.info(queryID + " set sample rate to "  + finalRate);
         }
       }
 
-      for (String queryID : removeList) {
-        logger.info(queryID + " isn't satisfied uid number of " + QueryMasterConstant.SAMPLING_THRESHOLD);
-        submission.queryID2Table.remove(queryID);
-      }
+      if (!lastRound) {
+        for (String queryID : removeList) {
+          logger.info(queryID + " isn't satisfied uid number of " + QueryMasterConstant.SAMPLING_THRESHOLD);
+          submission.queryID2Table.remove(queryID);
+        }
 
-      for (String queryID : submission.queryIdToPlan.keySet()) {
-        if (!submission.finishedIDSet.contains(queryID) && !removeList.contains(queryID)) {
-          logger.warn("Can't receive any result from drill-bit of " + queryID);
-          nextRoundPlan.add(LogicalPlanUtil.copyPlan(submission.queryIdToPlan.get(queryID)));
+        for (String queryID : submission.queryIdToPlan.keySet()) {
+          if (!submission.finishedIDSet.contains(queryID) && !removeList.contains(queryID)) {
+            logger.warn("Can't receive any result from drill-bit of " + queryID);
+            nextRoundPlan.add(LogicalPlanUtil.copyPlan(submission.queryIdToPlan.get(queryID)));
+          }
         }
       }
 
