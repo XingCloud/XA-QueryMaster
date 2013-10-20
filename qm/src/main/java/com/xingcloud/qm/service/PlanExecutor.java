@@ -171,7 +171,7 @@ public class PlanExecutor {
       for (String queryID : submission.queryIdToPlan.keySet()) {
         if (!submission.finishedIDSet.contains(queryID) && !removeList.contains(queryID)) {
           logger.warn("Can't receive any result from drill-bit of " + queryID);
-          nextRoundPlan.add(submission.queryIdToPlan.get(queryID));
+          nextRoundPlan.add(LogicalPlanUtil.copyPlan(submission.queryIdToPlan.get(queryID)));
         }
       }
 
