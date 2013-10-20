@@ -651,7 +651,7 @@ public class LogicalPlanUtil {
       endBucket = startBucketPos + offsetBucketLen;
       endBucket = endBucket << 32;
     }
-    long startBucket = startBucketPos << 32;
+    long startBucket = (long)startBucketPos << 32;
     return new Pair(Bytes.toBytes(startBucket), Bytes.toBytes(endBucket));
   }
 
