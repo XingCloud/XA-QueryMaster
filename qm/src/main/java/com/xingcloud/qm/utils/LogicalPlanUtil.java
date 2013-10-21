@@ -727,11 +727,15 @@ public class LogicalPlanUtil {
 
     for (SourceOperator scan : leaves) {
       if (scan instanceof UnionedScan) {
-        originScan.add(scan);
         JSONOptions selections = ((UnionedScan) scan).getSelection();
         ArrayNode selectionNodes = (ArrayNode)selections.getRoot();
         int totalEntryNum = selectionNodes.size();
         int each = totalEntryNum / splitNum;
+        if (each == 0) {
+          logger.info("Entry number(" + totalEntryNum + ") is less than " + splitNum);
+          continue;
+        }
+        originScan.add(scan);
         List<ArrayNode> splitSelections = new ArrayList<>();
         int i = 0;
         ArrayNode eachSelections = new ArrayNode(mapper.getNodeFactory());
