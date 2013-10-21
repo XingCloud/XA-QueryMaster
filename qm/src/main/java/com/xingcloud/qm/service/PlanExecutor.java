@@ -169,7 +169,7 @@ public class PlanExecutor {
       }
       uidNumCurrent += uidNum;
       oneQueryUidMap.put(key, uidNumCurrent);
-      return uidNum + uidNumCurrent > QueryMasterConstant.SAMPLING_THRESHOLD;
+      return uidNumCurrent > QueryMasterConstant.SAMPLING_THRESHOLD;
     }
 
     @Override
