@@ -217,6 +217,8 @@ public class PlanExecutor {
       try {
         //把采样的uid信息加入到logical plan中
         LogicalPlanUtil.addUidRangeInfo(submission.plan, startBucketPos, offset);
+        //拆分UnionedSplitScan
+        submission.plan = LogicalPlanUtil.splitUnionedScan(submission.plan, 4);
         planString = submission.plan.toJsonString(QueryNode.LOCAL_DEFAULT_DRILL_CONFIG);
         PlanWriter pw = null;
         boolean writePlan = QMConfig.conf().getBoolean(QMConfig.WRITE_PLAN, false);

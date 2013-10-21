@@ -668,7 +668,7 @@ public class LogicalPlanUtil {
     Collection<SourceOperator> leaves = mergedPlan.getGraph().getLeaves();
     for (SourceOperator leaf : leaves) {
       if (leaf instanceof Scan) {
-        logger.info("------ Add uid range info into " + leaf);
+        logger.debug("------ Add uid range info into " + leaf);
         JSONOptions selections = ((Scan) leaf).getSelection();
         ArrayNode selectionNodes = (ArrayNode)selections.getRoot();
         if (((Scan) leaf).getStorageEngine().equals(QueryMasterConstant.STORAGE_ENGINE.hbase.name())) {
@@ -677,13 +677,13 @@ public class LogicalPlanUtil {
             String startRK = rkRange.get(SELECTION_KEY_WORD_ROWKEY_START).textValue();
             String endRK = rkRange.get(SELECTION_KEY_WORD_ROWKEY_END).textValue();
             byte[] srk = Bytes.toBytesBinary(startRK);
-            logger.info("Origin: " + Bytes.toStringBinary(srk));
+            logger.debug("Origin: " + Bytes.toStringBinary(srk));
             changeUidBytes(srk, uidRange);
-            logger.info("Change to: " + Bytes.toStringBinary(srk));
+            logger.debug("Change to: " + Bytes.toStringBinary(srk));
             byte[] erk = Bytes.toBytesBinary(endRK);
-            logger.info("Origin: " + Bytes.toStringBinary(erk));
+            logger.debug("Origin: " + Bytes.toStringBinary(erk));
             changeUidBytes(erk, uidRange);
-            logger.info("Change to: " + Bytes.toStringBinary(erk));
+            logger.debug("Change to: " + Bytes.toStringBinary(erk));
 
             ((ObjectNode)rkRange).put(SELECTION_KEY_WORD_ROWKEY_START, Bytes.toStringBinary(srk));
             ((ObjectNode)rkRange).put(SELECTION_KEY_WORD_ROWKEY_END, Bytes.toStringBinary(erk));
@@ -707,6 +707,80 @@ public class LogicalPlanUtil {
         }
       }
     }
+  }
+
+  /**
+   * 根据Entry拆分UnionedScan，使drill-bit可以并发执行
+   * @param plan
+   * @param splitNum
+   */
+  public static LogicalPlan splitUnionedScan(LogicalPlan plan, int splitNum) throws IOException {
+    logger.info("Begin to split merged plan's UnionedScan, split number: " + splitNum);
+    assert splitNum > 0;
+    if (splitNum == 1) {
+      return plan;
+    }
+    ObjectMapper mapper = DrillConfig.create().getMapper();
+    Collection<SourceOperator> leaves = plan.getGraph().getLeaves();
+    List<LogicalOperator> originScan = new ArrayList<>();
+    List<LogicalOperator> operators = plan.getSortedOperators();
+
+    for (SourceOperator scan : leaves) {
+      if (scan instanceof UnionedScan) {
+        originScan.add(scan);
+        JSONOptions selections = ((UnionedScan) scan).getSelection();
+        ArrayNode selectionNodes = (ArrayNode)selections.getRoot();
+        int totalEntryNum = selectionNodes.size();
+        int each = totalEntryNum / splitNum;
+        List<ArrayNode> splitSelections = new ArrayList<>();
+        int i = 0;
+        ArrayNode eachSelections = new ArrayNode(mapper.getNodeFactory());
+        //对UnionedScan中的entry重新分组
+        for (JsonNode selection : selectionNodes) {
+          if (i > each-1) {
+            i = 0;
+            splitSelections.add(eachSelections);
+            eachSelections = new ArrayNode(mapper.getNodeFactory());
+          }
+          eachSelections.add(selection);
+          i++;
+        }
+        if (eachSelections.size() != 0) {
+          splitSelections.add(eachSelections);
+        }
+
+        //根据重新分组的entry重新构造UnionedScan
+        List<UnionedScan> unionedScans = new ArrayList<>();
+        for (ArrayNode selectionsGroup : splitSelections) {
+          String selectionStr = mapper.writeValueAsString(selectionsGroup);
+          JSONOptions newSelections = mapper.readValue(selectionStr, JSONOptions.class);
+          UnionedScan unionedScan = new UnionedScan(((UnionedScan) scan).getStorageEngine(),
+                  newSelections, ((UnionedScan) scan).getOutputReference());
+          unionedScans.add(unionedScan);
+          operators.add(unionedScan);
+        }
+        //更新UnionedScanSplit与UnionedScan的关系
+        List<LogicalOperator> parents = scan.getAllSubscribers(); //op: unioned-scan-split
+        for (LogicalOperator parent : parents) {
+          UnionedScanSplit unionedScanSplit = (UnionedScanSplit) parent;
+          int[] originEntries = unionedScanSplit.getEntries();
+          //每个UnionedScanSplit必须只唯一对应一个entry
+          assert originEntries.length == 1;
+          //与原始UnionedScan撤销关系
+          scan.unregisterSubscriber(unionedScanSplit);
+          //注册新的UnionedScan
+          int entryID = originEntries[0];
+          int inputPos = entryID / each;
+          int entryPos = entryID % each;
+          unionedScanSplit.setInput(unionedScans.get(inputPos));
+          int[] newEntires = {entryPos};
+          unionedScanSplit.setEntries(newEntires);
+        }
+      }
+    }
+    operators.removeAll(originScan);
+    LogicalPlan newPlan = new LogicalPlan(plan.getProperties(), plan.getStorageEngines(), operators);
+    return newPlan;
   }
 
   public static LogicalPlan copyPlan(LogicalPlan plan) {

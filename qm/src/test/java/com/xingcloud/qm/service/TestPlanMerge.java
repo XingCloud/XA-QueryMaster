@@ -140,6 +140,23 @@ public class TestPlanMerge {
     }
   }
 
+  @Test
+  public void testSplitUnionedScan() {
+    try {
+      String originPlanStr = Files.toString(FileUtils.getResourceAsFile("/qmplans/1.json"), Charsets.UTF_8);
+      LogicalPlan plan = c.getMapper().readValue(originPlanStr, LogicalPlan.class);
+      plan = LogicalPlanUtil.splitUnionedScan(plan, 2);
+      String planStr = c.getMapper().writeValueAsString(plan);
+      System.out.println(planStr);
+    } catch (JsonProcessingException e) {
+      e.printStackTrace();
+      return;
+    } catch (IOException e) {
+      e.printStackTrace();
+      return;
+    }
+  }
+
 
   public void testCase(String origDir) throws Exception {
     List<LogicalPlan> planList = new ArrayList<>();
