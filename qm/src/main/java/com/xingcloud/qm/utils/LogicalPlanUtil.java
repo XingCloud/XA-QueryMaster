@@ -774,8 +774,8 @@ public class LogicalPlanUtil {
           scan.unregisterSubscriber(unionedScanSplit);
           //注册新的UnionedScan
           int entryID = originEntries[0];
-          int inputPos = entryID / each;
-          int entryPos = entryID % each;
+          int inputPos = (entryID) / each;
+          int entryPos = (entryID) % each;
           unionedScanSplit.setInput(unionedScans.get(inputPos));
           int[] newEntires = {entryPos};
           unionedScanSplit.setEntries(newEntires);
