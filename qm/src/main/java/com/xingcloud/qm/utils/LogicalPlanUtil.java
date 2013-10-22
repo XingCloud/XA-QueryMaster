@@ -643,7 +643,7 @@ public class LogicalPlanUtil {
     }
   }
 
-  public static Pair<byte[], byte[]> getLocalSEUidOfBucket(int startBucketPos, int offsetBucketLen) {
+  public static Pair<Long, Long> getLocalSEUidOfBucket(int startBucketPos, int offsetBucketLen) {
     long endBucket = 0;
     if (startBucketPos + offsetBucketLen >= 255) {
       endBucket = (1l << 40) - 1l;
@@ -652,7 +652,16 @@ public class LogicalPlanUtil {
       endBucket = endBucket << 32;
     }
     long startBucket = (long)startBucketPos << 32;
-    return new Pair(Bytes.toBytes(startBucket), Bytes.toBytes(endBucket));
+    return new Pair(startBucket, endBucket);
+  }
+
+  public static Pair<byte[], byte[]> changeTo5Bytes(Pair<Long, Long> uidRange) {
+    Pair<byte[], byte[]> bytesPair = new Pair<>();
+    byte[] suid = Bytes.toBytes(uidRange.getFirst());
+    byte[] euid = Bytes.toBytes(uidRange.getSecond());
+    byte[] suid5 = Arrays.copyOfRange(suid, 3, 8);
+    byte[] euid5 = Arrays.copyOfRange(euid, 3, 8);
+    return new Pair<byte[], byte[]>(suid5, euid5);
   }
 
 
@@ -664,11 +673,12 @@ public class LogicalPlanUtil {
    * @throws IOException
    */
   public static void addUidRangeInfo(LogicalPlan mergedPlan, int startBucketPos, int offsetBucketLen) throws IOException {
-    Pair<byte[], byte[]> uidRange = getLocalSEUidOfBucket(startBucketPos, offsetBucketLen);
+    Pair<Long, Long> uidRange = getLocalSEUidOfBucket(startBucketPos, offsetBucketLen);
+    Pair<byte[], byte[]> uidRange5Bytes = changeTo5Bytes(uidRange);
     Collection<SourceOperator> leaves = mergedPlan.getGraph().getLeaves();
     for (SourceOperator leaf : leaves) {
       if (leaf instanceof Scan) {
-        logger.debug("------ Add uid range info into " + leaf);
+        logger.debug("Add uid range info into " + leaf);
         JSONOptions selections = ((Scan) leaf).getSelection();
         ArrayNode selectionNodes = (ArrayNode)selections.getRoot();
         if (((Scan) leaf).getStorageEngine().equals(QueryMasterConstant.STORAGE_ENGINE.hbase.name())) {
@@ -677,23 +687,24 @@ public class LogicalPlanUtil {
             String startRK = rkRange.get(SELECTION_KEY_WORD_ROWKEY_START).textValue();
             String endRK = rkRange.get(SELECTION_KEY_WORD_ROWKEY_END).textValue();
             byte[] srk = Bytes.toBytesBinary(startRK);
-            logger.debug("Origin: " + Bytes.toStringBinary(srk));
-            changeUidBytes(srk, uidRange);
-            logger.debug("Change to: " + Bytes.toStringBinary(srk));
+            changeUidBytes(srk, uidRange5Bytes.getFirst(), uidRange5Bytes.getSecond());
             byte[] erk = Bytes.toBytesBinary(endRK);
-            logger.debug("Origin: " + Bytes.toStringBinary(erk));
-            changeUidBytes(erk, uidRange);
-            logger.debug("Change to: " + Bytes.toStringBinary(erk));
-
+            changeUidBytes(erk, uidRange5Bytes.getFirst(), uidRange5Bytes.getSecond());
             ((ObjectNode)rkRange).put(SELECTION_KEY_WORD_ROWKEY_START, Bytes.toStringBinary(srk));
             ((ObjectNode)rkRange).put(SELECTION_KEY_WORD_ROWKEY_END, Bytes.toStringBinary(erk));
+
+            //增加一个字段Tail range，代表需扫描的起始和结束uid
+            JsonNode tailRange = new ObjectNode(JsonNodeFactory.instance);
+            ((ObjectNode)tailRange).put(SELECTION_KEY_ROWKEY_TAIL_START, Bytes.toStringBinary(uidRange5Bytes.getFirst()));
+            ((ObjectNode)tailRange).put(SELECTION_KEY_ROWKEY_TAIL_END, Bytes.toStringBinary(uidRange5Bytes.getSecond()));
+            ((ObjectNode)selection).put(SELECTION_KEY_ROWKEY_TAIL_RANGE, tailRange);
           }
         } else if (((Scan) leaf).getStorageEngine().equals(QueryMasterConstant.STORAGE_ENGINE.mysql.name())) {
           for (JsonNode selection : selectionNodes) {
             //Mysql把uid range信息加入到filter里（expression符合drill的logical expression规则）
             JsonNode filter = selection.get(SELECTION_KEY_WORD_FILTER);
-            String uidRangeStr = "( (uid) >= (" + Bytes.toLong(uidRange.getFirst()) +
-                    ") ) && ( (uid) < (" + Bytes.toLong(uidRange.getSecond()) + ") )";
+            String uidRangeStr = "( (uid) >= (" + uidRange.getFirst() +
+                    ") ) && ( (uid) < (" + uidRange.getSecond() + ") )";
             if (filter != null) {
               String expr = filter.get(SELECTION_KEY_WORD_FILTER_EXPRESSION).textValue();
               expr = expr + " && " + uidRangeStr;
@@ -802,11 +813,11 @@ public class LogicalPlanUtil {
     return copy;
   }
 
-  public static void changeUidBytes(byte[] rk, Pair<byte[], byte[]> uidRange) {
+  public static void changeUidBytes(byte[] rk, byte[] suid, byte[] euid) {
     if (Bytes.compareTo(rk, rk.length-5, 5, QueryMasterConstant.MIN_UID_BYTES, 0, 5) == 0) {
-      System.arraycopy(uidRange.getFirst(), 3, rk, rk.length-5, 5);
+      System.arraycopy(suid, 0, rk, rk.length-5, 5);
     } else {
-      System.arraycopy(uidRange.getSecond(), 3, rk, rk.length-5, 5);
+      System.arraycopy(euid, 0, rk, rk.length-5, 5);
     }
   }
 
