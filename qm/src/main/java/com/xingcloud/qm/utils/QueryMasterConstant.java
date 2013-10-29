@@ -47,8 +47,8 @@ public class QueryMasterConstant {
   public static enum STORAGE_ENGINE {
     mysql, hbase
   };
-  public static final int[] SAMPLING_ARRAY = {1, 2, 4, 8, 16, 32, 64, 64, 65};
-  //public static final int[] SAMPLING_ARRAY = {256};
+  //public static final int[] SAMPLING_ARRAY = {1, 2, 4, 8, 16, 32, 64, 64, 65};
+  public static final int[] SAMPLING_ARRAY = {1,255};
 
   public static final int TOTAL_BUCKET_NUM = 256;
 
