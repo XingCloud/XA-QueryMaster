@@ -829,7 +829,7 @@ public class LogicalPlanUtil {
     Map<String, Long> avgMap = XEventOperation.getInstance().getAvgCountOfEachEvent(pID, eventPatterns);
     List<Integer> initSampleList = new ArrayList<>();
     Set<Integer> sampleSet = new HashSet<>();
-    StringBuilder summary = new StringBuilder("------ Predict scan bucket summary: ");
+    StringBuilder summary = new StringBuilder("------ Predict scan bucket summary:\n");
     for (Map.Entry<String, Long> entry : avgMap.entrySet()) {
       String event = entry.getKey();
       long avg = entry.getValue();
