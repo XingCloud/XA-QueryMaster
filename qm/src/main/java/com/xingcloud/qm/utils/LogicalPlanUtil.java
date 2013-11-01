@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.xingcloud.meta.ByteUtils;
+import com.xingcloud.qm.service.PlanSubmission;
 import org.apache.drill.common.JSONOptions;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.expression.*;
@@ -823,7 +824,8 @@ public class LogicalPlanUtil {
   }
 
   public static List<Integer> generateSapmleList(String pID, Set<String> eventPatterns) throws XEventException {
-    long oneBucketCount = 16000000;
+    long st = System.nanoTime();
+    long oneBucketCount = 2400000;
     Map<String, Long> avgMap = XEventOperation.getInstance().getAvgCountOfEachEvent(pID, eventPatterns);
     List<Integer> initSampleList = new ArrayList<>();
     Set<Integer> sampleSet = new HashSet<>();
@@ -846,7 +848,7 @@ public class LogicalPlanUtil {
       sampleSet.add(scanBucket);
       summary.append(event).append(": [AVG: " + avg + "]\t[Bucket: " + scanBucket + "]").append("\n");
     }
-    //防止预测的扫描桶数都不满足人数阈值，增加最后桶数
+    //防止预测的扫描桶数都不满足人数阈值，增加全扫桶数
     sampleSet.add(256);
     //获得增量采样序列
     for (int initBucket : sampleSet) {
@@ -855,14 +857,28 @@ public class LogicalPlanUtil {
     Collections.sort(initSampleList);
     List<Integer> incrementSample = new ArrayList<>();
     summary.append("Scan bucket array:\t");
-    for (int i=1; i<initSampleList.size(); i++) {
-      int incrementBucket = initSampleList.get(i)-initSampleList.get(i-1);
-      incrementSample.add(incrementBucket);
-      summary.append(incrementBucket).append(",");
+    if (sampleSet.size() == 1) {
+      incrementSample.add(256);
+      summary.append(256);
+    } else {
+        for (int i=1; i<initSampleList.size(); i++) {
+          int incrementBucket = initSampleList.get(i)-initSampleList.get(i-1);
+          incrementSample.add(incrementBucket);
+          summary.append(incrementBucket).append(",");
+        }
     }
-    summary.append("\n");
+    summary.append("\n").append("Taken: " + (System.nanoTime()-st)/1.0e9 + " sec");
     logger.info(summary.toString());
     return incrementSample;
+  }
+
+  public static Set<String> getEventPatterns(PlanSubmission submission) {
+    Set<String> eventPatterns = new HashSet<>();
+    for (String qid : submission.queryID2Table.keySet()) {
+      String[] fields = qid.split(",");
+      eventPatterns.add(fields[4]);
+    }
+    return eventPatterns;
   }
 
 }

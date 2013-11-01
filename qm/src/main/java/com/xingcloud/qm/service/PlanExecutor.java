@@ -76,12 +76,14 @@ public class PlanExecutor {
         Map<String, List<ResultTable>> sampleRes = new HashMap<>();  //存储每轮采样结果
         Map<String, Map<String, Long>> uidNumMap = new HashMap<>(); //记录目前已查询到的uid数量
         int startBucketPos = 0;
-        for (int i = 0; i < QueryMasterConstant.SAMPLING_ARRAY.length; i++) {
-          int offset = QueryMasterConstant.SAMPLING_ARRAY[i];
+        Set<String> eventPatterns = LogicalPlanUtil.getEventPatterns(submission);
+        List<Integer> sampleList = LogicalPlanUtil.generateSapmleList(submission.projectID, eventPatterns);
+        for (int i = 0; i < sampleList.size(); i++) {
+          int offset = sampleList.get(i);
           queryOneTime(startBucketPos, offset);
           startBucketPos += offset;
           List<LogicalPlan> nextRoundPlan = getNextRoundPlan(sampleRes, uidNumMap,
-                  i==QueryMasterConstant.SAMPLING_ARRAY.length-1, startBucketPos);
+                  i==sampleList.size()-1, startBucketPos);
           logger.info("Next round plan number: " + nextRoundPlan.size());
           try {
             //全部plan符合采样阈值
