@@ -857,15 +857,13 @@ public class LogicalPlanUtil {
     Collections.sort(initSampleList);
     List<Integer> incrementSample = new ArrayList<>();
     summary.append("Scan bucket array:\t");
-    if (sampleSet.size() == 1) {
-      incrementSample.add(256);
-      summary.append(256);
-    } else {
-        for (int i=1; i<initSampleList.size(); i++) {
-          int incrementBucket = initSampleList.get(i)-initSampleList.get(i-1);
-          incrementSample.add(incrementBucket);
-          summary.append(incrementBucket).append(",");
-        }
+
+    incrementSample.add(initSampleList.get(0));
+    summary.append(initSampleList.get(0)).append(",");
+    for (int i=1; i<initSampleList.size(); i++) {
+      int incrementBucket = initSampleList.get(i)-initSampleList.get(i-1);
+      incrementSample.add(incrementBucket);
+      summary.append(incrementBucket).append(",");
     }
     summary.append("\n").append("Taken: " + (System.nanoTime()-st)/1.0e9 + " sec");
     logger.info(summary.toString());
