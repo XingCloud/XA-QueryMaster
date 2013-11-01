@@ -874,7 +874,7 @@ public class LogicalPlanUtil {
 
   public static Set<String> getEventPatterns(PlanSubmission submission) {
     Set<String> eventPatterns = new HashSet<>();
-    for (String qid : submission.queryID2Table.keySet()) {
+    for (String qid : submission.queryIdToPlan.keySet()) {
       String[] fields = qid.split(",");
       eventPatterns.add(fields[4]);
     }
