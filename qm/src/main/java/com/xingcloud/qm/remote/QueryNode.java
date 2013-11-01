@@ -67,6 +67,8 @@ public class QueryNode {
 
   public QueryNode(String id, String conf) {
     super();
+    LOGGER.info("[DRILL-CLIENT]: " + id + " is trying to connect to server...");
+    LOGGER.info(conf);
     this.id = id;
     this.drillClient = new DrillClient(DrillConfig.create(conf));
     try {
