@@ -824,53 +824,50 @@ public class LogicalPlanUtil {
   }
 
   public static List<Integer> generateSapmleList(String pID, Set<String> eventPatterns) throws XEventException {
+    long st = System.nanoTime();
+    long oneBucketCount = 2400000;
+    Map<String, Long> avgMap = XEventOperation.getInstance().getAvgCountOfEachEvent(pID, eventPatterns);
+    List<Integer> initSampleList = new ArrayList<>();
+    Set<Integer> sampleSet = new HashSet<>();
+    StringBuilder summary = new StringBuilder("------ Predict scan bucket summary[" + pID + "]:\n");
+    for (Map.Entry<String, Long> entry : avgMap.entrySet()) {
+      String event = entry.getKey();
+      long avg = entry.getValue();
+      int bucketNum = (int)(avg / oneBucketCount);
+      int scanBucket = 0;
+      if (bucketNum == 0) {
+        //不足一个桶，全扫
+        scanBucket = 256;
+      } else if (bucketNum > 256) {
+        //大于256个桶，先扫1个桶
+        scanBucket = 1;
+      } else {
+        //扫oneBucketCount所达到的桶
+        scanBucket = 256/bucketNum;
+      }
+      sampleSet.add(scanBucket);
+      summary.append(event).append(": [AVG: " + avg + "]\t[Bucket: " + scanBucket + "]").append("\n");
+    }
+    //防止预测的扫描桶数都不满足人数阈值，增加全扫桶数
+    sampleSet.add(256);
+    //获得增量采样序列
+    for (int initBucket : sampleSet) {
+      initSampleList.add(initBucket);
+    }
+    Collections.sort(initSampleList);
     List<Integer> incrementSample = new ArrayList<>();
-    incrementSample.add(256);
+    summary.append("Scan bucket array:\t");
+
+    incrementSample.add(initSampleList.get(0));
+    summary.append(initSampleList.get(0)).append(",");
+    for (int i=1; i<initSampleList.size(); i++) {
+      int incrementBucket = initSampleList.get(i)-initSampleList.get(i-1);
+      incrementSample.add(incrementBucket);
+      summary.append(incrementBucket).append(",");
+    }
+    summary.append("\n").append("Taken: " + (System.nanoTime()-st)/1.0e9 + " sec");
+    logger.info(summary.toString());
     return incrementSample;
-//    long st = System.nanoTime();
-//    long oneBucketCount = 2400000;
-//    Map<String, Long> avgMap = XEventOperation.getInstance().getAvgCountOfEachEvent(pID, eventPatterns);
-//    List<Integer> initSampleList = new ArrayList<>();
-//    Set<Integer> sampleSet = new HashSet<>();
-//    StringBuilder summary = new StringBuilder("------ Predict scan bucket summary[" + pID + "]:\n");
-//    for (Map.Entry<String, Long> entry : avgMap.entrySet()) {
-//      String event = entry.getKey();
-//      long avg = entry.getValue();
-//      int bucketNum = (int)(avg / oneBucketCount);
-//      int scanBucket = 0;
-//      if (bucketNum == 0) {
-//        //不足一个桶，全扫
-//        scanBucket = 256;
-//      } else if (bucketNum > 256) {
-//        //大于256个桶，先扫1个桶
-//        scanBucket = 1;
-//      } else {
-//        //扫oneBucketCount所达到的桶
-//        scanBucket = 256/bucketNum;
-//      }
-//      sampleSet.add(scanBucket);
-//      summary.append(event).append(": [AVG: " + avg + "]\t[Bucket: " + scanBucket + "]").append("\n");
-//    }
-//    //防止预测的扫描桶数都不满足人数阈值，增加全扫桶数
-//    sampleSet.add(256);
-//    //获得增量采样序列
-//    for (int initBucket : sampleSet) {
-//      initSampleList.add(initBucket);
-//    }
-//    Collections.sort(initSampleList);
-//    List<Integer> incrementSample = new ArrayList<>();
-//    summary.append("Scan bucket array:\t");
-//
-//    incrementSample.add(initSampleList.get(0));
-//    summary.append(initSampleList.get(0)).append(",");
-//    for (int i=1; i<initSampleList.size(); i++) {
-//      int incrementBucket = initSampleList.get(i)-initSampleList.get(i-1);
-//      incrementSample.add(incrementBucket);
-//      summary.append(incrementBucket).append(",");
-//    }
-//    summary.append("\n").append("Taken: " + (System.nanoTime()-st)/1.0e9 + " sec");
-//    logger.info(summary.toString());
-//    return incrementSample;
   }
 
   public static Set<String> getEventPatterns(PlanSubmission submission) {
