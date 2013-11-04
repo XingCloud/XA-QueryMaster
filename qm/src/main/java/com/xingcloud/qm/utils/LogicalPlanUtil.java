@@ -809,8 +809,6 @@ public class LogicalPlanUtil {
     try {
       planJson = plan.toJsonString(c);
       copy = c.getMapper().readValue(planJson, LogicalPlan.class);
-      GraphAlgos.checkDirected(copy.getGraph());
-      logger.info("Check directed ok!");
     } catch (JsonProcessingException e) {
       e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
     } catch (IOException e) {

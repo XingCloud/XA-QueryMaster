@@ -11,6 +11,7 @@ import com.xingcloud.qm.utils.PlanWriter;
 import com.xingcloud.qm.utils.QueryMasterConstant;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.exceptions.DrillRuntimeException;
+import org.apache.drill.common.graph.GraphAlgos;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.exec.client.DrillClient;
 import org.apache.drill.exec.proto.UserProtos;
@@ -221,6 +222,9 @@ public class PlanExecutor {
         LogicalPlanUtil.addUidRangeInfo(submission.plan, startBucketPos, offset);
         //拆分UnionedSplitScan
         submission.plan = LogicalPlanUtil.splitUnionedScan(submission.plan, 4);
+        GraphAlgos.checkDirected(submission.plan.getGraph());
+        logger.info("Check merged plan directed status is ok!");
+
         planString = submission.plan.toJsonString(QueryNode.LOCAL_DEFAULT_DRILL_CONFIG);
         PlanWriter pw = null;
         boolean writePlan = QMConfig.conf().getBoolean(QMConfig.WRITE_PLAN, false);
