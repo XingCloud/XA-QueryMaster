@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.xingcloud.meta.ByteUtils;
 import com.xingcloud.qm.service.PlanSubmission;
 import org.apache.drill.common.JSONOptions;
+import org.apache.drill.common.PlanProperties;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.expression.*;
 import org.apache.drill.common.graph.AdjacencyList;
@@ -802,18 +803,19 @@ public class LogicalPlanUtil {
   }
 
   public static LogicalPlan copyPlan(LogicalPlan plan) {
-    DrillConfig c = DrillConfig.create();
-    String planJson = null;
     LogicalPlan copy = null;
-    //copy = new LogicalPlan(plan.getProperties(), plan.getStorageEngines(), plan.getSortedOperators());
-    try {
-      planJson = plan.toJsonString(c);
-      copy = c.getMapper().readValue(planJson, LogicalPlan.class);
-    } catch (JsonProcessingException e) {
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-    } catch (IOException e) {
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-    }
+    List<LogicalOperator> sortedOperators = new ArrayList<>(plan.getSortedOperators());
+    copy = new LogicalPlan(plan.getProperties(), plan.getStorageEngines(), sortedOperators);
+//    DrillConfig c = DrillConfig.create();
+//    String planJson = null;
+//    try {
+//      planJson = plan.toJsonString(c);
+//      copy = c.getMapper().readValue(planJson, LogicalPlan.class);
+//    } catch (JsonProcessingException e) {
+//      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+//    } catch (IOException e) {
+//      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+//    }
     return copy;
   }
 
