@@ -804,14 +804,17 @@ public class LogicalPlanUtil {
     DrillConfig c = DrillConfig.create();
     String planJson = null;
     LogicalPlan copy = null;
-    try {
-      planJson = plan.toJsonString(c);
-      copy = c.getMapper().readValue(planJson, LogicalPlan.class);
-    } catch (JsonProcessingException e) {
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-    } catch (IOException e) {
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-    }
+    copy = new LogicalPlan(plan.getProperties(), plan.getStorageEngines(), plan.getSortedOperators());
+//    try {
+//      planJson = plan.toJsonString(c);
+//      copy = c.getMapper().readValue(planJson, LogicalPlan.class);
+//
+//
+//    } catch (JsonProcessingException e) {
+//      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+//    } catch (IOException e) {
+//      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+//    }
     return copy;
   }
 
