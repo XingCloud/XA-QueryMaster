@@ -19,6 +19,7 @@ import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.expression.*;
 import org.apache.drill.common.graph.AdjacencyList;
 import org.apache.drill.common.graph.Edge;
+import org.apache.drill.common.graph.GraphAlgos;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.common.logical.data.*;
 import org.apache.drill.common.util.Selections;
@@ -808,6 +809,8 @@ public class LogicalPlanUtil {
     try {
       planJson = plan.toJsonString(c);
       copy = c.getMapper().readValue(planJson, LogicalPlan.class);
+      GraphAlgos.checkDirected(copy.getGraph());
+      logger.info("Check directed ok!");
     } catch (JsonProcessingException e) {
       e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
     } catch (IOException e) {
