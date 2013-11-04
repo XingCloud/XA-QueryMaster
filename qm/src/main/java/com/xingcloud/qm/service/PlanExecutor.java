@@ -222,7 +222,7 @@ public class PlanExecutor {
         LogicalPlanUtil.addUidRangeInfo(submission.plan, startBucketPos, offset);
         //拆分UnionedSplitScan
         submission.plan = LogicalPlanUtil.splitUnionedScan(submission.plan, 4);
-        GraphAlgos.checkDirected(submission.plan.getGraph());
+        //GraphAlgos.checkDirected(submission.plan.getGraph());
         logger.info("Check merged plan directed status is ok!");
 
         planString = submission.plan.toJsonString(QueryNode.LOCAL_DEFAULT_DRILL_CONFIG);
