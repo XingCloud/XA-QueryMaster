@@ -96,7 +96,6 @@ public class PlanMerge {
       //原始plan按project id分堆
       sortPlanByProjectId(origPlans);
 
-      logger.info("Enter split Scan by Rk");
       Map<String, ProjectMergeContext> projectCtxMap = splitByTableName();
       List<LogicalPlan> resultPlans = new ArrayList<>();
       Map<LogicalPlan, LogicalPlan> resultPlanMap = new HashMap<>();
