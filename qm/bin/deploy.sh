@@ -7,7 +7,7 @@ java_home=/usr/java/jdk1.7.0_25
 # Branch
 if [ "" = "$1" ]
 then
-  branch=i20
+  branch=master
 else
   echo "User defined branch found($1)"
   branch=$2
@@ -22,11 +22,11 @@ aid=qm
 if [ "8181" = ${port} ];then
   xa_env="production"
   # Tomcat home
-  tomcat_home=/home/hadoop/catalina/apache-tomcat-7.0.39.8182
+  tomcat_home=/home/hadoop/catalina/apache-tomcat-7.0.42.8181
 else
   xa_env="pre_production"
   # Tomcat home
-  tomcat_home=/home/hadoop/catalina/apache-tomcat-7.0.39.8182
+  tomcat_home=/home/hadoop/catalina/apache-tomcat-7.0.42.8182
 fi
 
 echo "[CHECK-POINT] - Begin deploying data driller web interface."
