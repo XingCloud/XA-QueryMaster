@@ -745,7 +745,7 @@ public class LogicalPlanUtil {
         JSONOptions selections = ((UnionedScan) scan).getSelection();
         ArrayNode selectionNodes = (ArrayNode)selections.getRoot();
         int totalEntryNum = selectionNodes.size();
-        int each = totalEntryNum / splitNum;
+        int each = (int) Math.ceil((double)totalEntryNum / (double)splitNum);
         if (each == 0) {
           logger.info("Entry number(" + totalEntryNum + ") is less than " + splitNum);
           continue;
