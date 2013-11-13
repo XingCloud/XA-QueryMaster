@@ -52,17 +52,17 @@ public class QueryBossServlet extends HessianServlet implements Submit {
         LOGGER.info("[WS-SUBMIT] Current type(" + type + ") of operation is not supported.");
         return false;
       case PLAN:
+        LogicalPlan plan;
         Map<String, LogicalPlan> batchPlan = new HashMap<String, LogicalPlan>();
         for (Map.Entry<String, String> entry : batch.entrySet()) {
           String cacheId = entry.getKey();
           String planString = entry.getValue();
-
           try {
-            LogicalPlan plan = LOCAL_DEFAULT_DRILL_CONFIG.getMapper().readValue(planString, LogicalPlan.class);
-            batchPlan.put(cacheId, plan);
+            plan = LOCAL_DEFAULT_DRILL_CONFIG.getMapper().readValue(planString, LogicalPlan.class);
           } catch (IOException e) {
-            throw new XRemoteQueryException(e);
+            throw new XRemoteQueryException("Cannot deserialize lp-string - " + cacheId, e);
           }
+          batchPlan.put(cacheId, plan);
         }
         return QueryMaster.getInstance().submit(batchPlan);
       default:
