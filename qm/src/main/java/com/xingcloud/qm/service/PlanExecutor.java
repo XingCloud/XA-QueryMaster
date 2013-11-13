@@ -258,7 +258,8 @@ public class PlanExecutor {
             materializedResults.add(ret);
             succeeded++;
           } catch (Exception e) {
-            logger.warn("plan executing error", e);
+            logger.error("plan executing error!", e.getMessage());
+            e.printStackTrace();
             failedCause = e;
           }
         }
