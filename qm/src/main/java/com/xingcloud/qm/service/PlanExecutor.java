@@ -249,14 +249,14 @@ public class PlanExecutor {
         List<Map<String, ResultTable>> materializedResults = new ArrayList<>();
         //收集结果。理想情况下，应该收集所有的计算结果。
         //在有drillbit计算失败的情况下，使用剩下的结果作为估计值
-        int succeeded = 0;
+        //int succeeded = 0;
         Exception failedCause = null;
         for (Future<List<QueryResultBatch>> future : futures) {
           try {
             List<QueryResultBatch> batches = future.get();
             Map<String, ResultTable> ret = RecordParser.materializeRecords(batches, QueryNode.getAllocator());
             materializedResults.add(ret);
-            succeeded++;
+            //succeeded++;
           } catch (Exception e) {
             logger.error("plan executing error!", e.getMessage());
             e.printStackTrace();
@@ -265,9 +265,13 @@ public class PlanExecutor {
         }
 
         if (failedCause != null) {
+          submission.e = failedCause;
+          submission.queryID2Table = null;
           QueryMaster.getInstance().clearSubmittedTag(submission);
           throw new DrillRuntimeException("Get results from drill-bit got exception... Query failure!");
         }
+        Map<String, ResultTable> merged = mergeResults(materializedResults);
+        submission.queryID2Table = merged;
 
 //        if (succeeded == 0) {
 //          submission.e = failedCause;
