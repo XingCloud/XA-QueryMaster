@@ -115,8 +115,6 @@ public class RecordParser {
         v.close();
       }
 
-      logger.info("Allocate direct memory :{} bytes .",allocator.getAllocatedMemory());
-
     }//for records
     if (currentQueryID != null) {
       //output previous queryID
