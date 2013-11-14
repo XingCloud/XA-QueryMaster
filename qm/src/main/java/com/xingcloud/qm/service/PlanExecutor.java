@@ -264,19 +264,24 @@ public class PlanExecutor {
           }
         }
 
-        if (succeeded == 0) {
-          submission.e = failedCause;
-          submission.queryID2Table = null;
-        } else {
-          logger.debug("PlanSubmission {}: {} drillbits returned results.", submission.id, succeeded);
-          Map<String, ResultTable> merged = mergeResults(materializedResults);
-          //如果有结果没有收到，清理占位并抛异常
-          if (succeeded < futures.size()) {
-            QueryMaster.getInstance().clearSubmittedTag(submission);
-            throw new DrillRuntimeException("Get results from drill-bit got exception... Query failure!");
-          }
-          submission.queryID2Table = merged;
+        if (failedCause != null) {
+          QueryMaster.getInstance().clearSubmittedTag(submission);
+          throw new DrillRuntimeException("Get results from drill-bit got exception... Query failure!");
         }
+
+//        if (succeeded == 0) {
+//          submission.e = failedCause;
+//          submission.queryID2Table = null;
+//        } else {
+//          logger.debug("PlanSubmission {}: {} drillbits returned results.", submission.id, succeeded);
+//          Map<String, ResultTable> merged = mergeResults(materializedResults);
+//          //如果有结果没有收到，清理占位并抛异常
+//          if (succeeded < futures.size()) {
+//            QueryMaster.getInstance().clearSubmittedTag(submission);
+//            throw new DrillRuntimeException("Get results from drill-bit got exception... Query failure!");
+//          }
+//          submission.queryID2Table = merged;
+//        }
       } catch (Exception e) {
         e.printStackTrace();
         logger.error("Query one time get exception! MSG: " + e.getMessage());
