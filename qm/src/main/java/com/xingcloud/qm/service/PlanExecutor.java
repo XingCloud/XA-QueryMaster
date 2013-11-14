@@ -66,7 +66,9 @@ public class PlanExecutor {
         _run();
       } catch (Exception e) {
         e.printStackTrace();
-        logger.error("Run plan " + submission.id + " get exception! MSG: " + e.getMessage());
+        e.getCause().printStackTrace();
+        logger.error("!!!!!! Run plan " + submission.id + " get exception! MSG: " + e.getMessage() + " Cause MSG: " + e.getCause().getMessage());
+        QueryMaster.getInstance().clearSubmittedTag(submission);
       }
       t2 = System.currentTimeMillis();
       logger.info("[PlanExec] time use - " + (t2 - t1));
@@ -233,10 +235,10 @@ public class PlanExecutor {
 
       } catch (JsonProcessingException e) {
         e.printStackTrace();
-        return;
+        throw new DrillRuntimeException(e.getMessage());
       } catch (IOException e) {
         e.printStackTrace();
-        return;
+        throw new DrillRuntimeException(e.getMessage());
       }
 
       for (int i = 0; i < nodes.length; i++) {
@@ -249,43 +251,22 @@ public class PlanExecutor {
         List<Map<String, ResultTable>> materializedResults = new ArrayList<>();
         //收集结果。理想情况下，应该收集所有的计算结果。
         //在有drillbit计算失败的情况下，使用剩下的结果作为估计值
-        //int succeeded = 0;
-        Exception failedCause = null;
         for (Future<List<QueryResultBatch>> future : futures) {
           try {
             List<QueryResultBatch> batches = future.get();
             Map<String, ResultTable> ret = RecordParser.materializeRecords(batches, QueryNode.getAllocator());
             materializedResults.add(ret);
-            //succeeded++;
           } catch (Exception e) {
             logger.error("plan executing error!", e.getMessage());
             e.printStackTrace();
-            failedCause = e;
+            submission.e = e;
+            submission.queryID2Table = null;
+            throw new DrillRuntimeException("Get results from drill-bit got exception... Query failure!");
           }
         }
 
-        if (failedCause != null) {
-          submission.e = failedCause;
-          submission.queryID2Table = null;
-          QueryMaster.getInstance().clearSubmittedTag(submission);
-          throw new DrillRuntimeException("Get results from drill-bit got exception... Query failure!");
-        }
         Map<String, ResultTable> merged = mergeResults(materializedResults);
         submission.queryID2Table = merged;
-
-//        if (succeeded == 0) {
-//          submission.e = failedCause;
-//          submission.queryID2Table = null;
-//        } else {
-//          logger.debug("PlanSubmission {}: {} drillbits returned results.", submission.id, succeeded);
-//          Map<String, ResultTable> merged = mergeResults(materializedResults);
-//          //如果有结果没有收到，清理占位并抛异常
-//          if (succeeded < futures.size()) {
-//            QueryMaster.getInstance().clearSubmittedTag(submission);
-//            throw new DrillRuntimeException("Get results from drill-bit got exception... Query failure!");
-//          }
-//          submission.queryID2Table = merged;
-//        }
 
     }
 
