@@ -5,7 +5,7 @@ code_home=/home/hadoop/git_project_home/XA-QueryMaster
 # Java home
 java_home=/usr/java/jdk1.7.0_25
 # Branch
-if [ "" = "$1" ]
+if [ "" = "$2" ]
 then
   branch=master
 else
