@@ -245,7 +245,7 @@ public class PlanExecutor {
       }
       logger.info("[PLAN-SUBMISSION] - All client submit their queries.");
 
-      try {
+
         List<Map<String, ResultTable>> materializedResults = new ArrayList<>();
         //收集结果。理想情况下，应该收集所有的计算结果。
         //在有drillbit计算失败的情况下，使用剩下的结果作为估计值
@@ -286,10 +286,7 @@ public class PlanExecutor {
 //          }
 //          submission.queryID2Table = merged;
 //        }
-      } catch (Exception e) {
-        e.printStackTrace();
-        logger.error("Query one time get exception! MSG: " + e.getMessage());
-      }
+
     }
 
     private Map<String, ResultTable> mergeResults(List<Map<String, ResultTable>> materializedResults) {
