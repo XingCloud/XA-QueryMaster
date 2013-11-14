@@ -4,8 +4,9 @@ line="############################################"
 code_home=/home/hadoop/git_project_home/XA-QueryMaster
 # Java home
 java_home=/usr/java/jdk1.7.0_25
+export JAVA_HOME=/usr/java/jdk1.7.0_25
 # Branch
-if [ "" = "$1" ]
+if [ "" = "$2" ]
 then
   branch=master
 else
@@ -31,6 +32,7 @@ fi
 
 echo "[CHECK-POINT] - Begin deploying data driller web interface."
 echo ${line}
+echo "[JAVA-HOME] - "${JAVA_HOME}
 echo "[CODE-HOME] - "${code_home}
 echo "[TOMCAT] - "${tomcat_home}
 echo "[XA_ENV] - "${xa_env}
