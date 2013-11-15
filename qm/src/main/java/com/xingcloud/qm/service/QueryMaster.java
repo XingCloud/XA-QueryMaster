@@ -37,7 +37,7 @@ public class QueryMaster implements QueryListener {
   static Logger logger = LoggerFactory.getLogger(QueryMaster.class);
 
   //同时最多允许多少个plan执行
-  public static int MAX_PLAN_EXECUTING = 16;
+  public static int MAX_PLAN_EXECUTING = 8;
 
   //每个project，同时最多允许多少个plan执行
   public static int MAX_PLAN_PER_PROJECT = 1;

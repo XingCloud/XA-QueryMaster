@@ -64,7 +64,7 @@ public class PlanExecutor {
       long t1 = System.currentTimeMillis(), t2;
       try {
         _run();
-      } catch (Exception e) {
+      } catch (Throwable e) {
         e.printStackTrace();
         e.getCause().printStackTrace();
         logger.error("!!!!!! Run plan " + submission.id + " get exception! MSG: " + e.getMessage() + " Cause MSG: " + e.getCause().getMessage());

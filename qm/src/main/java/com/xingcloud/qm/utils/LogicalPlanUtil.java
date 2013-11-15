@@ -17,6 +17,7 @@ import com.xingcloud.qm.service.PlanSubmission;
 import org.apache.drill.common.JSONOptions;
 import org.apache.drill.common.PlanProperties;
 import org.apache.drill.common.config.DrillConfig;
+import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.apache.drill.common.expression.*;
 import org.apache.drill.common.graph.AdjacencyList;
 import org.apache.drill.common.graph.Edge;
@@ -876,6 +877,9 @@ public class LogicalPlanUtil {
     Set<String> eventPatterns = new HashSet<>();
     for (String qid : submission.queryIdToPlan.keySet()) {
       String[] fields = qid.split(",");
+      if (fields.length < 5) {
+        throw new DrillRuntimeException("Cache key is invalid!. + " + qid);
+      }
       eventPatterns.add(fields[4]);
     }
     return eventPatterns;
