@@ -2,9 +2,9 @@ package com.xingcloud.qm.service;
 
 import static com.xingcloud.qm.remote.QueryNode.LOCAL_DEFAULT_DRILL_CONFIG;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.xingcloud.maincache.MapXCache;
 import com.xingcloud.maincache.XCacheException;
-import com.xingcloud.maincache.XCacheOperator;
 import com.xingcloud.maincache.redis.RedisXCacheOperator;
 import com.xingcloud.qm.config.QMConfig;
 import com.xingcloud.qm.exceptions.XRemoteQueryException;
@@ -25,7 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -230,15 +230,23 @@ public class QueryMaster implements QueryListener {
     /**
      * 对每个项目，正在执行的查询的计数。
      */
-    Map<String, AtomicInteger> perProjectExecuting = new ConcurrentHashMap<String, AtomicInteger>();
+    private Map<String, AtomicInteger> perProjectExecuting = new ConcurrentHashMap<String, AtomicInteger>();
 
     private boolean stop = false;
 
     private DrillConfig config;
 
+    ThreadPoolExecutor mergeAndSubmitExecutor;
+
     Scheduler(String name, DrillConfig config) {
       super(name);
       this.config = config;
+      ThreadFactoryBuilder builder = new ThreadFactoryBuilder();
+
+      builder.setNameFormat("Merge and submit pool");
+      builder.setDaemon(true);
+      ThreadFactory factory = builder.build();
+      mergeAndSubmitExecutor = (ThreadPoolExecutor)Executors.newFixedThreadPool(MAX_PLAN_EXECUTING, factory);
     }
 
     @Override
@@ -264,85 +272,9 @@ public class QueryMaster implements QueryListener {
             || getProjectCounter(projectID).intValue() >= MAX_PLAN_PER_PROJECT) {//这个任务已经有太多plan在执行
             continue;
           }
-          //找任务，合并。不超过MAX_BATCHMERGE，MAX_BATCHCOST
-          List<QuerySubmission> pickedSubmissions = new ArrayList<>();
-          List<LogicalPlan> pickedPlans = new ArrayList<>();
-          int totalCost = 0;
-          Map<String, LogicalPlan> id2Origin = new HashMap<>();
-          for (int i = 0; projectSubmissions.size() > 0 && i < MAX_BATCHMERGE && totalCost < MAX_BATCHCOST; i++) {
-            QuerySubmission submission = projectSubmissions.pollFirst();
-            totalCost += submission.cost;
-            pickedSubmissions.add(submission);
-            pickedPlans.add(submission.plan);
-            if (!(submission instanceof PlanSubmission)) {
-              id2Origin.put(submission.id, LogicalPlanUtil.copyPlan(submission.plan));
-            }
-          }
 
-          Map<LogicalPlan, LogicalPlan> origin2Merged = null;
-          try {
-            origin2Merged = PlanMerge.sortAndMerge(pickedPlans, config);
-
-            //建立合并后的plan和原始用户提交的BasicQuerySubmission之间的对应关系
-            Map<LogicalPlan, PlanSubmission> mergedPlan2Submissions = new HashMap<>();
-            for (int i = 0; i < pickedSubmissions.size(); i++) {
-              QuerySubmission submission = pickedSubmissions.get(i);
-              LogicalPlan to = origin2Merged.get(submission.plan);
-              if (to == submission.plan) {//origin = merged, 即没和别的plan合并的plan
-                if (submission instanceof PlanSubmission) {
-                  //以前已经合并过的plan
-                  mergedPlan2Submissions.put(to, (PlanSubmission) submission);
-                } else {
-                  //第一次被合并的plan，会变成PlanSubmission
-                  PlanSubmission planSubmission = new PlanSubmission(submission, projectID);
-                  planSubmission.addOriginPlan(submission.id, id2Origin.get(submission.id));
-                  mergedPlan2Submissions.put(to, planSubmission);
-                }
-              } else {//newly merged plan
-                PlanSubmission mergedSubmission = mergedPlan2Submissions.get(to);
-                if (mergedSubmission == null) {
-                  mergedSubmission = new PlanSubmission(to, projectID);
-                  mergedPlan2Submissions.put(to, mergedSubmission);
-                }
-                //mark submission merge
-                (mergedSubmission).absorbIDCost(submission);
-                if (submission instanceof PlanSubmission) {
-                  logger.warn("Plan has already been merged... " + ((PlanSubmission) submission).projectID + "\t" + submission.id);
-                  //之前已经merge过的plan
-                  Map<String, LogicalPlan> id2PlanMap = ((PlanSubmission) submission).queryIdToPlan;
-                  for (Map.Entry<String, LogicalPlan> id2PlanEntry : id2PlanMap.entrySet()) {
-                    mergedSubmission.addOriginPlan(id2PlanEntry.getKey(), id2PlanEntry.getValue());
-                  }
-                } else {
-                  mergedSubmission.addOriginPlan(submission.id, id2Origin.get(submission.id));
-                }
-              }
-            }
-
-            Iterator<PlanSubmission> mergedSubmissions = mergedPlan2Submissions.values().iterator();
-            for (int i = getProjectCounter(projectID).intValue(); i < MAX_PLAN_PER_PROJECT; i++) {
-              if (!mergedSubmissions.hasNext()) {
-                break;
-              }
-              PlanSubmission plan = mergedSubmissions.next();
-              if (logger.isDebugEnabled()) {
-                logger.debug("PlanSubmission {} submitted: {}", plan.id, plan.queryIdToPlan.toString());
-              }
-              doSubmitExecution(plan);
-            }
-            //如果有未提交的任务，一并放回perProject的任务队列
-            for (; mergedSubmissions.hasNext(); ) {
-              QuerySubmission unExecuted = mergedSubmissions.next();
-              projectSubmissions.addFirst(unExecuted);
-            }
-          } catch (Throwable e) {
-            e.printStackTrace();
-            for (QuerySubmission qs : pickedSubmissions) {
-              String queryId = qs.id;
-              submitted.remove(queryId);
-            }
-            logger.info("plan merge and submit fails");
-          }
+          Thread mergeAndSubmitTask = new MergeAndSubmit(projectSubmissions, projectID, this);
+          mergeAndSubmitExecutor.execute(mergeAndSubmitTask);
         }
       }
       logger.info("QueryMaster scheduler exiting...");
@@ -438,4 +370,110 @@ public class QueryMaster implements QueryListener {
     }
   }
 
+  class MergeAndSubmit extends Thread {
+    private Deque<QuerySubmission> projectSubmissions;
+    private String pID;
+    private Scheduler scheduler;
+
+    public MergeAndSubmit(Deque<QuerySubmission> projectSubmissions, String pID, Scheduler scheduler) {
+      this.projectSubmissions = projectSubmissions;
+      this.pID = pID;
+      this.scheduler = scheduler;
+    }
+
+    @Override
+    public void run() {
+      synchronized (projectSubmissions) {
+        logger.info("Start to process " + pID + "\trequest size: " + projectSubmissions.size());
+        if (projectSubmissions.size() == 0
+                || scheduler.getProjectCounter(pID).intValue() >= MAX_PLAN_PER_PROJECT) {
+          return;
+        }
+        //找任务，合并。不超过MAX_BATCHMERGE，MAX_BATCHCOST
+        List<QuerySubmission> pickedSubmissions = new ArrayList<>();
+        List<LogicalPlan> pickedPlans = new ArrayList<>();
+        int totalCost = 0;
+        Map<String, LogicalPlan> id2Origin = new HashMap<>();
+        for (int i = 0; projectSubmissions.size() > 0 && i < MAX_BATCHMERGE && totalCost < MAX_BATCHCOST; i++) {
+          QuerySubmission submission = projectSubmissions.pollFirst();
+          totalCost += submission.cost;
+          pickedSubmissions.add(submission);
+          pickedPlans.add(submission.plan);
+          if (!(submission instanceof PlanSubmission)) {
+            id2Origin.put(submission.id, LogicalPlanUtil.copyPlan(submission.plan));
+          }
+        }
+
+        Map<LogicalPlan, LogicalPlan> origin2Merged = null;
+        try {
+          origin2Merged = PlanMerge.sortAndMerge(pickedPlans, scheduler.config);
+
+          //建立合并后的plan和原始用户提交的BasicQuerySubmission之间的对应关系
+          Map<LogicalPlan, PlanSubmission> mergedPlan2Submissions = new HashMap<>();
+          for (int i = 0; i < pickedSubmissions.size(); i++) {
+            QuerySubmission submission = pickedSubmissions.get(i);
+            LogicalPlan to = origin2Merged.get(submission.plan);
+            if (to == submission.plan) {//origin = merged, 即没和别的plan合并的plan
+              if (submission instanceof PlanSubmission) {
+                //以前已经合并过的plan
+                mergedPlan2Submissions.put(to, (PlanSubmission) submission);
+              } else {
+                //第一次被合并的plan，会变成PlanSubmission
+                PlanSubmission planSubmission = new PlanSubmission(submission, pID);
+                planSubmission.addOriginPlan(submission.id, id2Origin.get(submission.id));
+                mergedPlan2Submissions.put(to, planSubmission);
+              }
+            } else {//newly merged plan
+              PlanSubmission mergedSubmission = mergedPlan2Submissions.get(to);
+              if (mergedSubmission == null) {
+                mergedSubmission = new PlanSubmission(to, pID);
+                mergedPlan2Submissions.put(to, mergedSubmission);
+              }
+              //mark submission merge
+              (mergedSubmission).absorbIDCost(submission);
+              if (submission instanceof PlanSubmission) {
+                logger.warn("Plan has already been merged... " + ((PlanSubmission) submission).projectID + "\t" + submission.id);
+                //之前已经merge过的plan
+                Map<String, LogicalPlan> id2PlanMap = ((PlanSubmission) submission).queryIdToPlan;
+                for (Map.Entry<String, LogicalPlan> id2PlanEntry : id2PlanMap.entrySet()) {
+                  mergedSubmission.addOriginPlan(id2PlanEntry.getKey(), id2PlanEntry.getValue());
+                }
+              } else {
+                mergedSubmission.addOriginPlan(submission.id, id2Origin.get(submission.id));
+              }
+            }
+          }
+
+          Iterator<PlanSubmission> mergedSubmissions = mergedPlan2Submissions.values().iterator();
+          for (int i = scheduler.getProjectCounter(pID).intValue(); i < MAX_PLAN_PER_PROJECT; i++) {
+            if (!mergedSubmissions.hasNext()) {
+              break;
+            }
+            PlanSubmission plan = mergedSubmissions.next();
+            scheduler.doSubmitExecution(plan);
+          }
+          //如果有未提交的任务，一并放回perProject的任务队列
+          for (; mergedSubmissions.hasNext(); ) {
+            QuerySubmission unExecuted = mergedSubmissions.next();
+            projectSubmissions.addFirst(unExecuted);
+          }
+      } catch (Throwable e) {
+          e.printStackTrace();
+          int size = 0;
+          for (QuerySubmission submission : pickedSubmissions) {
+            if (submission instanceof PlanSubmission) {
+              for (String qID : ((PlanSubmission) submission).queryIdToPlan.keySet()) {
+                submitted.remove(qID);
+                size++;
+              }
+            } else {
+              submitted.remove(submission.id);
+              size++;
+            }
+          }
+          logger.error("Submit logical plan failure! Picked submission size: " + size);
+        }
+      }
+    }
+  }
 }
