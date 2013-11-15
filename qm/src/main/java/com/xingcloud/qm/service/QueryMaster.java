@@ -311,7 +311,7 @@ public class QueryMaster implements QueryListener {
                   //之前已经merge过的plan
                   Map<String, LogicalPlan> id2PlanMap = ((PlanSubmission) submission).queryIdToPlan;
                   for (String qID : id2PlanMap.keySet()) {
-                    mergedSubmission.addOriginPlan(qID, id2Origin.get(submission.id));
+                    mergedSubmission.addOriginPlan(qID, id2Origin.get(qID));
                   }
                 } else {
                   mergedSubmission.addOriginPlan(submission.id, id2Origin.get(submission.id));
