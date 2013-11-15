@@ -306,7 +306,16 @@ public class QueryMaster implements QueryListener {
                 }
                 //mark submission merge
                 (mergedSubmission).absorbIDCost(submission);
-                mergedSubmission.addOriginPlan(submission.id, id2Origin.get(submission.id));
+                if (submission instanceof PlanSubmission) {
+                  logger.info("Plan has already been merged... " + ((PlanSubmission) submission).projectID + "\t" + submission.id);
+                  //之前已经merge过的plan
+                  Map<String, LogicalPlan> id2PlanMap = ((PlanSubmission) submission).queryIdToPlan;
+                  for (String qID : id2PlanMap.keySet()) {
+                    mergedSubmission.addOriginPlan(qID, id2Origin.get(submission.id));
+                  }
+                } else {
+                  mergedSubmission.addOriginPlan(submission.id, id2Origin.get(submission.id));
+                }
               }
             }
 

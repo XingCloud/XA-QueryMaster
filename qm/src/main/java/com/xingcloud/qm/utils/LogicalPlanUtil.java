@@ -878,7 +878,7 @@ public class LogicalPlanUtil {
     for (String qid : submission.queryIdToPlan.keySet()) {
       String[] fields = qid.split(",");
       if (fields.length < 5) {
-        throw new DrillRuntimeException("Cache key is invalid!. + " + qid);
+        throw new DrillRuntimeException("Cache key is invalid!. " + qid);
       }
       eventPatterns.add(fields[4]);
     }
