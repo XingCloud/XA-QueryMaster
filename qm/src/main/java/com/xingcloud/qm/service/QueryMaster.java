@@ -273,6 +273,7 @@ public class QueryMaster implements QueryListener {
             continue;
           }
 
+          incCounter(projectID);
           Thread mergeAndSubmitTask = new MergeAndSubmit(projectSubmissions, projectID, this);
           mergeAndSubmitExecutor.execute(mergeAndSubmitTask);
         }
@@ -281,11 +282,13 @@ public class QueryMaster implements QueryListener {
     }
 
     private void doSubmitExecution(PlanSubmission plan) {
+      PlanExecutor.getInstance().executePlan(plan, Scheduler.this);
+    }
+
+    private void incCounter(String projectID) {
       //更新各种counter
       this.executing.incrementAndGet();
-      getProjectCounter(plan.projectID).incrementAndGet();
-
-      PlanExecutor.getInstance().executePlan(plan, Scheduler.this);
+      getProjectCounter(projectID).incrementAndGet();
     }
 
     private AtomicInteger getProjectCounter(String projectID) {
