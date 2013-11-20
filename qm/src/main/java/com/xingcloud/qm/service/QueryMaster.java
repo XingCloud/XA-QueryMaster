@@ -445,18 +445,23 @@ public class QueryMaster implements QueryListener {
           }
 
           Iterator<PlanSubmission> mergedSubmissions = mergedPlan2Submissions.values().iterator();
-          for (int i = scheduler.getProjectCounter(pID).intValue(); i < MAX_PLAN_PER_PROJECT; i++) {
-            if (!mergedSubmissions.hasNext()) {
-              break;
-            }
+          while (mergedSubmissions.hasNext()) {
             PlanSubmission plan = mergedSubmissions.next();
             scheduler.doSubmitExecution(plan);
           }
-          //如果有未提交的任务，一并放回perProject的任务队列
-          for (; mergedSubmissions.hasNext(); ) {
-            QuerySubmission unExecuted = mergedSubmissions.next();
-            projectSubmissions.addFirst(unExecuted);
-          }
+
+//          for (int i = scheduler.getProjectCounter(pID).intValue(); i < MAX_PLAN_PER_PROJECT; i++) {
+//            if (!mergedSubmissions.hasNext()) {
+//              break;
+//            }
+//            PlanSubmission plan = mergedSubmissions.next();
+//            scheduler.doSubmitExecution(plan);
+//          }
+//          //如果有未提交的任务，一并放回perProject的任务队列
+//          for (; mergedSubmissions.hasNext(); ) {
+//            QuerySubmission unExecuted = mergedSubmissions.next();
+//            projectSubmissions.addFirst(unExecuted);
+//          }
       } catch (Throwable e) {
           e.printStackTrace();
           int size = 0;
