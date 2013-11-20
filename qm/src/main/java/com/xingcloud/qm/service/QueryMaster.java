@@ -388,10 +388,7 @@ public class QueryMaster implements QueryListener {
     public void run() {
       synchronized (projectSubmissions) {
         logger.info("Start to process " + pID + "\trequest size: " + projectSubmissions.size());
-        if (projectSubmissions.size() == 0
-                || scheduler.getProjectCounter(pID).intValue() >= MAX_PLAN_PER_PROJECT) {
-          return;
-        }
+
         //找任务，合并。不超过MAX_BATCHMERGE，MAX_BATCHCOST
         List<QuerySubmission> pickedSubmissions = new ArrayList<>();
         List<LogicalPlan> pickedPlans = new ArrayList<>();
