@@ -66,7 +66,6 @@ public class PlanExecutor {
         _run();
       } catch (Throwable e) {
         e.printStackTrace();
-        e.getCause().printStackTrace();
         logger.error("!!!!!! Run plan " + submission.id + " get exception! MSG: " + e.getMessage() + " Cause MSG: " + e.getCause().getMessage());
         QueryMaster.getInstance().clearSubmittedTag(submission);
       }

@@ -368,7 +368,7 @@ public class QueryMaster implements QueryListener {
 
   public void clearSubmittedTag(PlanSubmission planSubmission) {
     for (String basicQueryID : planSubmission.queryIdToPlan.keySet()) {
-      logger.warn("Force to remove basic query id: " + basicQueryID);
+      logger.warn("------ Force to remove basic query id: " + basicQueryID);
       submitted.remove(basicQueryID);
     }
   }
