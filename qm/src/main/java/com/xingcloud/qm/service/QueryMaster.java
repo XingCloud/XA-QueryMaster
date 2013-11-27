@@ -53,12 +53,21 @@ public class QueryMaster implements QueryListener {
 
   private static QueryMaster instance = new QueryMaster();
 
-  //private static DrillConfig config=DrillConfig.create();
 
   /**
    * 所有已经提交的任务。 由QueryMaster写入和删除。
    */
   public Map<String, QuerySubmission> submitted = new ConcurrentHashMap<String, QuerySubmission>();
+
+  /**
+   * 对每个项目，正在执行的查询的计数。
+   */
+  public Map<String, AtomicInteger> perProjectExecuting = new ConcurrentHashMap<String, AtomicInteger>();
+
+  /**
+   * 正在执行的查询。
+   */
+  public AtomicInteger executing = new AtomicInteger();
 
   /**
    * 每个project所提交的任务队列。 由QueryMaster写入，由Scheduler取出。
@@ -223,15 +232,6 @@ public class QueryMaster implements QueryListener {
 
   class Scheduler extends Thread implements QueryListener {
 
-    /**
-     * 正在执行的查询。
-     */
-    AtomicInteger executing = new AtomicInteger();
-    /**
-     * 对每个项目，正在执行的查询的计数。
-     */
-    private Map<String, AtomicInteger> perProjectExecuting = new ConcurrentHashMap<String, AtomicInteger>();
-
     private boolean stop = false;
 
     private DrillConfig config;
@@ -287,12 +287,12 @@ public class QueryMaster implements QueryListener {
 
     private void incCounter(String projectID) {
       //更新各种counter
-      this.executing.incrementAndGet();
+      executing.incrementAndGet();
       getProjectCounter(projectID).incrementAndGet();
     }
 
     private AtomicInteger getProjectCounter(String projectID) {
-      AtomicInteger counter = this.perProjectExecuting.get(projectID);
+      AtomicInteger counter = perProjectExecuting.get(projectID);
       if (counter == null) {
         counter = new AtomicInteger(0);
         perProjectExecuting.put(projectID, counter);
@@ -371,6 +371,9 @@ public class QueryMaster implements QueryListener {
       logger.warn("------ Force to remove basic query id: " + basicQueryID);
       submitted.remove(basicQueryID);
     }
+    //更新counter
+    perProjectExecuting.get(planSubmission.projectID).decrementAndGet();
+    executing.decrementAndGet();
   }
 
   class MergeAndSubmit extends Thread {
@@ -450,18 +453,6 @@ public class QueryMaster implements QueryListener {
             scheduler.doSubmitExecution(plan);
           }
 
-//          for (int i = scheduler.getProjectCounter(pID).intValue(); i < MAX_PLAN_PER_PROJECT; i++) {
-//            if (!mergedSubmissions.hasNext()) {
-//              break;
-//            }
-//            PlanSubmission plan = mergedSubmissions.next();
-//            scheduler.doSubmitExecution(plan);
-//          }
-//          //如果有未提交的任务，一并放回perProject的任务队列
-//          for (; mergedSubmissions.hasNext(); ) {
-//            QuerySubmission unExecuted = mergedSubmissions.next();
-//            projectSubmissions.addFirst(unExecuted);
-//          }
       } catch (Throwable e) {
           e.printStackTrace();
           int size = 0;
