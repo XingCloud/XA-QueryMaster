@@ -78,33 +78,34 @@ public class PlanExecutor {
         Map<String, List<ResultTable>> sampleRes = new HashMap<>();  //存储每轮采样结果
         Map<String, Map<String, Long>> uidNumMap = new HashMap<>(); //记录目前已查询到的uid数量
         int startBucketPos = 0;
-        Set<String> eventPatterns = LogicalPlanUtil.getEventPatterns(submission);
-        List<Integer> sampleList = LogicalPlanUtil.generateSapmleList(submission.projectID, eventPatterns);
-        for (int i = 0; i < sampleList.size(); i++) {
-          int offset = sampleList.get(i);
-          queryOneTime(startBucketPos, offset);
-          startBucketPos += offset;
-          List<LogicalPlan> nextRoundPlan = getNextRoundPlan(sampleRes, uidNumMap,
-                  i==sampleList.size()-1, startBucketPos);
-          logger.info("Next round plan number: " + nextRoundPlan.size());
+//        Set<String> eventPatterns = LogicalPlanUtil.getEventPatterns(submission);
+//        List<Integer> sampleList = LogicalPlanUtil.generateSapmleList(submission.projectID, eventPatterns);
+//        for (int i = 0; i < sampleList.size(); i++) {
+//          int offset = sampleList.get(i);
+//          queryOneTime(startBucketPos, offset);
+//          startBucketPos += offset;
+//          List<LogicalPlan> nextRoundPlan = getNextRoundPlan(sampleRes, uidNumMap,
+//                  i==sampleList.size()-1, startBucketPos);
+//          logger.info("Next round plan number: " + nextRoundPlan.size());
+        queryOneTime(startBucketPos,26);
           try {
             //全部plan符合采样阈值
-            if (nextRoundPlan.size() == 0) {
+//            if (nextRoundPlan.size() == 0) {
               submission.allFinish = true;
               logger.info("All sub plan query finish for " + submission.id);
               return;
-            }
+//            }
           } finally {
             //更新已经满足采样阈值的结果到缓存
             listener.onQueryResultReceived(submission.id, submission);
           }
-          //把没有达到采样阈值的plan重新merge，准备下一轮采样提交
-          Map<LogicalPlan, LogicalPlan> mergedPlanMap = PlanMerge.sortAndMerge(nextRoundPlan, DrillConfig.create());
-          Collection<LogicalPlan> mergedPlans = mergedPlanMap.values();
-          assert mergedPlans.size() == 1;  //应该只合并成一个plan
-          LogicalPlan nextRoundMergedPlan = mergedPlans.iterator().next();
-          submission.plan = nextRoundMergedPlan;
-        }
+//          //把没有达到采样阈值的plan重新merge，准备下一轮采样提交
+//          Map<LogicalPlan, LogicalPlan> mergedPlanMap = PlanMerge.sortAndMerge(nextRoundPlan, DrillConfig.create());
+//          Collection<LogicalPlan> mergedPlans = mergedPlanMap.values();
+//          assert mergedPlans.size() == 1;  //应该只合并成一个plan
+//          LogicalPlan nextRoundMergedPlan = mergedPlans.iterator().next();
+//          submission.plan = nextRoundMergedPlan;
+//        }
       }
     }
 
