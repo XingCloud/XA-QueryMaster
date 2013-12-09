@@ -87,27 +87,25 @@ public class PlanExecutor {
 //          List<LogicalPlan> nextRoundPlan = getNextRoundPlan(sampleRes, uidNumMap,
 //                  i==sampleList.size()-1, startBucketPos);
 //          logger.info("Next round plan number: " + nextRoundPlan.size());
-        queryOneTime(startBucketPos,26);
+          queryOneTime(startBucketPos,26);
+          List<LogicalPlan> nextRoundPlan= getNextRoundPlan(sampleRes, uidNumMap, true, startBucketPos);
           try {
             //全部plan符合采样阈值
-//            if (nextRoundPlan.size() == 0) {
+            if (nextRoundPlan.size() == 0) {
               submission.allFinish = true;
-              for(String queryId: submission.queryIdToPlan.keySet()){
-                submission.finishedIDSet.add(queryId);
-              }
               logger.info("All sub plan query finish for " + submission.id);
               return;
-//            }
+            }
           } finally {
             //更新已经满足采样阈值的结果到缓存
             listener.onQueryResultReceived(submission.id, submission);
           }
-//          //把没有达到采样阈值的plan重新merge，准备下一轮采样提交
-//          Map<LogicalPlan, LogicalPlan> mergedPlanMap = PlanMerge.sortAndMerge(nextRoundPlan, DrillConfig.create());
-//          Collection<LogicalPlan> mergedPlans = mergedPlanMap.values();
-//          assert mergedPlans.size() == 1;  //应该只合并成一个plan
-//          LogicalPlan nextRoundMergedPlan = mergedPlans.iterator().next();
-//          submission.plan = nextRoundMergedPlan;
+          //把没有达到采样阈值的plan重新merge，准备下一轮采样提交
+          Map<LogicalPlan, LogicalPlan> mergedPlanMap = PlanMerge.sortAndMerge(nextRoundPlan, DrillConfig.create());
+          Collection<LogicalPlan> mergedPlans = mergedPlanMap.values();
+          assert mergedPlans.size() == 1;  //应该只合并成一个plan
+          LogicalPlan nextRoundMergedPlan = mergedPlans.iterator().next();
+          submission.plan = nextRoundMergedPlan;
 //        }
       }
     }
@@ -270,6 +268,9 @@ public class PlanExecutor {
 
         Map<String, ResultTable> merged = mergeResults(materializedResults);
         submission.queryID2Table = merged;
+        for(ResultTable rt: merged.values()){
+          rt.setSampleRate((startBucketPos+offset)/256);
+        }
 
     }
 
