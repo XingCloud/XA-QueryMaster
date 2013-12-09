@@ -92,6 +92,9 @@ public class PlanExecutor {
             //全部plan符合采样阈值
 //            if (nextRoundPlan.size() == 0) {
               submission.allFinish = true;
+              for(String queryId: submission.queryIdToPlan.keySet()){
+                submission.finishedIDSet.add(queryId);
+              }
               logger.info("All sub plan query finish for " + submission.id);
               return;
 //            }
