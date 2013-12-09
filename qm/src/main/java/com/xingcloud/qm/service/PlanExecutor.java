@@ -88,7 +88,7 @@ public class PlanExecutor {
 //                  i==sampleList.size()-1, startBucketPos);
 //          logger.info("Next round plan number: " + nextRoundPlan.size());
           queryOneTime(startBucketPos,26);
-          List<LogicalPlan> nextRoundPlan= getNextRoundPlan(sampleRes, uidNumMap, true, startBucketPos);
+          List<LogicalPlan> nextRoundPlan= getNextRoundPlan(sampleRes, uidNumMap, true, startBucketPos+26);
           try {
             //全部plan符合采样阈值
             if (nextRoundPlan.size() == 0) {
@@ -268,10 +268,6 @@ public class PlanExecutor {
 
         Map<String, ResultTable> merged = mergeResults(materializedResults);
         submission.queryID2Table = merged;
-        for(ResultTable rt: merged.values()){
-          rt.setSampleRate(((double)(startBucketPos+offset))/256);
-        }
-
     }
 
     private Map<String, ResultTable> mergeResults(List<Map<String, ResultTable>> materializedResults) {
