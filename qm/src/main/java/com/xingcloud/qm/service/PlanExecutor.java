@@ -87,7 +87,7 @@ public class PlanExecutor {
 //          List<LogicalPlan> nextRoundPlan = getNextRoundPlan(sampleRes, uidNumMap,
 //                  i==sampleList.size()-1, startBucketPos);
 //          logger.info("Next round plan number: " + nextRoundPlan.size());
-          queryOneTime(startBucketPos,26);
+          queryOneTime(startBucketPos,3);
           List<LogicalPlan> nextRoundPlan= getNextRoundPlan(sampleRes, uidNumMap, true, startBucketPos+26);
           try {
             //全部plan符合采样阈值
