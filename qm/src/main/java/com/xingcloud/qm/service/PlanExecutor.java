@@ -269,7 +269,7 @@ public class PlanExecutor {
         Map<String, ResultTable> merged = mergeResults(materializedResults);
         submission.queryID2Table = merged;
         for(ResultTable rt: merged.values()){
-          rt.setSampleRate((startBucketPos+offset)/256);
+          rt.setSampleRate(((double)(startBucketPos+offset))/256);
         }
 
     }
