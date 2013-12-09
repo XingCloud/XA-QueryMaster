@@ -80,15 +80,18 @@ public class PlanExecutor {
         int startBucketPos = 0;
 //        Set<String> eventPatterns = LogicalPlanUtil.getEventPatterns(submission);
 //        List<Integer> sampleList = LogicalPlanUtil.generateSapmleList(submission.projectID, eventPatterns);
-//        for (int i = 0; i < sampleList.size(); i++) {
-//          int offset = sampleList.get(i);
-//          queryOneTime(startBucketPos, offset);
-//          startBucketPos += offset;
-//          List<LogicalPlan> nextRoundPlan = getNextRoundPlan(sampleRes, uidNumMap,
-//                  i==sampleList.size()-1, startBucketPos);
-//          logger.info("Next round plan number: " + nextRoundPlan.size());
-          queryOneTime(startBucketPos,3);
-          List<LogicalPlan> nextRoundPlan= getNextRoundPlan(sampleRes, uidNumMap, true, startBucketPos+3);
+        List<Integer> sampleList=new ArrayList<>();
+        for(int i=0;i<3;i++){
+          sampleList.add(new Integer(1));
+        }
+
+        for (int i = 0; i < sampleList.size(); i++) {
+          int offset = sampleList.get(i);
+          queryOneTime(startBucketPos, offset);
+          startBucketPos += offset;
+          List<LogicalPlan> nextRoundPlan = getNextRoundPlan(sampleRes, uidNumMap,
+                  i==sampleList.size()-1, startBucketPos);
+          logger.info("Next round plan number: " + nextRoundPlan.size());
           try {
             //全部plan符合采样阈值
             if (nextRoundPlan.size() == 0) {
@@ -106,7 +109,7 @@ public class PlanExecutor {
           assert mergedPlans.size() == 1;  //应该只合并成一个plan
           LogicalPlan nextRoundMergedPlan = mergedPlans.iterator().next();
           submission.plan = nextRoundMergedPlan;
-//        }
+        }
       }
     }
 
