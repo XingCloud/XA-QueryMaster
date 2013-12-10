@@ -81,8 +81,8 @@ public class PlanExecutor {
 //        Set<String> eventPatterns = LogicalPlanUtil.getEventPatterns(submission);
 //        List<Integer> sampleList = LogicalPlanUtil.generateSapmleList(submission.projectID, eventPatterns);
         List<Integer> sampleList=new ArrayList<>();
-        for(int i=0;i<3;i++){
-          sampleList.add(new Integer(1));
+        for(int i=0;i<2;i++){
+          sampleList.add(new Integer(i+1));
         }
 
         for (int i = 0; i < sampleList.size(); i++) {
