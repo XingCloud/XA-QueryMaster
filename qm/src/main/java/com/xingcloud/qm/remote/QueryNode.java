@@ -34,6 +34,7 @@ public class QueryNode {
       for (Dom nodeDom : nodes) {
         id = nodeDom.getAttributeValue("id");
         conf = nodeDom.getAttributeValue("conf");
+
         NODES.add(new QueryNode(id, conf));
       }
     }

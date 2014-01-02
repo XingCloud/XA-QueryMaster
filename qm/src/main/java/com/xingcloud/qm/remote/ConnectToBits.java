@@ -60,4 +60,10 @@ public class ConnectToBits implements Runnable {
     else
       connectionState=ConnectionState.connecting;
   }
+
+  public static void main(String[] args){
+    ConnectToBits connectToBits = new ConnectToBits();
+    Thread thread = new Thread(connectToBits);
+    thread.start();
+  }
 }
