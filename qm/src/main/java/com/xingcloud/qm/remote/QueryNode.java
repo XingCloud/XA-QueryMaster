@@ -76,6 +76,7 @@ public class QueryNode {
     LOGGER.info(conf);
     this.id = id;
     this.drillClient = new DrillClient(DrillConfig.create(conf));
+    LOGGER.info("init drillClient");
     try {
       this.drillClient.connect();
       if(this.drillClient.isActive())
