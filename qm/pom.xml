@@ -63,6 +63,7 @@
                         <packagingExcludes>WEB-INF/web.xml</packagingExcludes>
                     </configuration>
                 </plugin>
+
             </plugins>
         </pluginManagement>
     </build>
