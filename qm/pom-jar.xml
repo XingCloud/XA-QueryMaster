@@ -197,7 +197,7 @@
         <dependency>
             <groupId>com.xingcloud.xa</groupId>
             <artifactId>confutil</artifactId>
-            <version>1.1</version>
+            <version>1.2</version>
         </dependency>
         <dependency>
             <groupId>com.xingcloud.xa</groupId>
