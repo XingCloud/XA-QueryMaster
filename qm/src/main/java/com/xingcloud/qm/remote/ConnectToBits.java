@@ -59,6 +59,7 @@ public class ConnectToBits implements Runnable {
       connectionState=ConnectionState.active;
     else
       connectionState=ConnectionState.connecting;
+    LOG.info("connection state is "+connectionState);
   }
 
   public static void main(String[] args){
