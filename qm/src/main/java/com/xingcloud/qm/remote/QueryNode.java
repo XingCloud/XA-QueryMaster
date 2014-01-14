@@ -79,14 +79,14 @@ public class QueryNode {
     LOGGER.info("init drillClient");
     try {
       this.drillClient.connect();
-      if(this.drillClient.isActive())
-        connectionState=ConnectionState.active;
-      else
-        connectionState=ConnectionState.disconnection;
       LOGGER.info("[DRILL-CLIENT]: " + id + " connected to server.");
     } catch (Exception e) {
       e.printStackTrace();
     }
+    if(this.drillClient.isActive())
+      connectionState=ConnectionState.active;
+    else
+      connectionState=ConnectionState.disconnection;
   }
 
   public String getId() {

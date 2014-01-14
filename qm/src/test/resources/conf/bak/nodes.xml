@@ -2,6 +2,6 @@
 
 <root>
   <nodes id="QUERY-NODES">
-    <node id="QN-01" conf="drill-module.conf" />
+    <node id="QN-01" conf="drill-module-01.conf" />
   </nodes>
 </root>

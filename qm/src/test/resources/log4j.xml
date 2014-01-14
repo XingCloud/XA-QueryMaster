@@ -22,7 +22,7 @@
     </appender>
 
   <logger name="com.xingcloud.qm">
-    <level value="info" />
+    <level value="debug" />
     <appender-ref ref="CONSOLE" />
   </logger>
   <logger name="com.xingcloud.qm.service.PlanMerge">
