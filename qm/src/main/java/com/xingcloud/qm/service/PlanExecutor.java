@@ -11,7 +11,6 @@ import com.xingcloud.qm.utils.PlanWriter;
 import com.xingcloud.qm.utils.QueryMasterConstant;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.exceptions.DrillRuntimeException;
-import org.apache.drill.common.graph.GraphAlgos;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.exec.client.DrillClient;
 import org.apache.drill.exec.proto.UserProtos;

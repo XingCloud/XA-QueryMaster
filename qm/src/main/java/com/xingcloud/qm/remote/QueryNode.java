@@ -23,8 +23,10 @@ public class QueryNode {
     try {
       root = ConfigReader.getDom("nodes.xml");
     } catch (Exception e) {
+      //todo: throw exception
       e.printStackTrace();
     }
+    //todo: root may be null
     List<Dom> nodesDomList = root.elements("nodes");
 
     String id, conf;
@@ -66,6 +68,7 @@ public class QueryNode {
   }
 
   public QueryNode(String id, String conf) {
+    //todo: super call unnecessary
     super();
     LOGGER.info("[DRILL-CLIENT]: " + id + " is trying to connect to server...");
     LOGGER.info(conf);
@@ -75,6 +78,7 @@ public class QueryNode {
       this.drillClient.connect();
       LOGGER.info("[DRILL-CLIENT]: " + id + " connected to server.");
     } catch (Exception e) {
+      //todo: throw exception
       e.printStackTrace();
     }
   }
@@ -102,6 +106,7 @@ public class QueryNode {
 
     QueryNode queryNode = (QueryNode) o;
 
+    //todo: simplify return statement
     if (!id.equals(queryNode.id)) {
       return false;
     }

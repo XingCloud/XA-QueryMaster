@@ -1,27 +1,25 @@
 package com.xingcloud.qm.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.xingcloud.events.XEventException;
 import com.xingcloud.events.XEventOperation;
 import com.xingcloud.events.XEventRange;
-import com.xingcloud.qm.service.LOPComparator;
-import com.xingcloud.qm.service.PlanMerge.*;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.xingcloud.meta.ByteUtils;
+import com.xingcloud.qm.service.LOPComparator;
+import com.xingcloud.qm.service.PlanMerge.ScanWithPlan;
 import com.xingcloud.qm.service.PlanSubmission;
 import org.apache.drill.common.JSONOptions;
-import org.apache.drill.common.PlanProperties;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.apache.drill.common.expression.*;
 import org.apache.drill.common.graph.AdjacencyList;
 import org.apache.drill.common.graph.Edge;
-import org.apache.drill.common.graph.GraphAlgos;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.common.logical.data.*;
 import org.apache.drill.common.util.Selections;
@@ -32,17 +30,14 @@ import org.apache.log4j.Logger;
 import java.io.IOException;
 import java.util.*;
 
-import static org.apache.drill.common.util.DrillConstants.*;
+import static org.apache.drill.common.util.DrillConstants.SE_HBASE;
 import static org.apache.drill.common.util.Selections.*;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY_END;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY_START;
 
 /**
  * Created with IntelliJ IDEA.
  * User: yb
  * Date: 8/30/13
  * Time: 3:07 PM
- * To change this template use File | Settings | File Templates.
  */
 public class LogicalPlanUtil {
   public static Logger logger = Logger.getLogger(LogicalPlanUtil.class);
@@ -811,10 +806,13 @@ public class LogicalPlanUtil {
       planJson = plan.toJsonString(c);
       copy = c.getMapper().readValue(planJson, LogicalPlan.class);
     } catch (JsonProcessingException e) {
+      //todo: log error
       e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
     } catch (IOException e) {
+      //todo: log error
       e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
     }
+    //todo: may return null
     return copy;
   }
 

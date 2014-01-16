@@ -23,6 +23,7 @@ public class QueryBossServlet extends HessianServlet implements Submit {
   public boolean submit(String cacheKey, String content, SubmitQueryType type) throws XRemoteQueryException {
     switch (type) {
       case SQL:
+        //todo: change log level to warn?
         LOGGER.info("[WS-SUBMIT] Current type(" + type + ") of operation is not supported.");
         return false;
       case PLAN:

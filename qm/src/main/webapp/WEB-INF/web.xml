@@ -9,13 +9,11 @@
   </welcome-file-list>
 
   <listener>
-    <listener-class>com.xingcloud.qm.web.listener.QMStartServiceListener
-    </listener-class>
+    <listener-class>com.xingcloud.qm.web.listener.QMStartServiceListener</listener-class>
   </listener>
 
   <listener>
-    <listener-class>com.xingcloud.qm.web.listener.QMShutDownListener
-    </listener-class>
+    <listener-class>com.xingcloud.qm.web.listener.QMShutDownListener</listener-class>
   </listener>
 
   <!-- Query master servlet -->

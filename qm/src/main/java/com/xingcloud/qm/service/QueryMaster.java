@@ -29,8 +29,13 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
-* 接收前端提交的plan，由QueryMaster控制查询的队列。 - 不接受已经提交、且正在查询的的重复query。 - 控制集群正在进行的查询计算量。 - 控制单个项目正在进行的查询数。 - 提交的查询请求进行排序，合并。 -
-* 监控查询的完成状况，填到cache里面去。
+ * 接收前端提交的plan，
+ * - 由QueryMaster控制查询的队列。
+ * - 不接受已经提交、且正在查询的的重复query。
+ * - 控制集群正在进行的查询计算量。
+ * - 控制单个项目正在进行的查询数。
+ * - 提交的查询请求进行排序，合并。
+ * - 监控查询的完成状况，填到cache里面去。
 */
 public class QueryMaster implements QueryListener {
 
@@ -162,6 +167,7 @@ public class QueryMaster implements QueryListener {
   private synchronized Deque<QuerySubmission> getProjectQueue(String projectID) {
     Deque<QuerySubmission> projectPlans = perProjectSubmitted.get(projectID);
     if (projectPlans == null) {
+      //todo: ArrayDeque does not automatically shrink?
       projectPlans = new ArrayDeque<>();
       perProjectSubmitted.put(projectID, projectPlans);
     }
@@ -263,6 +269,7 @@ public class QueryMaster implements QueryListener {
           continue;
         }
         for (Map.Entry<String, Deque<QuerySubmission>> entry : perProjectSubmitted.entrySet()) {
+          //todo: why twice? delete it
           if (executing.intValue() >= MAX_PLAN_EXECUTING) { //到达最大执行上限
             break;
           }
@@ -281,6 +288,7 @@ public class QueryMaster implements QueryListener {
       logger.info("QueryMaster scheduler exiting...");
     }
 
+    //todo: this method should belong to MergeAndSubmit
     private void doSubmitExecution(PlanSubmission plan) {
       PlanExecutor.getInstance().executePlan(plan, Scheduler.this);
     }

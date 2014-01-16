@@ -13,14 +13,12 @@ import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.
  * User: Wang Yufei
  * Date: 13-9-27
  * Time: 下午1:46
- * To change this template use File | Settings | File Templates.
  */
 public class PlanWriter {
   private static Logger logger = LoggerFactory.getLogger(PlanWriter.class);

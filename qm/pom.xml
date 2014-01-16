@@ -6,10 +6,13 @@
   <artifactId>qm</artifactId>
   <packaging>war</packaging>
   <version>0.0.1</version>
-  <url>http://65.255.35.141:8081</url>
+
+  <name>XAQueryMaster</name>
+
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
+
   <repositories>
     <repository>
       <releases>
@@ -27,7 +30,7 @@
       <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
     </repository>
   </repositories>
-  <name>XAQueryMaster</name>
+
   <!-- Building config -->
   <build>
     <defaultGoal>package</defaultGoal>
@@ -178,16 +181,6 @@
     </dependency>
 
     <!-- XA -->
-    <dependency>
-      <groupId>com.xingcloud.xa</groupId>
-      <artifactId>confutil</artifactId>
-      <version>1.1</version>
-    </dependency>
-    <dependency>
-      <groupId>com.xingcloud.xa</groupId>
-      <artifactId>main-cache-service</artifactId>
-      <version>1.0</version>
-    </dependency>
     <dependency>
       <groupId>com.xingcloud</groupId>
       <artifactId>basis</artifactId>
