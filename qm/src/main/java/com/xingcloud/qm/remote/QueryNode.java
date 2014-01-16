@@ -43,10 +43,6 @@ public class QueryNode {
 
   private DrillClient drillClient;
 
-
-
-  private ConnectionState connectionState;
-
   public DrillClient getDrillClient() {
     return drillClient;
   }
@@ -77,10 +73,6 @@ public class QueryNode {
     this.drillClient = new DrillClient(DrillConfig.create(conf));
     try {
       this.drillClient.connect();
-      if(this.drillClient.isActive())
-        connectionState=ConnectionState.active;
-      else
-        connectionState=ConnectionState.disconnection;
       LOGGER.info("[DRILL-CLIENT]: " + id + " connected to server.");
     } catch (Exception e) {
       e.printStackTrace();
@@ -93,14 +85,6 @@ public class QueryNode {
 
   public void setId(String id) {
     this.id = id;
-  }
-
-  public ConnectionState getConnectionState() {
-    return connectionState;
-  }
-
-  public void setConnectionState(ConnectionState connectionState) {
-    this.connectionState = connectionState;
   }
 
   public static BufferAllocator getAllocator() {
