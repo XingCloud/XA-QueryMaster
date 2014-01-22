@@ -2,21 +2,17 @@ package com.xingcloud.qm.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xingcloud.qm.config.QMConfig;
+import com.xingcloud.qm.exceptions.XQueryMasterException;
 import com.xingcloud.qm.remote.QueryNode;
 import com.xingcloud.qm.result.ResultRow;
 import com.xingcloud.qm.result.ResultTable;
-import com.xingcloud.qm.utils.GraphVisualize;
-import com.xingcloud.qm.utils.LogicalPlanUtil;
-import com.xingcloud.qm.utils.PlanWriter;
-import com.xingcloud.qm.utils.QueryMasterConstant;
+import com.xingcloud.qm.utils.*;
 import org.apache.drill.common.config.DrillConfig;
-import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.exec.client.DrillClient;
 import org.apache.drill.exec.proto.UserProtos;
 import org.apache.drill.exec.rpc.user.QueryResultBatch;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,22 +22,37 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class PlanExecutor {
 
-  private static final Logger logger = LoggerFactory.getLogger(PlanExecutor.class);
-  private static PlanExecutor instance = new PlanExecutor();
+  private static final Logger logger = Logger.getLogger(LogicalPlanUtil.class);
+
+  private static final PlanExecutor instance = new PlanExecutor();
 
   //for PlanRunner. 
-  private static ExecutorService planExecutor = new ThreadPoolExecutor(24, 24, 30, TimeUnit.MINUTES,
-                                                                       new ArrayBlockingQueue<Runnable>(256), new DaemonlizedFactory("PlanExec"));
+  private static final ExecutorService planExecutor =
+    new ThreadPoolExecutor(
+      24,
+      24,
+      30,
+      TimeUnit.MINUTES,
+      new ArrayBlockingQueue<Runnable>(256),
+      new DaemonlizedFactory("PlanExec")
+    );
 
   //for drillbitRunner.
-  private static ExecutorService drillBitExecutor = new ThreadPoolExecutor(24, 24, 30, TimeUnit.MINUTES,
-                                                                           new ArrayBlockingQueue<Runnable>(256), new DaemonlizedFactory("DrillbitExec"));
+  private static final ExecutorService drillBitExecutor =
+    new ThreadPoolExecutor(
+      24,
+      24,
+      30,
+      TimeUnit.MINUTES,
+      new ArrayBlockingQueue<Runnable>(256),
+      new DaemonlizedFactory("DrillbitExec")
+    );
 
   public static PlanExecutor getInstance() {
     return instance;
   }
 
-  public PlanExecutor() {
+  private PlanExecutor() {
 
   }
 
@@ -73,6 +84,7 @@ public class PlanExecutor {
     }
 
     public void _run() throws Exception {
+      //todo: if not need sampling, do what?
       if (submission.needSample) {
         Map<String, List<ResultTable>> sampleRes = new HashMap<>();  //存储每轮采样结果
         Map<String, Map<String, Long>> uidNumMap = new HashMap<>(); //记录目前已查询到的uid数量
@@ -204,9 +216,12 @@ public class PlanExecutor {
      * @param startBucketPos  起始桶的位置
      * @param offset 采多少桶
      */
-    private void queryOneTime(int startBucketPos, int offset) {
-      logger.info("PlanSubmission {} executing...", submission.id + " Total query id number: " + submission.queryIdToPlan.keySet().size()
-              + "\tStart bucket position: " + startBucketPos + " Offset length: " + offset);
+    private void queryOneTime(int startBucketPos, int offset) throws XQueryMasterException {
+      logger.info("PlanSubmission id: " + submission.id +
+        "; total: " + submission.queryIdToPlan.keySet().size() +
+        "; start bucket position: " + startBucketPos +
+        "; offset: " + offset);
+
       if (logger.isDebugEnabled()) {
         logger.debug("PlanSubmission " + submission.id + " with " + submission.plan.getGraph().getAdjList().getNodeSet()
                 .size() + " LOPs...");
@@ -214,6 +229,7 @@ public class PlanExecutor {
         logger.debug("Image url: http://69.28.58.61/" + submission.id + ".svg");
         GraphVisualize.visualizeMX(submission.plan, svgPath);
       }
+
       QueryNode[] nodes = QueryNode.getNodes();
       List<Future<List<QueryResultBatch>>> futures = new ArrayList<>(nodes.length);
       String planString;
@@ -230,42 +246,37 @@ public class PlanExecutor {
           pw = new PlanWriter(System.currentTimeMillis(), DrillConfig.create());
           pw.writeUidRangePlan(planString);
         }
-
       } catch (JsonProcessingException e) {
-        e.printStackTrace();
-        throw new DrillRuntimeException(e.getMessage());
+        logger.error(e.getMessage(), e);
+        throw new XQueryMasterException(e.getMessage(), e);
       } catch (IOException e) {
-        e.printStackTrace();
-        throw new DrillRuntimeException(e.getMessage());
+        logger.error(e.getMessage(), e);
+        throw new XQueryMasterException(e.getMessage(), e);
       }
 
-      for (int i = 0; i < nodes.length; i++) {
-        QueryNode node = nodes[i];
+      for (QueryNode node : nodes) {
         futures.add(drillBitExecutor.submit(new DrillbitCallable(planString, node)));
       }
       logger.info("[PLAN-SUBMISSION] - All client submit their queries.");
 
+      List<Map<String, ResultTable>> materializedResults = new ArrayList<>();
+      //收集结果。理想情况下，应该收集所有的计算结果。
+      //在有drillbit计算失败的情况下，使用剩下的结果作为估计值
+      for (Future<List<QueryResultBatch>> future : futures) {
+        try {
+          List<QueryResultBatch> batches = future.get();
+          Map<String, ResultTable> ret = RecordParser.materializeRecords(batches, QueryNode.getAllocator());
+          materializedResults.add(ret);
+        } catch (Exception e) {
+          submission.e = e;
+          submission.queryID2Table = null;
 
-        List<Map<String, ResultTable>> materializedResults = new ArrayList<>();
-        //收集结果。理想情况下，应该收集所有的计算结果。
-        //在有drillbit计算失败的情况下，使用剩下的结果作为估计值
-        for (Future<List<QueryResultBatch>> future : futures) {
-          try {
-            List<QueryResultBatch> batches = future.get();
-            Map<String, ResultTable> ret = RecordParser.materializeRecords(batches, QueryNode.getAllocator());
-            materializedResults.add(ret);
-          } catch (Exception e) {
-            logger.error("plan executing error!", e.getMessage());
-            e.printStackTrace();
-            submission.e = e;
-            submission.queryID2Table = null;
-            throw new DrillRuntimeException("Get results from drill-bit got exception... Query failure!");
-          }
+          logger.error("plan executing error!", e);
+          throw new XQueryMasterException("Get results from drill-bit got exception... Query failure!", e);
         }
+      }
 
-        Map<String, ResultTable> merged = mergeResults(materializedResults);
-        submission.queryID2Table = merged;
-
+      submission.queryID2Table = mergeResults(materializedResults);
     }
 
     private Map<String, ResultTable> mergeResults(List<Map<String, ResultTable>> materializedResults) {
@@ -313,18 +324,27 @@ public class PlanExecutor {
     public List<QueryResultBatch> call() throws Exception {
       List<QueryResultBatch> result = null;
       DrillClient client = node.getDrillClient();
+
+      //todo: why reconnect?
       if (client.reconnect()) {
-        long t1 = System.currentTimeMillis(), t2;
+        long t1 = System.currentTimeMillis();
+
         try {
-          result = client
-            .runQuery(UserProtos.QueryType.LOGICAL, plan, QMConfig.conf().getLong(QMConfig.DRILL_EXEC_TIMEOUT));
+          result = client.runQuery(UserProtos.QueryType.LOGICAL, plan, QMConfig.conf().getLong(QMConfig.DRILL_EXEC_TIMEOUT));
         } catch (Exception e) {
+          logger.error("run query error!", e);
           throw e;
         }
-        t2 = System.currentTimeMillis();
-        logger.info("[PlanExec] - Single node[{}] submit query at {},receive result at {} ,cost {} . ",node.getId(),t1,t2,(t2 - t1));
+
+        long t2 = System.currentTimeMillis();
+        logger.info("Single node[" + node.getId() +
+          "] submit query on " + TimeUtil.getDatetime(t1) +
+          ", receive result on " + TimeUtil.getDatetime(t2) +
+          ", cost " + (t2 - t1));
+//        logger.info("Single node[{}] submit query at {}, receive result at {}, cost {}.",
+//          node.getId(), TimeUtil.getDatetime(t1), TimeUtil.getDatetime(t2), (t2 - t1));
       } else {
-        logger.info("[DrillbitCallable2] - Cannot connect to server.");
+        logger.error("Cannot connect to drillbit.");
       }
       return result;
     }

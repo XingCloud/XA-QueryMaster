@@ -2,8 +2,7 @@ package com.xingcloud.qm.utils;
 
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.logical.LogicalPlan;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -21,7 +20,8 @@ import java.util.List;
  * Time: 下午1:46
  */
 public class PlanWriter {
-  private static Logger logger = LoggerFactory.getLogger(PlanWriter.class);
+
+  private static final Logger logger = Logger.getLogger(PlanWriter.class);
 
   private static final String basePath = "/data/log/plans/";
   private final SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd-hhmmss");

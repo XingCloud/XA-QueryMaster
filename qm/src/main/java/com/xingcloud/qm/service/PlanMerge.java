@@ -27,8 +27,7 @@ import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleDirectedGraph;
 import org.jgrapht.graph.SimpleGraph;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.*;
@@ -46,7 +45,7 @@ public class PlanMerge {
 
     private Map<String, List<LogicalPlan>> sortedByProjectID;
 
-    public static Logger logger = LoggerFactory.getLogger(PlanMerge.class);
+    private static final Logger logger = Logger.getLogger(PlanMerge.class);
 
     public PlanMerge(List<LogicalPlan> plans) throws Exception {
         this.incoming = plans;
@@ -577,13 +576,8 @@ public class PlanMerge {
                       Scan scan = (Scan) leaf;
                       //初始状态，每个scan自成一组
                       ctx.mergedScanSets.addVertex(scan);
-                      String tableName = null;
-                      try {
-                          tableName = LogicalPlanUtil.getTableName(scan);
-                      } catch (Exception e) {
-                          e.printStackTrace();
-                          throw e;
-                      }
+                      String tableName = LogicalPlanUtil.getTableName(scan);
+
                       ScanWithPlan swp = new ScanWithPlan(scan, plan, tableName);
                       Set<ScanWithPlan> swps = ctx.tableName2Plans.get(tableName);
                       if (swps == null) {

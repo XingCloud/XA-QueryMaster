@@ -72,26 +72,6 @@
 
   <!-- Dependencies -->
   <dependencies>
-    <!-- Hadoop, HDFS, Hbase, ZK -->
-    <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-client</artifactId>
-      <version>2.0.0-cdh4.3.0</version>
-      <exclusions>
-        <exclusion>
-          <artifactId>hadoop-mapreduce-client-app</artifactId>
-          <groupId>org.apache.hadoop</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>hadoop-yarn-api</artifactId>
-          <groupId>org.apache.hadoop</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>hadoop-mapreduce-client-jobclient</artifactId>
-          <groupId>org.apache.hadoop</groupId>
-        </exclusion>
-      </exclusions>
-    </dependency>
     <!-- Mail service -->
     <dependency>
       <groupId>com.sun.mail</groupId>
@@ -117,7 +97,7 @@
       <scope>provided</scope>
     </dependency>
 
-    <!-- Common usage -->
+    <!-- for plan visualization -->
     <dependency>
       <groupId>net.sf.jgrapht</groupId>
       <artifactId>jgrapht</artifactId>
@@ -129,29 +109,15 @@
       <version>5.13.0.0</version>
     </dependency>
     <dependency>
-        <groupId>org.tinyjee.jgraphx</groupId>
-        <artifactId>jgraphx</artifactId>
-        <version>2.0.0.1</version>
+      <groupId>org.tinyjee.jgraphx</groupId>
+      <artifactId>jgraphx</artifactId>
+      <version>2.0.0.1</version>
     </dependency>
-    <dependency>
-      <groupId>commons-collections</groupId>
-      <artifactId>commons-collections</artifactId>
-      <version>3.2.1</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-lang3</artifactId>
-      <version>3.1</version>
-    </dependency>
+
     <dependency>
       <groupId>commons-logging</groupId>
       <artifactId>commons-logging</artifactId>
       <version>1.1.2</version>
-    </dependency>
-    <dependency>
-      <groupId>com.google.code.gson</groupId>
-      <artifactId>gson</artifactId>
-      <version>2.2.2</version>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
@@ -174,19 +140,6 @@
       <version>1.2.17</version>
     </dependency>
 
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.11</version>
-    </dependency>
-
-    <!-- XA -->
-    <dependency>
-      <groupId>com.xingcloud</groupId>
-      <artifactId>basis</artifactId>
-      <version>0.0.5</version>
-    </dependency>
-
     <!-- Drill -->
     <dependency>
       <groupId>org.apache.drill</groupId>
@@ -197,6 +150,22 @@
         <exclusion>
           <groupId>com.google.protobuf</groupId>
           <artifactId>protobuf-java</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>log4j-over-slf4j</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>jul-to-slf4j</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>jcl-over-slf4j</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -225,109 +194,45 @@
       </exclusions>
     </dependency>
 
-
-    <!-- HTTP-Component -->
-    <!-- HTTP-Generic -->
-    <dependency>
-      <groupId>commons-codec</groupId>
-      <artifactId>commons-codec</artifactId>
-      <version>1.8</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpmime</artifactId>
-      <version>4.2.4</version>
-    </dependency>
-
-    <!-- HTTP-Core -->
-    <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpcore</artifactId>
-      <version>4.2.4</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpcore-ab</artifactId>
-      <version>4.2.4</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpcore-nio</artifactId>
-      <version>4.2.4</version>
-    </dependency>
-
-    <!-- HTTP-Client -->
-    <dependency>
-      <groupId>commons-httpclient</groupId>
-      <artifactId>commons-httpclient</artifactId>
-      <version>3.1</version>
-    </dependency>
+    <!-- for test -->
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
       <version>4.2.5</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpclient-cache</artifactId>
-      <version>4.2.5</version>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.11</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- XA -->
+    <dependency>
+      <groupId>com.xingcloud</groupId>
+      <artifactId>basis</artifactId>
+      <version>0.0.5</version>
     </dependency>
     <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpasyncclient</artifactId>
-      <version>4.0-beta3</version>
+      <groupId>com.xingcloud.xa</groupId>
+      <artifactId>basis</artifactId>
+      <version>1.0</version>
     </dependency>
     <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>fluent-hc</artifactId>
-      <version>4.2.5</version>
+      <groupId>com.xingcloud.xa</groupId>
+      <artifactId>main-cache-service</artifactId>
+      <version>1.0</version>
     </dependency>
     <dependency>
-        <groupId>net.sf.ehcache</groupId>
-        <artifactId>ehcache-core</artifactId>
-        <version>2.5.1</version>
+      <groupId>com.xingcloud.xa</groupId>
+      <artifactId>event-service</artifactId>
+      <version>1.1</version>
     </dependency>
     <dependency>
-        <groupId>com.xingcloud.xa</groupId>
-        <artifactId>basis</artifactId>
-        <version>1.0</version>
+      <groupId>com.xingcloud.xa</groupId>
+      <artifactId>mongodb</artifactId>
+      <version>1.0</version>
     </dependency>
-      <!--
-      <dependency>
-        <groupId>com.xingcloud</groupId>
-        <artifactId>cache</artifactId>
-        <version>0.0.5</version>
-      </dependency>
-      -->
-      <dependency>
-          <groupId>com.xingcloud.xa</groupId>
-          <artifactId>main-cache-service</artifactId>
-          <version>1.0</version>
-      </dependency>
-      <dependency>
-          <groupId>com.xingcloud.xa</groupId>
-          <artifactId>confutil</artifactId>
-          <version>1.2</version>
-      </dependency>
-      <dependency>
-          <groupId>com.xingcloud.xa</groupId>
-          <artifactId>dbutil</artifactId>
-          <version>1.3</version>
-      </dependency>
-      <dependency>
-          <groupId>com.xingcloud.xa</groupId>
-          <artifactId>hashutil</artifactId>
-          <version>1.2</version>
-      </dependency>
-      <dependency>
-          <groupId>com.xingcloud.xa</groupId>
-          <artifactId>event-service</artifactId>
-          <version>1.1</version>
-      </dependency>
-      <dependency>
-          <groupId>com.xingcloud.xa</groupId>
-          <artifactId>mongodb</artifactId>
-          <version>1.0</version>
-      </dependency>
   </dependencies>
 </project>

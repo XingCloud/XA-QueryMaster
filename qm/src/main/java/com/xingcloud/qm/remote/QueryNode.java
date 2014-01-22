@@ -15,6 +15,7 @@ import java.util.List;
 public class QueryNode {
   private static final Logger LOGGER = Logger.getLogger(QueryNode.class);
   public static final List<QueryNode> NODES = new ArrayList<>(16);
+  public static final QueryNode[] NODE_ARRAY;
   public static final DrillConfig LOCAL_DEFAULT_DRILL_CONFIG = DrillConfig.create();
   public static final BufferAllocator DEFAULT_BUFFER_ALLOCATOR = new DirectBufferAllocator();
 
@@ -23,10 +24,9 @@ public class QueryNode {
     try {
       root = ConfigReader.getDom("nodes.xml");
     } catch (Exception e) {
-      //todo: throw exception
-      e.printStackTrace();
+      LOGGER.error(e.getMessage(), e);
+      throw new RuntimeException("read nodes.xml config file error!", e);
     }
-    //todo: root may be null
     List<Dom> nodesDomList = root.elements("nodes");
 
     String id, conf;
@@ -39,6 +39,8 @@ public class QueryNode {
         NODES.add(new QueryNode(id, conf));
       }
     }
+
+    NODE_ARRAY = NODES.toArray(new QueryNode[NODES.size()]);
   }
 
   private String id;
@@ -61,15 +63,13 @@ public class QueryNode {
   }
   
   public static QueryNode[] getNodes(){
-    return NODES.toArray(new QueryNode[NODES.size()]);
+    return NODE_ARRAY;
   }
 
   public static void init() {
   }
 
   public QueryNode(String id, String conf) {
-    //todo: super call unnecessary
-    super();
     LOGGER.info("[DRILL-CLIENT]: " + id + " is trying to connect to server...");
     LOGGER.info(conf);
     this.id = id;
@@ -78,8 +78,8 @@ public class QueryNode {
       this.drillClient.connect();
       LOGGER.info("[DRILL-CLIENT]: " + id + " connected to server.");
     } catch (Exception e) {
-      //todo: throw exception
-      e.printStackTrace();
+      LOGGER.error(e.getMessage(), e);
+      throw new RuntimeException("connect to drillbit error!", e);
     }
   }
 
@@ -106,12 +106,7 @@ public class QueryNode {
 
     QueryNode queryNode = (QueryNode) o;
 
-    //todo: simplify return statement
-    if (!id.equals(queryNode.id)) {
-      return false;
-    }
-
-    return true;
+    return id.equals(queryNode.id);
   }
 
   @Override

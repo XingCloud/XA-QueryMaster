@@ -12,8 +12,7 @@ import org.apache.drill.exec.rpc.user.QueryResultBatch;
 import org.apache.drill.exec.vector.BigIntVector;
 import org.apache.drill.exec.vector.ValueVector;
 import org.apache.drill.exec.vector.VarCharVector;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import java.util.HashMap;
 import java.util.List;
@@ -21,7 +20,7 @@ import java.util.Map;
 
 public class RecordParser {
 
-  final static Logger logger = LoggerFactory.getLogger(RecordParser.class);
+  private static final Logger logger = Logger.getLogger(RecordParser.class);
 
   public static final String COL_COUNT = "count";
   public static final String COL_SUM = "sum";
@@ -36,7 +35,8 @@ public class RecordParser {
    * @param allocator
    * @return Map: queryID -> value. value的类型是：Map<String, Number[]> 包含count, sum, user_num, 以及一个采样率。
    */
-  public static Map<String, ResultTable> materializeRecords(List<QueryResultBatch> records, BufferAllocator allocator) throws Exception {
+  public static Map<String, ResultTable> materializeRecords(List<QueryResultBatch> records, BufferAllocator allocator)
+    throws XRemoteQueryException {
     Map<String, ResultTable> out = new HashMap<>();
     // Look at records
     RecordBatchLoader batchLoader = new RecordBatchLoader(allocator);
@@ -60,7 +60,7 @@ public class RecordParser {
       try {
         schemaChanged = batchLoader.load(batch.getHeader().getDef(), batch.getData());
       } catch (SchemaChangeException e) {
-        e.printStackTrace();  //e:
+        logger.error(e.getMessage(), e);
       }
 
       BigIntVector countVector = null, userNumVector = null, sumVector = null;
