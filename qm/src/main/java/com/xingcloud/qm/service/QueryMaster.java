@@ -107,6 +107,7 @@ public class QueryMaster implements QueryListener {
 
   public synchronized boolean submit(String cacheKey, LogicalPlan logicalPlan) throws XRemoteQueryException {
     if (!submitted.containsKey(cacheKey)) {
+      logger.info("Add " + cacheKey + " to queue.");
       enQueue(logicalPlan, cacheKey);
       return true;
     }
@@ -156,14 +157,19 @@ public class QueryMaster implements QueryListener {
     putProjectQueue(submission, projectID, id);
   }
 
-  private void putProjectQueue(QuerySubmission submittion, String projectID, String id) {
-    getProjectQueue(projectID).add(submittion);
+  private void putProjectQueue(QuerySubmission submission, String projectID, String id) {
+    Deque<QuerySubmission> projectQueue = getProjectQueue(projectID);
+    synchronized (projectQueue) {
+      projectQueue.add(submission);
+    }
   }
 
   private void putProjectQueue(List<QuerySubmission> submissions, String projectID) {
     logger.info("Submit " + submissions.size() + " to queue of " + projectID);
-    //todo: synchronization on queue or use blocking queue
-    getProjectQueue(projectID).addAll(submissions);
+    Deque<QuerySubmission> projectQueue = getProjectQueue(projectID);
+    synchronized (projectQueue) {
+      projectQueue.addAll(submissions);
+    }
   }
 
   private synchronized Deque<QuerySubmission> getProjectQueue(String projectID) {

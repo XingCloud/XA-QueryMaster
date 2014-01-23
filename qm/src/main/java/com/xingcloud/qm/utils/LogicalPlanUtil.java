@@ -40,7 +40,7 @@ import static org.apache.drill.common.util.Selections.*;
  * Time: 3:07 PM
  */
 public class LogicalPlanUtil {
-  public static Logger logger = Logger.getLogger(LogicalPlanUtil.class);
+  private static final Logger logger = Logger.getLogger(LogicalPlanUtil.class);
 
   public static String getTableName(Scan scan) {
     JsonNode jsonNode = scan.getSelection().getRoot();

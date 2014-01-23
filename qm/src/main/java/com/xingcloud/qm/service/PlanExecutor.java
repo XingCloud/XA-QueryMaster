@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class PlanExecutor {
 
-  private static final Logger logger = Logger.getLogger(LogicalPlanUtil.class);
+  private static final Logger logger = Logger.getLogger(PlanExecutor.class);
 
   private static final PlanExecutor instance = new PlanExecutor();
 
@@ -255,7 +255,7 @@ public class PlanExecutor {
       }
 
       for (QueryNode node : nodes) {
-        futures.add(drillBitExecutor.submit(new DrillbitCallable(planString, node)));
+        futures.add(drillBitExecutor.submit(new DrillbitCallable(planString, node, submission.id)));
       }
       logger.info("[PLAN-SUBMISSION] - All client submit their queries.");
 
@@ -314,10 +314,12 @@ public class PlanExecutor {
   private class DrillbitCallable implements Callable<List<QueryResultBatch>> {
     private final String plan;
     private final QueryNode node;
+    private final String submissionId;
 
-    public DrillbitCallable(String plan, QueryNode node) {
+    public DrillbitCallable(String plan, QueryNode node, String submissionId) {
       this.plan = plan;
       this.node = node;
+      this.submissionId = submissionId;
     }
 
     @Override
@@ -337,12 +339,10 @@ public class PlanExecutor {
         }
 
         long t2 = System.currentTimeMillis();
-        logger.info("Single node[" + node.getId() +
-          "] submit query on " + TimeUtil.getDatetime(t1) +
-          ", receive result on " + TimeUtil.getDatetime(t2) +
+        logger.info("[" + submissionId + "][" + node.getId() +
+          "] submit query at " + TimeUtil.getTime(t1) +
+          ", receive result at " + TimeUtil.getTime(t2) +
           ", cost " + (t2 - t1));
-//        logger.info("Single node[{}] submit query at {}, receive result at {}, cost {}.",
-//          node.getId(), TimeUtil.getDatetime(t1), TimeUtil.getDatetime(t2), (t2 - t1));
       } else {
         logger.error("Cannot connect to drillbit.");
       }

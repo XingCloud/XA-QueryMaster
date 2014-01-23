@@ -15,8 +15,8 @@ public class TimeUtil {
   public static final TimeZone TZ = TimeZone.getTimeZone(TIMEZONE);
 
 
-  public static String getDatetime(long timestamp) {
-    final SimpleDateFormat DF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+  public static String getTime(long timestamp) {
+    final SimpleDateFormat DF = new SimpleDateFormat("HH:mm:ss");
     DF.setTimeZone(TZ);
     Date date = new Date(timestamp);
     return DF.format(date);
@@ -25,9 +25,9 @@ public class TimeUtil {
 
   public static void main(String[] args) {
     long timestamp = System.currentTimeMillis();
-    System.out.println(getDatetime(timestamp));
+    System.out.println(getTime(timestamp));
     for (int i = 0; i < 100000; i++) {
-      getDatetime(timestamp);
+      getTime(timestamp);
     }
     System.out.println(System.currentTimeMillis() - timestamp);
   }
