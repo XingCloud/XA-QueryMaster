@@ -267,6 +267,13 @@ public class PlanExecutor {
           List<QueryResultBatch> batches = future.get();
           Map<String, ResultTable> ret = RecordParser.materializeRecords(batches, QueryNode.getAllocator());
           materializedResults.add(ret);
+
+          // release QueryResultBatch
+          for (QueryResultBatch queryResultBatch : batches) {
+            if (queryResultBatch.hasData()) {
+              queryResultBatch.getData().release();
+            }
+          }
         } catch (Exception e) {
           submission.e = e;
           submission.queryID2Table = null;
