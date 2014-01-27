@@ -4,7 +4,6 @@ line="############################################"
 code_home=/home/hadoop/git_project_home/XA-QueryMaster
 # Java home
 java_home=/usr/java/jdk1.7.0_25
-export JAVA_HOME=/usr/java/jdk1.7.0_25
 # Branch
 if [ "" = "$2" ]
 then
@@ -20,19 +19,19 @@ scripts_home=${code_home}/bin/
 port=$1
 aid=qm
 
-if [ "8181" = ${port} ];then
+if [ "8081" = ${port} ];then
   xa_env="production"
   # Tomcat home
-  tomcat_home=/home/hadoop/catalina/apache-tomcat-7.0.42.8181
+  tomcat_home=/home/hadoop/catalina/apache-tomcat-7.0.50.qm
 else
-  xa_env="pre_production"
+  xa_env="production"
   # Tomcat home
-  tomcat_home=/home/hadoop/catalina/apache-tomcat-7.0.42.8182
+  tomcat_home=/home/hadoop/catalina/apache-tomcat-7.0.50.qm
 fi
 
 echo "[CHECK-POINT] - Begin deploying data driller web interface."
 echo ${line}
-echo "[JAVA-HOME] - "${JAVA_HOME}
+echo "[JAVA-HOME] - "${java_home}
 echo "[CODE-HOME] - "${code_home}
 echo "[TOMCAT] - "${tomcat_home}
 echo "[XA_ENV] - "${xa_env}
