@@ -4,6 +4,7 @@ line="############################################"
 code_home=/home/hadoop/git_project_home/XA-QueryMaster
 # Java home
 java_home=/usr/java/jdk1.7.0_45
+export JAVA_HOME=${java_home}
 # Branch
 if [ "" = "$2" ]
 then
