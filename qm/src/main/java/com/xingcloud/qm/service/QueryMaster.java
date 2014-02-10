@@ -339,7 +339,12 @@ public class QueryMaster implements QueryListener {
           for (String basicQueryID : planSubmission.queryID2Table.keySet()) {
             ResultTable value = materializedRecords.get(basicQueryID);
             BasicQuerySubmission basicSubmission = (BasicQuerySubmission) submitted.get(basicQueryID);
+            if(basicSubmission==null){
+              logger.info("basicQueryId--"+basicQueryID+" does not exists in submitted");
+              continue;
+            }
             basicSubmission.value = value;
+
             if (value == null) {
               //Drill-bit 返回empty set
               logger.info("PlanSubmission: {} completed with empty result.", basicQueryID);
