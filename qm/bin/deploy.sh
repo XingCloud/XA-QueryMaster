@@ -31,11 +31,9 @@ fi
 
 #XA_ENV
 xa_env=$3
-if [ "" = ${xa_env}]
+if [ "" = ${xa_env} ]
 then
     xa_env="test"
-else
-    xa_env="pre_production"
 fi
 echo "[CHECK-POINT] - Begin deploying data driller web interface."
 echo ${line}
