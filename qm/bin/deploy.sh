@@ -23,10 +23,10 @@ aid=qm
 if [ "8181" = ${port} ];then
   xa_env="production"
   # Tomcat home
-  tomcat_home=/home/hadoop/catalina/apache-tomcat-7.0.42.8181
+  tomcat_home=/home/hadoop/catalina/apache-tomcat-7.0.47.8181
 else
   # Tomcat home
-  tomcat_home=/home/hadoop/catalina/apache-tomcat-7.0.42.8182
+  tomcat_home=/home/hadoop/catalina/apache-tomcat-7.0.47.8182
 fi
 
 #XA_ENV
