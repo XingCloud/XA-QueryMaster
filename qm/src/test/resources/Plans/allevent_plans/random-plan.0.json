@@ -4,19 +4,19 @@
     version : 1,
     generator : {
       type : "AUTO",
-      info : "sof-dsk"
+      info : "age"
     }
   },
   storage : { },
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "deu_sof-dsk,2013-10-08,2013-10-08,visit.*",
+    memo : "deu_age,2014-01-07,2013-01-08,visit.*",
     storageengine : "hbase",
     selection : [ {
-      table : "deu_sof-dsk",
+      table : "deu_age",
       filter : {
-        expression : " ( (date)  == ('20131008') )  && ( (event0)  == ('visit') ) "
+        expression : " ( (date)  == ('20140105') )  && ( (event1)  == ('pri') ) "
       },
       projections : [ {
         ref : "uid",
@@ -25,9 +25,21 @@
         ref : "value",
         expr : "value"
       } ]
-    } ],
-    ref : "event"
-  }, {
+    },{
+      table : "deu_age",
+      filter : {
+        expression : "  ( (date)  == ('20140106') )  && ( (event1)  == ('heartbeat') )  "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }]
+    },
+    {
     op : "collapsingaggregate",
     @id : 2,
     input : 1,
@@ -50,7 +62,7 @@
     input : 2,
     projections : [ {
       ref : "query_id",
-      expr : "'COMMON,sof-dsk,2013-10-08,2013-10-08,visit.*,TOTAL_USER,VF-ALL-0-0,PERIOD'"
+      expr : "'COMMON,age,2014-01-07,2014-01-08,visit.*,TOTAL_USER,VF-ALL-0-0,PERIOD'"
     }, {
       ref : "count",
       expr : "count"
