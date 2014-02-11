@@ -3,8 +3,8 @@ line="############################################"
 # Code base
 code_home=/home/hadoop/git_project_home/XA-QueryMaster
 # Java home
-java_home=/usr/java/jdk1.7.0_45
-export JAVA_HOME=/usr/java/jdk1.7.0_45
+java_home=/usr/java/jdk1.7.0_25
+export JAVA_HOME=/usr/java/jdk1.7.0_25
 # Branch
 if [ "" = "$2" ]
 then
@@ -19,22 +19,17 @@ scripts_home=${code_home}/bin/
 # tomcat port
 port=$1
 aid=qm
-#PORT
+
 if [ "8181" = ${port} ];then
   xa_env="production"
   # Tomcat home
-  tomcat_home=/home/hadoop/catalina/apache-tomcat-7.0.47.8181
+  tomcat_home=/home/hadoop/catalina/apache-tomcat-7.0.42.8181
 else
+  xa_env="pre_production"
   # Tomcat home
-  tomcat_home=/home/hadoop/catalina/apache-tomcat-7.0.47.8182
+  tomcat_home=/home/hadoop/catalina/apache-tomcat-7.0.42.8182
 fi
 
-#XA_ENV
-xa_env=$3
-if [ "" = ${xa_env} ]
-then
-    xa_env="test"
-fi
 echo "[CHECK-POINT] - Begin deploying data driller web interface."
 echo ${line}
 echo "[JAVA-HOME] - "${JAVA_HOME}
