@@ -461,6 +461,7 @@ public class QueryMaster implements QueryListener {
       } catch (Throwable e) {
           e.printStackTrace();
           int size = 0;
+          //clear querySubmission from submitted.
           for (QuerySubmission submission : pickedSubmissions) {
             if (submission instanceof PlanSubmission) {
               for (String qID : ((PlanSubmission) submission).queryIdToPlan.keySet()) {
@@ -472,6 +473,10 @@ public class QueryMaster implements QueryListener {
               size++;
             }
           }
+          // executing and executing for the pid both decrement.
+          // because before mergeAndSubmit the executing and executing for the pid has increase by one.
+          executing.decrementAndGet();
+          perProjectExecuting.get(pID).decrementAndGet();
           logger.error("Submit logical plan failure! Picked submission size: " + size);
         }
       }
