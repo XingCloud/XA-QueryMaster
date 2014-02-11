@@ -13,15 +13,13 @@ import com.xingcloud.qm.result.ResultTable;
 import com.xingcloud.qm.utils.LogicalPlanUtil;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.logical.LogicalPlan;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,12 +27,17 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
-* 接收前端提交的plan，由QueryMaster控制查询的队列。 - 不接受已经提交、且正在查询的的重复query。 - 控制集群正在进行的查询计算量。 - 控制单个项目正在进行的查询数。 - 提交的查询请求进行排序，合并。 -
-* 监控查询的完成状况，填到cache里面去。
+ * 接收前端提交的plan，
+ * - 由QueryMaster控制查询的队列。
+ * - 不接受已经提交、且正在查询的的重复query。
+ * - 控制集群正在进行的查询计算量。
+ * - 控制单个项目正在进行的查询数。
+ * - 提交的查询请求进行排序，合并。
+ * - 监控查询的完成状况，填到cache里面去。
 */
 public class QueryMaster implements QueryListener {
 
-  static Logger logger = LoggerFactory.getLogger(QueryMaster.class);
+  private static final Logger logger = Logger.getLogger(QueryMaster.class);
 
   //同时最多允许多少个plan执行
   public static int MAX_PLAN_EXECUTING = 8;
@@ -56,11 +59,13 @@ public class QueryMaster implements QueryListener {
 
   /**
    * 所有已经提交的任务。 由QueryMaster写入和删除。
+   * cache key --> query submission
    */
   public Map<String, QuerySubmission> submitted = new ConcurrentHashMap<String, QuerySubmission>();
 
   /**
    * 对每个项目，正在执行的查询的计数。
+   * project name --> query count
    */
   public Map<String, AtomicInteger> perProjectExecuting = new ConcurrentHashMap<String, AtomicInteger>();
 
@@ -71,6 +76,7 @@ public class QueryMaster implements QueryListener {
 
   /**
    * 每个project所提交的任务队列。 由QueryMaster写入，由Scheduler取出。
+   * project name --> query submission queue
    */
   public Map<String, Deque<QuerySubmission>> perProjectSubmitted = new ConcurrentHashMap<>();
 
@@ -101,6 +107,7 @@ public class QueryMaster implements QueryListener {
 
   public synchronized boolean submit(String cacheKey, LogicalPlan logicalPlan) throws XRemoteQueryException {
     if (!submitted.containsKey(cacheKey)) {
+      logger.info("Add " + cacheKey + " to queue.");
       enQueue(logicalPlan, cacheKey);
       return true;
     }
@@ -128,7 +135,7 @@ public class QueryMaster implements QueryListener {
     if (submissions.size() > 0) {
       putProjectQueue(submissions, pID);
     }
-    return submissions.size() > 0 ? true : false;
+    return submissions.size() > 0;
   }
 
   public Set<LogicalPlan> getQueuePlans() {
@@ -150,18 +157,25 @@ public class QueryMaster implements QueryListener {
     putProjectQueue(submission, projectID, id);
   }
 
-  private void putProjectQueue(QuerySubmission submittion, String projectID, String id) {
-    getProjectQueue(projectID).add(submittion);
+  private void putProjectQueue(QuerySubmission submission, String projectID, String id) {
+    Deque<QuerySubmission> projectQueue = getProjectQueue(projectID);
+    synchronized (projectQueue) {
+      projectQueue.add(submission);
+    }
   }
 
   private void putProjectQueue(List<QuerySubmission> submissions, String projectID) {
     logger.info("Submit " + submissions.size() + " to queue of " + projectID);
-    getProjectQueue(projectID).addAll(submissions);
+    Deque<QuerySubmission> projectQueue = getProjectQueue(projectID);
+    synchronized (projectQueue) {
+      projectQueue.addAll(submissions);
+    }
   }
 
   private synchronized Deque<QuerySubmission> getProjectQueue(String projectID) {
     Deque<QuerySubmission> projectPlans = perProjectSubmitted.get(projectID);
     if (projectPlans == null) {
+      //todo: ArrayDeque does not automatically shrink?
       projectPlans = new ArrayDeque<>();
       perProjectSubmitted.put(projectID, projectPlans);
     }
@@ -172,7 +186,7 @@ public class QueryMaster implements QueryListener {
   public void onQueryResultReceived(String queryID, QuerySubmission query) {
     if (query instanceof BasicQuerySubmission) {
       //修改submitted 记录
-      logger.info("BasicQuerySubmission {} completed.", queryID);
+      logger.info("BasicQuerySubmission " + queryID + " completed.");
       BasicQuerySubmission basicQuery = (BasicQuerySubmission) query;
       if (!submitted.containsKey(queryID)) {
         throw new IllegalArgumentException("queryID:" + queryID + " not in submitted pool!");
@@ -183,7 +197,7 @@ public class QueryMaster implements QueryListener {
         if (USING_CACHE) {
           try {
             RedisXCacheOperator.getInstance().putExceptionCache(queryID);
-            logger.info("[X-CACHE] - Exception placeholder of {} has been added to main cache.", key);
+            logger.info("[X-CACHE] - Exception placeholder of " + key + " has been added to main cache.");
           } catch (XCacheException e) {
             e.printStackTrace();
           }
@@ -192,7 +206,7 @@ public class QueryMaster implements QueryListener {
         logger.info("basicQuery Result");
         MapXCache xCache = null;
         if (((BasicQuerySubmission) query).value.isEmpty()) {
-          logger.info("[X-CACHE] - Result of {} is empty", key);
+          logger.info("[X-CACHE] - Result of " + key + " is empty.");
           try {
             xCache = MapXCache.buildMapXCache(key, null);
           } catch (XCacheException e) {
@@ -216,7 +230,7 @@ public class QueryMaster implements QueryListener {
         if (USING_CACHE) {
           try {
             RedisXCacheOperator.getInstance().putMapCache(xCache);
-            logger.info("[X-CACHE] - Result of {} has been added to main cache.", key);
+            logger.info("[X-CACHE] - Result of " + key + "has been added to main cache.");
           } catch (XCacheException e) {
             e.printStackTrace();
           }
@@ -232,7 +246,7 @@ public class QueryMaster implements QueryListener {
 
   class Scheduler extends Thread implements QueryListener {
 
-    private boolean stop = false;
+    private volatile boolean stop = false;
 
     private DrillConfig config;
 
@@ -253,16 +267,17 @@ public class QueryMaster implements QueryListener {
     public void run() {
       logger.info("QueryMaster scheduler starting...");
       while (!stop) {
-        try {
-          Thread.sleep(100);
-        } catch (InterruptedException e) {
-          continue;
+        if (executing.intValue() >= MAX_PLAN_EXECUTING || submitted.size() == 0) {
+          //正在执行的plan个数达到最大值 或者 没有查询任务
+          try {
+            Thread.sleep(100);
+          } catch (InterruptedException iex) {
+            continue;
+          }
         }
-        if (executing.intValue() >= MAX_PLAN_EXECUTING //到达最大执行上限
-          || submitted.size() == 0) { //无任务可以提交
-          continue;
-        }
+
         for (Map.Entry<String, Deque<QuerySubmission>> entry : perProjectSubmitted.entrySet()) {
+          //to control total executing plans
           if (executing.intValue() >= MAX_PLAN_EXECUTING) { //到达最大执行上限
             break;
           }
@@ -281,6 +296,7 @@ public class QueryMaster implements QueryListener {
       logger.info("QueryMaster scheduler exiting...");
     }
 
+    //todo: this method should belong to MergeAndSubmit
     private void doSubmitExecution(PlanSubmission plan) {
       PlanExecutor.getInstance().executePlan(plan, Scheduler.this);
     }
@@ -317,7 +333,7 @@ public class QueryMaster implements QueryListener {
 
         // 分发数据
         if (planSubmission.e != null || planSubmission.getValues() == null || (planSubmission.getValues().size() == 0 && planSubmission.allFinish)) {
-          logger.info("PlanSubmission: {} completed.", queryID);
+          logger.info("PlanSubmission " + queryID + " completed.");
           //出错处理
           for (String basicQueryID : planSubmission.queryIdToPlan.keySet()) {
             if (planSubmission.finishedIDSet.contains(basicQueryID)) {
@@ -330,7 +346,7 @@ public class QueryMaster implements QueryListener {
             if (basicSubmission.e == null) {
               basicSubmission.value = new ResultTable();
               basicSubmission.value.put("XA-NA", new ResultRow(0, 0, 0));
-              logger.info("PlanSubmission: {} completed with empty result.", basicQueryID);
+              logger.info("PlanSubmission " + basicQueryID + " completed with empty result.");
             }
             QueryMaster.this.onQueryResultReceived(basicQueryID, basicSubmission);
           }
@@ -347,7 +363,7 @@ public class QueryMaster implements QueryListener {
 
             if (value == null) {
               //Drill-bit 返回empty set
-              logger.info("PlanSubmission: {} completed with empty result.", basicQueryID);
+              logger.info("PlanSubmission " + basicQueryID + "completed with empty result.");
               basicSubmission.value = new ResultTable();
               basicSubmission.value.put("XA-NA", new ResultRow(0, 0, 0));
             }
@@ -361,7 +377,7 @@ public class QueryMaster implements QueryListener {
               BasicQuerySubmission basicSubmission = (BasicQuerySubmission) submitted.get(basicQueryID);
               basicSubmission.value = new ResultTable();
               basicSubmission.value.put("XA-NA", new ResultRow(0, 0, 0));
-              logger.info("PlanSubmission: {} completed with empty result.", basicQueryID);
+              logger.info("PlanSubmission " + basicQueryID + " completed with empty result.");
               QueryMaster.this.onQueryResultReceived(basicQueryID, basicSubmission);
             }
           }
@@ -401,6 +417,8 @@ public class QueryMaster implements QueryListener {
         List<QuerySubmission> pickedSubmissions = new ArrayList<>();
         List<LogicalPlan> pickedPlans = new ArrayList<>();
         int totalCost = 0;
+
+        //cache key --> logical plan
         Map<String, LogicalPlan> id2Origin = new HashMap<>();
         for (int i = 0; projectSubmissions.size() > 0 && i < MAX_BATCHMERGE && totalCost < MAX_BATCHCOST; i++) {
           QuerySubmission submission = projectSubmissions.pollFirst();
@@ -412,11 +430,12 @@ public class QueryMaster implements QueryListener {
           }
         }
 
-        Map<LogicalPlan, LogicalPlan> origin2Merged = null;
         try {
-          origin2Merged = PlanMerge.sortAndMerge(pickedPlans, scheduler.config);
+          // original plan --> merged plan
+          Map<LogicalPlan, LogicalPlan> origin2Merged = PlanMerge.sortAndMerge(pickedPlans, scheduler.config);
 
           //建立合并后的plan和原始用户提交的BasicQuerySubmission之间的对应关系
+          // merged plan --> plan submission ?
           Map<LogicalPlan, PlanSubmission> mergedPlan2Submissions = new HashMap<>();
           for (int i = 0; i < pickedSubmissions.size(); i++) {
             QuerySubmission submission = pickedSubmissions.get(i);
@@ -438,7 +457,7 @@ public class QueryMaster implements QueryListener {
                 mergedPlan2Submissions.put(to, mergedSubmission);
               }
               //mark submission merge
-              (mergedSubmission).absorbIDCost(submission);
+              mergedSubmission.absorbIDCost(submission);
               if (submission instanceof PlanSubmission) {
                 logger.warn("Plan has already been merged... " + ((PlanSubmission) submission).projectID + "\t" + submission.id);
                 //之前已经merge过的plan
@@ -452,13 +471,10 @@ public class QueryMaster implements QueryListener {
             }
           }
 
-          Iterator<PlanSubmission> mergedSubmissions = mergedPlan2Submissions.values().iterator();
-          while (mergedSubmissions.hasNext()) {
-            PlanSubmission plan = mergedSubmissions.next();
+          for (PlanSubmission plan : mergedPlan2Submissions.values()) {
             scheduler.doSubmitExecution(plan);
           }
-
-      } catch (Throwable e) {
+        } catch (Throwable e) {
           e.printStackTrace();
           int size = 0;
           //clear querySubmission from submitted.

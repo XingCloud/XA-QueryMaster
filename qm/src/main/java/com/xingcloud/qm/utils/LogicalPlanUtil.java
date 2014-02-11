@@ -1,27 +1,25 @@
 package com.xingcloud.qm.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.xingcloud.events.XEventException;
 import com.xingcloud.events.XEventOperation;
 import com.xingcloud.events.XEventRange;
-import com.xingcloud.qm.service.LOPComparator;
-import com.xingcloud.qm.service.PlanMerge.*;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.xingcloud.meta.ByteUtils;
+import com.xingcloud.qm.exceptions.XQueryMasterException;
+import com.xingcloud.qm.service.LOPComparator;
+import com.xingcloud.qm.service.PlanMerge.ScanWithPlan;
 import com.xingcloud.qm.service.PlanSubmission;
 import org.apache.drill.common.JSONOptions;
-import org.apache.drill.common.PlanProperties;
 import org.apache.drill.common.config.DrillConfig;
-import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.apache.drill.common.expression.*;
 import org.apache.drill.common.graph.AdjacencyList;
 import org.apache.drill.common.graph.Edge;
-import org.apache.drill.common.graph.GraphAlgos;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.common.logical.data.*;
 import org.apache.drill.common.util.Selections;
@@ -32,30 +30,24 @@ import org.apache.log4j.Logger;
 import java.io.IOException;
 import java.util.*;
 
-import static org.apache.drill.common.util.DrillConstants.*;
+import static org.apache.drill.common.util.DrillConstants.SE_HBASE;
 import static org.apache.drill.common.util.Selections.*;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY_END;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY_START;
 
 /**
  * Created with IntelliJ IDEA.
  * User: yb
  * Date: 8/30/13
  * Time: 3:07 PM
- * To change this template use File | Settings | File Templates.
  */
 public class LogicalPlanUtil {
-  public static Logger logger = Logger.getLogger(LogicalPlanUtil.class);
+  private static final Logger logger = Logger.getLogger(LogicalPlanUtil.class);
 
-  public static String getTableName(Scan scan) throws Exception {
-    try {
-      if (scan.getSelection().getRoot() instanceof ArrayNode) {
-        return scan.getSelection().getRoot().get(0).get(SELECTION_KEY_WORD_TABLE).asText();
-      } else {
-        return scan.getSelection().getRoot().get(SELECTION_KEY_WORD_TABLE).asText();
-      }
-    } catch (Exception e) {
-      throw new Exception(e);
+  public static String getTableName(Scan scan) {
+    JsonNode jsonNode = scan.getSelection().getRoot();
+    if (jsonNode instanceof ArrayNode) {
+      return jsonNode.get(0).get(SELECTION_KEY_WORD_TABLE).asText();
+    } else {
+      return jsonNode.get(SELECTION_KEY_WORD_TABLE).asText();
     }
   }
 
@@ -146,49 +138,22 @@ public class LogicalPlanUtil {
   }
 
   public static String getEventFilter(Map<String, UnitFunc> fieldFunc) {
-    StringBuilder eventFilter = new StringBuilder();
-    UnitFunc uf = fieldFunc.get(QueryMasterConstant.EVENT0);
-    if (uf != null) {
-      eventFilter.append(uf.getValue());
-    } else {
-      eventFilter.append("*");
+    StringBuilder stringBuilder = new StringBuilder();
+
+    for (int i = 0; i < QueryMasterConstant.EVENT_ARRAY.length; i++) {
+      UnitFunc uf = fieldFunc.get(QueryMasterConstant.EVENT_ARRAY[i]);
+      if (uf != null) {
+        stringBuilder.append(uf.getValue());
+      } else {
+        stringBuilder.append("*");
+      }
+
+      if (i != QueryMasterConstant.EVENT_ARRAY.length - 1) {
+        stringBuilder.append(".");
+      }
     }
-    eventFilter.append(".");
-    uf = fieldFunc.get(QueryMasterConstant.EVENT1);
-    if (uf != null) {
-      eventFilter.append(uf.getValue());
-    } else {
-      eventFilter.append("*");
-    }
-    eventFilter.append(".");
-    uf = fieldFunc.get(QueryMasterConstant.EVENT2);
-    if (uf != null) {
-      eventFilter.append(uf.getValue());
-    } else {
-      eventFilter.append("*");
-    }
-    eventFilter.append(".");
-    uf = fieldFunc.get(QueryMasterConstant.EVENT3);
-    if (uf != null) {
-      eventFilter.append(uf.getValue());
-    } else {
-      eventFilter.append("*");
-    }
-    eventFilter.append(".");
-    uf = fieldFunc.get(QueryMasterConstant.EVENT4);
-    if (uf != null) {
-      eventFilter.append(uf.getValue());
-    } else {
-      eventFilter.append("*");
-    }
-    eventFilter.append(".");
-    uf = fieldFunc.get(QueryMasterConstant.EVENT5);
-    if (uf != null) {
-      eventFilter.append(uf.getValue());
-    } else {
-      eventFilter.append("*");
-    }
-    return eventFilter.toString();
+
+    return stringBuilder.toString();
   }
 
   public static Map<String, UnitFunc> parseFilterExpr(JsonNode origExpr, DrillConfig config) throws IOException {
@@ -799,22 +764,25 @@ public class LogicalPlanUtil {
       }
     }
     operators.removeAll(originScan);
+    logger.info("split merged plan's UnionedScan finished.");
     LogicalPlan newPlan = new LogicalPlan(plan.getProperties(), plan.getStorageEngines(), operators);
     return newPlan;
   }
 
   public static LogicalPlan copyPlan(LogicalPlan plan) {
     LogicalPlan copy = null;
+    //todo: 传入drill config
     DrillConfig c = DrillConfig.create();
     String planJson = null;
     try {
       planJson = plan.toJsonString(c);
       copy = c.getMapper().readValue(planJson, LogicalPlan.class);
     } catch (JsonProcessingException e) {
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+      logger.error(e.getMessage(), e);
     } catch (IOException e) {
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+      logger.error(e.getMessage(), e);
     }
+    //todo: may return null
     return copy;
   }
 
@@ -828,6 +796,7 @@ public class LogicalPlanUtil {
 
   public static List<Integer> generateSapmleList(String pID, Set<String> eventPatterns) throws XEventException {
     long st = System.nanoTime();
+    //todo: why 240w?
     long oneBucketCount = 2400000;
     Map<String, Long> avgMap = XEventOperation.getInstance().getAvgCountOfEachEvent(pID, eventPatterns);
     List<Integer> initSampleList = new ArrayList<>();
@@ -854,6 +823,7 @@ public class LogicalPlanUtil {
     //防止预测的扫描桶数都不满足人数阈值，增加全扫桶数
     sampleSet.add(256);
     //获得增量采样序列
+    //todo: 这个转换写成一个方法
     for (int initBucket : sampleSet) {
       initSampleList.add(initBucket);
     }
@@ -873,12 +843,13 @@ public class LogicalPlanUtil {
     return incrementSample;
   }
 
-  public static Set<String> getEventPatterns(PlanSubmission submission) {
+  public static Set<String> getEventPatterns(PlanSubmission submission) throws XQueryMasterException {
     Set<String> eventPatterns = new HashSet<>();
     for (String qid : submission.queryIdToPlan.keySet()) {
       String[] fields = qid.split(",");
       if (fields.length < 5) {
-        throw new DrillRuntimeException("Cache key is invalid!. " + qid);
+        logger.error("Cache key is invalid! " + qid);
+        throw new XQueryMasterException("Cache key is invalid! " + qid);
       }
       eventPatterns.add(fields[4]);
     }

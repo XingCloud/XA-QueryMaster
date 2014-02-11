@@ -1,11 +1,8 @@
 package com.xingcloud.qm.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xingcloud.qm.result.ResultTable;
-import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.logical.LogicalPlan;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;

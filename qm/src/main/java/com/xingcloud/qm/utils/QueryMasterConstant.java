@@ -28,6 +28,8 @@ public class QueryMasterConstant {
   public static final String EVENT3 = "event3";
   public static final String EVENT4 = "event4";
   public static final String EVENT5 = "event5";
+  //必须保持这种顺序
+  public static final String[] EVENT_ARRAY = {EVENT0, EVENT1, EVENT2, EVENT3, EVENT4, EVENT5};
 
   public static final String DATE = "date";
   public static final String MIN_UID = "\\x00\\x00\\x00\\x00\\x00";

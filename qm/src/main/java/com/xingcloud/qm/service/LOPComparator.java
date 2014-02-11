@@ -35,11 +35,7 @@ public abstract class LOPComparator<T extends LogicalOperator> implements Compar
       return false;
     }
     LOPComparator c = comparators.get(clz);
-    if(c == null){
-      return false;
-    }
-    return c.compare(op1, op2) == 0;
-    
+    return c != null && c.compare(op1, op2) == 0;
   }
 
   @Override
@@ -77,6 +73,7 @@ public abstract class LOPComparator<T extends LogicalOperator> implements Compar
           return -1;
         }
       }
+      //todo: what about union's property: distinct?
       return 0;
     }
   }
@@ -118,6 +115,7 @@ public abstract class LOPComparator<T extends LogicalOperator> implements Compar
   private static class LimitComparator extends LOPComparator<Limit> {
     @Override
     public int compare(Limit o1, Limit o2) {
+      //todo: no implementation?
       return -1;
     }
   }
@@ -150,15 +148,16 @@ public abstract class LOPComparator<T extends LogicalOperator> implements Compar
   private static class ScanComparator extends LOPComparator<Scan> {
     @Override
     public int compare(Scan o1, Scan o2) {
-        try {
-            if(LogicalPlanUtil.getTableName(o1).equals(LogicalPlanUtil.getTableName(o2))
-                  && o1.getSelection().equals(o2.getSelection())){
-              return 0;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-        }
+      if (!LogicalPlanUtil.getTableName(o1).equals(LogicalPlanUtil.getTableName(o2))){
         return -1;
+      }
+
+      if (!o1.getSelection().equals(o2.getSelection())) {
+        return -1;
+      }
+      //todo: what about storage engine property?
+
+      return 0;
     }
   }
 
@@ -168,8 +167,9 @@ public abstract class LOPComparator<T extends LogicalOperator> implements Compar
       if(0!=comparators.get(SingleInputOperator.class).compare(o1, o2)){
         return -1;
       }
-      if(o1.getExprs() != null ? o1.getExprs().equals(o2.getExprs()): o2.getExprs() != null) return -1;
-      if(o1.getName() != null? o1.getName().equals(o2.getName()): o2.getName() != null) return -1;
+
+      if(!Arrays.equals(o1.getExprs(), o2.getExprs())) return -1;
+      if(o1.getName() != null? !o1.getName().equals(o2.getName()): o2.getName() != null) return -1;
       return 0;
     }
   }

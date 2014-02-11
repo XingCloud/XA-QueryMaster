@@ -23,7 +23,7 @@ public class QueryBossServlet extends HessianServlet implements Submit {
   public boolean submit(String cacheKey, String content, SubmitQueryType type) throws XRemoteQueryException {
     switch (type) {
       case SQL:
-        LOGGER.info("[WS-SUBMIT] Current type(" + type + ") of operation is not supported.");
+        LOGGER.warn("[WS-SUBMIT] Current type(" + type + ") of operation is not supported.");
         return false;
       case PLAN:
         try {
@@ -49,7 +49,7 @@ public class QueryBossServlet extends HessianServlet implements Submit {
   public boolean submitBatch(Map<String, String> batch, SubmitQueryType type) throws XRemoteQueryException {
     switch (type) {
       case SQL:
-        LOGGER.info("[WS-SUBMIT] Current type(" + type + ") of operation is not supported.");
+        LOGGER.warn("[WS-SUBMIT] Current type(" + type + ") of operation is not supported.");
         return false;
       case PLAN:
         LogicalPlan plan;

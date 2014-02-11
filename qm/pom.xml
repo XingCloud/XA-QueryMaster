@@ -44,7 +44,6 @@
                 <directory>${project.basedir}/src/main/resources/${xa_env}/</directory>
             </resource>
         </resources>
-
         <pluginManagement>
             <plugins>
                 <plugin>

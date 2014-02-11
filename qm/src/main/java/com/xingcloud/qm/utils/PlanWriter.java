@@ -2,8 +2,7 @@ package com.xingcloud.qm.utils;
 
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.logical.LogicalPlan;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -13,17 +12,16 @@ import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.
  * User: Wang Yufei
  * Date: 13-9-27
  * Time: 下午1:46
- * To change this template use File | Settings | File Templates.
  */
 public class PlanWriter {
-  private static Logger logger = LoggerFactory.getLogger(PlanWriter.class);
+
+  private static final Logger logger = Logger.getLogger(PlanWriter.class);
 
   private static final String basePath = "/data/log/plans/";
   private final SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd-hhmmss");
