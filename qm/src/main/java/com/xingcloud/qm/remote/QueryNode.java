@@ -83,10 +83,6 @@ public class QueryNode {
       LOGGER.error(e.getMessage(), e);
       throw new RuntimeException("connect to drillbit error!", e);
     }
-    if(this.drillClient.isActive())
-      connectionState=ConnectionState.active;
-    else
-      connectionState=ConnectionState.disconnection;
   }
 
   public String getId() {
