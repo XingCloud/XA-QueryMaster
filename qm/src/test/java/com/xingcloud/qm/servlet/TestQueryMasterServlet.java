@@ -24,7 +24,7 @@ public class TestQueryMasterServlet {
 
   @Test
   public void test() throws URISyntaxException, IOException, ClassNotFoundException, XRemoteQueryException {
-    String file = "/Plans/allevent_plans/random-plan.0.json";
+    String file = "/Plans/allevent_plans/random-plan.2.json";
     File realFile= FileUtils.getResourceAsFile(file);
     StringBuilder sb;
     String line, plan;
@@ -44,7 +44,8 @@ public class TestQueryMasterServlet {
     URI uri = builder.build();
     Submit service = (Submit) FACTORY.create(uri.toString());
     String key = RandomStringUtils.randomAlphanumeric(5);
-    key="'COMMON,age,2014-01-07,2014-01-08,visit.*,TOTAL_USER,VF-ALL-0-0,PERIOD'";
+    key="GROUP,age,2014-01-11,2014-01-12,pay.*,TOTAL_USER,VF-ALL-0-0,EVENT_VAL";
+    //key="COMMON,age,2014-01-08,2014-01-08,*.*,TOTAL_USER,VF-ALL-0-0,PERIOD";
     Submit.SubmitQueryType type = Submit.SubmitQueryType.PLAN;
     if (service.submit(key, plan, type)) {
       System.out.println("Submit ok - " + key);

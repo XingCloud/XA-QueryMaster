@@ -61,59 +61,36 @@
      },{
         ref : "perUidsum" ,
         expr : "sum(value)"
+     },{
+        ref : "count_uid"  ,
+        expr : "count(uid)"
      }]
    },
    {
-    op : "segment",
+    op : "project",
     @id : 4,
     input : 3,
-    exprs : [ {
-      ref : "dimension" ,
-      expr : "perUidSum"
-    } ],
-    name : "sgmt"
-  }, {
-    op : "collapsingaggregate",
-    @id : 5,
-    input : 4,
-    within : "sgmt",
-    target : null,
-    carryovers : [ "dimension" ],
-    aggregations : [ {
-      ref : "count",
-      expr : "count(uid) "
-    }, {
-      ref : "user_num",
-      expr : "count_distinct(uid) "
-    }, {
-      ref : "sum",
-      expr : "sum(perUidsum)"
-    } ]
-  }, {
-    op : "project",
-    @id : 6,
-    input : 5,
     projections : [ {
       ref : "query_id",
-      expr : "'GROUP,age,2014-01-10,2014-01-11,pay.*,TOTAL_USER,VF-ALL-0-0,EVENT_VAL'"
+      expr : "'GROUP,age,2014-01-11,2014-01-12,pay.*,TOTAL_USER,VF-ALL-0-0,EVENT_VAL'"
     }, {
       ref : "dimension",
-      expr : "dimension"
+      expr : "dimension_uid"
     }, {
       ref : "count",
-      expr : "count"
+      expr : "count_uid"
     }, {
       ref : "user_num",
-      expr : "user_num"
+      expr : "1"
     }, {
       ref : "sum",
-      expr : "sum"
+      expr : "perUidsum"
     } ]
   },
   {
     op : "store",
-    @id : 7,
-    input : 6,
+    @id : 5,
+    input : 4,
     target : null,
     partition : null,
     storageEngine : "DEFAULT-STORE"

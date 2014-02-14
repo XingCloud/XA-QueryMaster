@@ -4,19 +4,19 @@
     version : 1,
     generator : {
       type : "AUTO",
-      info : "sof-dsk"
+      info : "age"
     }
   },
   storage : { },
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "deu_sof-dsk,2013-10-08,2013-10-08,*.*",
+    memo : "deu_age,2014-01-08,204-01-08,*.*",
     storageengine : "hbase",
     selection : [ {
-      table : "deu_sof-dsk",
+      table : "deu_age",
       filter : {
-        expression : " (date)  == ('20131008') "
+        expression : " (date)  == ('20140108') "
       },
       projections : [ {
         ref : "uid",
@@ -50,7 +50,7 @@
     input : 2,
     projections : [ {
       ref : "query_id",
-      expr : "'COMMON,sof-dsk,2013-10-08,2013-10-08,*.*,TOTAL_USER,VF-ALL-0-0,PERIOD'"
+      expr : "'COMMON,age,2014-01-08,2014-01-08,*.*,TOTAL_USER,VF-ALL-0-0,PERIOD'"
     }, {
       ref : "count",
       expr : "count"
