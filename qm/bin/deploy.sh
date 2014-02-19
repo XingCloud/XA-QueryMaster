@@ -57,6 +57,7 @@ fi
 
 echo ${line}
 echo "[CHECK-POINT] - Packaging."
+export JAVA_HOME=${java_bin}
 mvn -f ${code_home}/qm/pom.xml clean package -Dxa_env=${xa_env} -DskipTests=true
 
 echo "[CHECK-POINT] - Shutdown tomcat."

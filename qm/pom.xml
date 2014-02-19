@@ -51,9 +51,9 @@
           <artifactId>maven-compiler-plugin</artifactId>
           <configuration>
             <verbose>true</verbose>
-            <executable>/usr/java/jdk1.7.0_25/bin/javac</executable>
-            <!--<source>1.7</source>-->
-            <!--<target>1.7</target>-->
+            <!--<executable>/usr/java/jdk1.7.0_25/bin/javac</executable>-->
+            <source>1.7</source>
+            <target>1.7</target>
           </configuration>
         </plugin>
         <plugin>
