@@ -355,7 +355,12 @@ public class QueryMaster implements QueryListener {
           for (String basicQueryID : planSubmission.queryID2Table.keySet()) {
             ResultTable value = materializedRecords.get(basicQueryID);
             BasicQuerySubmission basicSubmission = (BasicQuerySubmission) submitted.get(basicQueryID);
+            if(basicSubmission==null){
+              logger.info("basicQueryId--"+basicQueryID+" does not exists in submitted");
+              continue;
+            }
             basicSubmission.value = value;
+
             if (value == null) {
               //Drill-bit 返回empty set
               logger.info("PlanSubmission " + basicQueryID + "completed with empty result.");
@@ -472,6 +477,7 @@ public class QueryMaster implements QueryListener {
         } catch (Throwable e) {
           e.printStackTrace();
           int size = 0;
+          //clear querySubmission from submitted.
           for (QuerySubmission submission : pickedSubmissions) {
             if (submission instanceof PlanSubmission) {
               for (String qID : ((PlanSubmission) submission).queryIdToPlan.keySet()) {
@@ -483,6 +489,10 @@ public class QueryMaster implements QueryListener {
               size++;
             }
           }
+          // executing and executing for the pid both decrement.
+          // because before mergeAndSubmit the executing and executing for the pid has increase by one.
+          executing.decrementAndGet();
+          perProjectExecuting.get(pID).decrementAndGet();
           logger.error("Submit logical plan failure! Picked submission size: " + size);
         }
       }

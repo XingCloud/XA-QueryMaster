@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<root>
+  <nodes>
+    <node id="QN-00" conf="drill-module-00.conf" />
+    <node id="QN-01" conf="drill-module-01.conf" />
+    <node id="QN-02" conf="drill-module-02.conf" />
+    <node id="QN-03" conf="drill-module-03.conf" />
+    <node id="QN-04" conf="drill-module-04.conf" />
+    <node id="QN-05" conf="drill-module-05.conf" />
+    <node id="QN-06" conf="drill-module-06.conf" />
+    <node id="QN-07" conf="drill-module-07.conf" />
+    <node id="QN-08" conf="drill-module-08.conf" />
+    <node id="QN-09" conf="drill-module-09.conf" />
+    <node id="QN-10" conf="drill-module-10.conf" />
+    <node id="QN-11" conf="drill-module-11.conf" />
+    <node id="QN-12" conf="drill-module-12.conf" />
+    <node id="QN-13" conf="drill-module-13.conf" />
+    <node id="QN-14" conf="drill-module-14.conf" />
+    <node id="QN-15" conf="drill-module-15.conf" />
+  </nodes>
+</root>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<root>
+  <nodes id="QUERY-NODES">
+    <node id="QN-01" conf="drill-module-01.conf" />
+  </nodes>
+</root>

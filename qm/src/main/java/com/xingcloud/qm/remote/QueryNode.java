@@ -36,6 +36,7 @@ public class QueryNode {
       for (Dom nodeDom : nodes) {
         id = nodeDom.getAttributeValue("id");
         conf = nodeDom.getAttributeValue("conf");
+
         NODES.add(new QueryNode(id, conf));
       }
     }
@@ -74,6 +75,7 @@ public class QueryNode {
     LOGGER.info(conf);
     this.id = id;
     this.drillClient = new DrillClient(DrillConfig.create(conf));
+    LOGGER.info("init drillClient");
     try {
       this.drillClient.connect();
       LOGGER.info("[DRILL-CLIENT]: " + id + " connected to server.");

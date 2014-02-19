@@ -2,5 +2,5 @@
 
 <root>
   <local-server enabled="false" />
-  <put-cache enabled="true" />
+  <put-cache enabled="false" />
 </root>

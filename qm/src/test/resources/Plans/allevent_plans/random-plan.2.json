@@ -1,0 +1,98 @@
+{
+  head : {
+    type : "APACHE_DRILL_LOGICAL",
+    version : 1,
+    generator : {
+      type : "AUTO",
+      info : "age"
+    }
+  },
+  storage : { },
+  query : [ {
+    op : "scan",
+    @id : 1,
+    memo : "deu_age,2014-01-10,2014-01-11,pay.*",
+    storageengine : "hbase",
+    selection : [ {
+      table : "deu_age",
+      filter : {
+        expression : " ( (date)  == ('20140110') )  && ( (event0)  == ('pay') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_age",
+      filter : {
+        expression : " ( (date)  == ('20140111') )  && ( (event0)  == ('pay') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    } ],
+    ref : "event"
+  },{
+     op : "segment",
+     @id : 2,
+     input : 1,
+     exprs : [{
+        ref :"dimension_uid" ,
+        expr: "uid"
+     }],
+     name :"sgmt_uid"
+  },{
+     op : "collapsingaggregate",
+     @id : 3,
+     input : 2,
+     within : "sgmt_uid",
+     target : null,
+     carryovers : [ "dimension_uid" ],
+     aggregations : [ {
+        ref : "uid" ,
+        expr : "dimension_uid"
+     },{
+        ref : "perUidsum" ,
+        expr : "sum(value)"
+     },{
+        ref : "count_uid"  ,
+        expr : "count(uid)"
+     }]
+   },
+   {
+    op : "project",
+    @id : 4,
+    input : 3,
+    projections : [ {
+      ref : "query_id",
+      expr : "'GROUP,age,2014-01-11,2014-01-12,pay.*,TOTAL_USER,VF-ALL-0-0,EVENT_VAL'"
+    }, {
+      ref : "dimension",
+      expr : "dimension_uid"
+    }, {
+      ref : "count",
+      expr : "count_uid"
+    }, {
+      ref : "user_num",
+      expr : "1"
+    }, {
+      ref : "sum",
+      expr : "perUidsum"
+    } ]
+  },
+  {
+    op : "store",
+    @id : 5,
+    input : 4,
+    target : null,
+    partition : null,
+    storageEngine : "DEFAULT-STORE"
+  } ]
+}

@@ -82,7 +82,9 @@ public class LogicalPlanUtil {
     String tableName = getTableName(scan);
     if (SE_HBASE.equals(storageEngine)) {
       for (JsonNode selectionNode : scan.getSelection().getRoot()) {
+        logger.debug("getRowKeyRange start");
         RowKeyRange range = getRowKeyRangeFromFilter(selectionNode, tableName, config);
+        logger.debug("getRowKeyRange success");
         ObjectNode rkRangeNode = new ObjectNode(JsonNodeFactory.instance);
         rkRangeNode.put(SELECTION_KEY_WORD_ROWKEY_START, range.getStartRkStr());
         rkRangeNode.put(SELECTION_KEY_WORD_ROWKEY_END, range.getEndRkStr());

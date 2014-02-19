@@ -1,0 +1,121 @@
+{
+  head : {
+    type : "APACHE_DRILL_LOGICAL",
+    version : 1,
+    generator : {
+      type : "AUTO",
+      info : "age"
+    }
+  },
+  storage : { },
+  query : [ {
+    op : "scan",
+    @id : 1,
+    memo : "deu_age,2014-01-10,2014-01-11,pay.*",
+    storageengine : "hbase",
+    selection : [ {
+      table : "deu_age",
+      filter : {
+        expression : " ( (date)  == ('20140110') )  && ( (event0)  == ('pay') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    }, {
+      table : "deu_age",
+      filter : {
+        expression : " ( (date)  == ('20140111') )  && ( (event0)  == ('pay') ) "
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ]
+    } ],
+    ref : "event"
+  },{
+     op : "segment",
+     @id : 2,
+     input : 1,
+     exprs : [{
+        ref :"dimension_uid" ,
+        expr: "uid"
+     }],
+     name :"sgmt_uid"
+  },{
+     op : "collapsingaggregate",
+     @id : 3,
+     input : 2,
+     within : "sgmt_uid",
+     target : null,
+     carryovers : [ "dimension_uid" ],
+     aggregations : [ {
+        ref : "uid" ,
+        expr : "dimension_uid"
+     },{
+        ref : "perUidsum" ,
+        expr : "sum(value)"
+     }]
+   },
+   {
+    op : "segment",
+    @id : 4,
+    input : 3,
+    exprs : [ {
+      ref : "dimension" ,
+      expr : "perUidSum"
+    } ],
+    name : "sgmt"
+  }, {
+    op : "collapsingaggregate",
+    @id : 5,
+    input : 4,
+    within : "sgmt",
+    target : null,
+    carryovers : [ "dimension" ],
+    aggregations : [ {
+      ref : "count",
+      expr : "count(uid) "
+    }, {
+      ref : "user_num",
+      expr : "count_distinct(uid) "
+    }, {
+      ref : "sum",
+      expr : "sum(perUidsum)"
+    } ]
+  }, {
+    op : "project",
+    @id : 6,
+    input : 5,
+    projections : [ {
+      ref : "query_id",
+      expr : "'GROUP,age,2014-01-10,2014-01-11,pay.*,TOTAL_USER,VF-ALL-0-0,EVENT_VAL'"
+    }, {
+      ref : "dimension",
+      expr : "dimension"
+    }, {
+      ref : "count",
+      expr : "count"
+    }, {
+      ref : "user_num",
+      expr : "user_num"
+    }, {
+      ref : "sum",
+      expr : "sum"
+    } ]
+  },
+  {
+    op : "store",
+    @id : 7,
+    input : 6,
+    target : null,
+    partition : null,
+    storageEngine : "DEFAULT-STORE"
+  } ]
+}

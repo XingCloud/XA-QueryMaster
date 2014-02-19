@@ -3,7 +3,6 @@ package com.xingcloud.qm.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
-import com.xingcloud.qm.remote.QueryNode;
 import com.xingcloud.qm.utils.GraphVisualize;
 import com.xingcloud.qm.utils.LogicalPlanUtil;
 import com.xingcloud.qm.utils.QueryMasterConstant;
@@ -18,7 +17,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
-import java.nio.charset.Charset;
 import java.util.*;
 
 public class TestPlanMerge {
@@ -71,48 +69,48 @@ public class TestPlanMerge {
   //same plan
   @Test
   public void testCase0() throws Exception {
-    String origDir = "/same_plans";
+    String origDir = "/Plans/same_plans";
     testCase(origDir);
   }
 
   @Test
   public void testCase1() throws Exception {
-    String origDir = "/contain_plans";
+    String origDir = "/Plans/contain_plans";
     testCase(origDir);
   }
 
   @Test
   public void testCase2() throws Exception {
-    String origDir = "/rkcross_plans";
+    String origDir = "/Plans/rkcross_plans";
     testCase(origDir);
   }
 
   @Test
   public void testCase3() throws Exception {
-    String origDir = "/sametable_plans";
+    String origDir = "/Plans/sametable_plans";
     testCase(origDir);
   }
 
   @Test
   public void testCase4() throws Exception {
-    String origDir = "/differenttable_plans";
+    String origDir = "/Plans/differenttable_plans";
     testCase(origDir);
   }
 
   @Test
   public void testCase5() throws Exception {
-    String origDir="/random_plans";
+    String origDir= "/Plans/random_plans";
     testCase(origDir);
   }
 
   @Test
   public void testCase6() throws Exception {
-    String origDir="/allevent_plans";
+    String origDir= "/Plans/allevent_plans";
     testCase(origDir);
   }
   @Test
   public void testCaseRandom() throws Exception {
-    String origDir="/random_plans";
+    String origDir= "/Plans/random_plans";
     testCase(origDir);
   }
 
