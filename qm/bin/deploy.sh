@@ -2,43 +2,48 @@
 line="############################################"
 # Code base
 code_home=/home/hadoop/git_project_home/XA-QueryMaster
-# Java home
-java_home=/usr/java/jdk1.7.0_25
-export JAVA_HOME=/usr/java/jdk1.7.0_25
-# Branch
-if [ "" = "$2" ]
-then
-  branch=master
-else
-  echo "User defined branch found($1)"
-  branch=$2
-fi
 
 # deploy bin home
 scripts_home=${code_home}/bin/
+
 # tomcat port
-port=$1
+tport=$1
+
+# Artifact Id
 aid=qm
 
-if [ "8181" = ${port} ];then
-  xa_env="production"
-  # Tomcat home
-  tomcat_home=/home/hadoop/catalina/apache-tomcat-7.0.42.8181
+# Java binary
+java_bin=/usr/java/jdk1.7.0_25
+
+# QueryMaster env
+xa_env="production"
+
+if [ "" = "$1" ];then
+  tport=18080
+  tomcat_home=/home/hadoop/catalina/apache-tomcat-7.0.50.te
 else
-  xa_env="pre_production"
-  # Tomcat home
-  tomcat_home=/home/hadoop/catalina/apache-tomcat-7.0.42.8182
+  echo "User defined tomcat port found($1)"
+  tport=$1
+  tomcat_home=/home/hadoop/catalina/apache-tomcat-7.0.50.qm
+fi
+
+if [ "" = "$2" ];then
+  branch=master
+else
+  echo "User defined branch found($2)"
+  branch=$2
 fi
 
 echo "[CHECK-POINT] - Begin deploying data driller web interface."
 echo ${line}
-echo "[JAVA-HOME] - "${JAVA_HOME}
 echo "[CODE-HOME] - "${code_home}
-echo "[TOMCAT] - "${tomcat_home}
+echo "[CURRENT-BRANCH] - "${branch}
 echo "[XA_ENV] - "${xa_env}
-echo "[BRANCH] - "${branch}
+echo "[TOMCAT-PORT] - "${tport}
+echo "[JAVA-BIN] - "${java_bin}
 echo ${line}
 echo "[CHECK-POINT] - Update code from VCS"
+
 cd ${code_home}
 git pull
 git checkout ${branch}
@@ -57,7 +62,7 @@ mvn -f ${code_home}/qm/pom.xml clean package -Dxa_env=${xa_env} -DskipTests=true
 echo "[CHECK-POINT] - Shutdown tomcat."
 sh ${tomcat_home}/bin/shutdown.sh
 for((i=1;i<=10;i++));do
-  proc=`ps aux | grep ${java_home} | grep tomcat | grep -v "grep" | grep ${port} | awk '{print $2}'`
+  proc=`ps aux | grep ${java_bin} | grep tomcat | grep -v "grep" | grep ${tport} | awk '{print $2}'`
   if [ "" = "$proc" ]
   then
     break
@@ -66,7 +71,7 @@ for((i=1;i<=10;i++));do
     sleep 3
   fi
 done
-proc=`ps aux | grep ${java_home} | grep tomcat | grep -v "grep" | grep ${port} | awk '{print $2}'`
+proc=`ps aux | grep ${java_bin} | grep tomcat | grep -v "grep" | grep ${tport} | awk '{print $2}'`
 if [ "" != "$proc" ];then
   echo "Tomcat(${proc}) is not shutdown, and it will be killed directly."
   kill -9 $proc
