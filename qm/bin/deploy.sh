@@ -18,7 +18,7 @@ java_bin=/usr/java/jdk1.7.0_25
 # QueryMaster env
 xa_env="production"
 
-if [ "" = "$1" ];then
+if [ "" = "$1" -o "18080" = "$1" ];then
   tport=18080
   tomcat_home=/home/hadoop/catalina/apache-tomcat-7.0.50.te
 else
