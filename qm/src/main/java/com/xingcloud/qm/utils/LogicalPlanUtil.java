@@ -115,6 +115,12 @@ public class LogicalPlanUtil {
    */
   public static RowKeyRange getDeuRkRange(String tableName, JsonNode filter, DrillConfig config) throws Exception {
     Map<String, UnitFunc> fieldFunc = parseFilterExpr(filter, config);
+    //eventFilter not ends with "."
+    //if get event range from XEventOperation there would not be faults.
+    //but if directly use it to form rowkeyrange,it would be wrong.
+    //such as stat.connect.normal.finialsuccess.wifi.recordphone
+    //it will produce rowkeyrange stat.connect.normal.finialsuccess.wifi.recordphone\\xFF
+    //then the actual event stat.connect.normal.finialsuccess.wifi.recordphone. will not be included.
     String eventFilter = getEventFilter(fieldFunc);
     UnitFunc dateUF = fieldFunc.get(QueryMasterConstant.DATE);
     if (dateUF == null) {
@@ -138,13 +144,19 @@ public class LogicalPlanUtil {
       }
     } else {
       //已经是具体事件
-      srk = date + eventFilter + QueryMasterConstant.XFF + QueryMasterConstant.MIN_UID;
-      erk = date + eventFilter + QueryMasterConstant.XFF + QueryMasterConstant.MAX_UID;
+      //append "." to eventFilter to produce the actual event
+      String actualEvent=eventFilter+".";
+      srk = date + actualEvent + QueryMasterConstant.XFF + QueryMasterConstant.MIN_UID;
+      erk = date + actualEvent + QueryMasterConstant.XFF + QueryMasterConstant.MAX_UID;
     }
 
     return new RowKeyRange(srk, erk);
   }
-
+  // getEventFilter such as stat.connect.normal.finialsuccess.wifi.recordphone .  or stat.*.connect
+  // the eventFilter should not ends with "."
+  // because XEventOperation will create event arr according to the eventFilter.
+  // if it ends with "." then "stat.*.connect"  will results in 4 level events with the last event "".
+  // as with stat.connect.normal.finialsuccess.wifi.recordphone. there will be exception resulting from array index.
   public static String getEventFilter(Map<String, UnitFunc> fieldFunc) {
     StringBuilder eventFilter = new StringBuilder();
     UnitFunc uf = fieldFunc.get(QueryMasterConstant.EVENT0);
@@ -188,7 +200,6 @@ public class LogicalPlanUtil {
     } else {
       eventFilter.append("*");
     }
-    eventFilter.append(".");
     return eventFilter.toString();
   }
 
