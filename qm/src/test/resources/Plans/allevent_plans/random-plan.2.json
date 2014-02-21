@@ -11,12 +11,12 @@
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "deu_age,2014-02-02,2014-02-02,event_val_test",
+    memo : "deu_age,2014-01-10,2014-01-11,pay.*",
     storageengine : "hbase",
     selection : [ {
       table : "deu_age",
       filter : {
-        expression : " ( (date)  == ('20140202') )  && ( (event0)  == ('event_val_test') ) "
+        expression : " ( (date)  == ('20140102') )  && ( (event0)  == ('pay') ) "
       },
       projections : [ {
         ref : "uid",
@@ -36,7 +36,7 @@
       expr : "uid"
     } ],
     name : "sgmt_uid"
-  }, {
+  },{
     op : "collapsingaggregate",
     @id : 3,
     input : 2,
@@ -46,26 +46,26 @@
     aggregations : [ {
       ref : "count_per_uid",
       expr : "count(uid) "
-    }, null, {
-      ref : "sum_val_per_uid",
+    }, {
+      ref : "sum_per_uid",
       expr : "sum(value) "
     } ]
-  }, {
+  },{
     op : "segment",
     @id : 4,
     input : 3,
     exprs : [ {
-      ref : "dimension",
-      expr : "sum_val_per_uid"
+      ref : "dimension_final",
+      expr : "sum_per_uid"
     } ],
-    name : "sgmt"
-  }, {
+    name : "sgmt_final"
+  },{
     op : "collapsingaggregate",
     @id : 5,
     input : 4,
-    within : "sgmt",
+    within : "sgmt_final",
     target : null,
-    carryovers : [ "dimension" ],
+    carryovers : [ "dimension_final" ],
     aggregations : [ {
       ref : "count",
       expr : "sum(count_per_uid) "
@@ -74,7 +74,7 @@
       expr : "count_distinct(dimension_uid) "
     }, {
       ref : "sum",
-      expr : "sum(sum_val_per_uid) "
+      expr : "sum(sum_per_uid) "
     } ]
   }, {
     op : "project",
@@ -82,10 +82,10 @@
     input : 5,
     projections : [ {
       ref : "query_id",
-      expr : "'GROUP,age,2014-02-01,2014-02-01,event_val_test,TOTAL_USER,VF-ALL-0-0,EVENT_VAL,C'"
+      expr : "'GROUP,age,2014-01-01,2014-01-01,pay.*,TOTAL_USER,VF-ALL-0-0,EVENT_VAL'"
     }, {
       ref : "dimension",
-      expr : "dimension"
+      expr : "dimension_final"
     }, {
       ref : "count",
       expr : "count"
@@ -105,4 +105,3 @@
     storageEngine : "DEFAULT-STORE"
   } ]
 }
-

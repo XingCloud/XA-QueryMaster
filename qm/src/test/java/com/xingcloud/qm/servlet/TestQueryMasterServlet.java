@@ -24,7 +24,7 @@ public class TestQueryMasterServlet {
 
   @Test
   public void test() throws URISyntaxException, IOException, ClassNotFoundException, XRemoteQueryException {
-    String file = "/Plans/allevent_plans/random-plan.0.json";
+    String file = "/Plans/allevent_plans/fixbug.json";
     File realFile= FileUtils.getResourceAsFile(file);
     StringBuilder sb;
     String line, plan;
@@ -44,7 +44,12 @@ public class TestQueryMasterServlet {
     URI uri = builder.build();
     Submit service = (Submit) FACTORY.create(uri.toString());
     String key = RandomStringUtils.randomAlphanumeric(5);
-    key="'COMMON,age,2014-01-07,2014-01-08,visit.*,TOTAL_USER,VF-ALL-0-0,PERIOD'";
+    key="GROUP,age,2014-01-11,2014-01-12,pay.*,TOTAL_USER,VF-ALL-0-0,EVENT_VAL";
+    String key0="GROUP,age,2014-02-01,2014-02-01,event_val_test,TOTAL_USER,VF-ALL-0-0,EVENT_VAL,C";
+    String key1="GROUP,age,2014-01-05,2014-01-06,pay.*,TOTAL_USER,VF-ALL-0-0,EVENT_VAL";
+    String key2="GROUP,age,2014-01-01,2014-01-01,pay.*,TOTAL_USER,VF-ALL-0-0,EVENT_VAL";
+    String key3="COMMON,sof-apptools,2014-02-20,2014-02-20,stat.connect.normal.finialsuccess.wifi.recordphone,TOTAL_USER,VF-ALL-0-0,DAY";
+    key=key3;
     Submit.SubmitQueryType type = Submit.SubmitQueryType.PLAN;
     if (service.submit(key, plan, type)) {
       System.out.println("Submit ok - " + key);

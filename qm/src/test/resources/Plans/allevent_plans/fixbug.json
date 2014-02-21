@@ -4,31 +4,19 @@
     version : 1,
     generator : {
       type : "AUTO",
-      info : "age"
+      info : "sof-apptools"
     }
   },
   storage : { },
   query : [ {
     op : "scan",
     @id : 1,
-    memo : "deu_age,2014-01-10,2014-01-11,pay.*",
+    memo : "deu_sof-apptools,2014-02-20,2014-02-20,stat.connect.normal.finialsuccess.wifi.recordphone",
     storageengine : "hbase",
     selection : [ {
-      table : "deu_age",
+      table : "deu_sof-apptools",
       filter : {
-        expression : " ( (date)  == ('20140105') )  && ( (event0)  == ('pay') ) "
-      },
-      projections : [ {
-        ref : "uid",
-        expr : "uid"
-      }, {
-        ref : "value",
-        expr : "value"
-      } ]
-    }, {
-      table : "deu_age",
-      filter : {
-        expression : " ( (date)  == ('20140106') )  && ( (event0)  == ('pay') ) "
+        expression : " ( ( ( ( ( ( (event2)  == ('normal') )  && ( (event3)  == ('finialsuccess') ) )  && ( (event4)  == ('wifi') ) )  && ( (event5)  == ('recordphone') ) )  && ( (date)  == ('20140220') ) )  && ( (event0)  == ('stat') ) )  && ( (event1)  == ('connect') ) "
       },
       projections : [ {
         ref : "uid",
@@ -39,11 +27,13 @@
       } ]
     } ],
     ref : "event"
-  },{
+  }, {
     op : "collapsingaggregate",
     @id : 2,
     input : 1,
+    within : null,
     target : null,
+    carryovers : null,
     aggregations : [ {
       ref : "count",
       expr : "count(uid) "
@@ -52,7 +42,7 @@
       expr : "count_distinct(uid) "
     }, {
       ref : "sum",
-      expr : "sum(value)"
+      expr : "sum(value) "
     } ]
   }, {
     op : "project",
@@ -60,8 +50,11 @@
     input : 2,
     projections : [ {
       ref : "query_id",
-      expr : "'GROUP,age,2014-01-05,2014-01-06,pay.*,TOTAL_USER,VF-ALL-0-0,EVENT_VAL'"
-    },{
+      expr : "'COMMON,sof-apptools,2014-02-20,2014-02-20,stat.connect.normal.finialsuccess.wifi.recordphone,TOTAL_USER,VF-ALL-0-0,DAY'"
+    }, {
+      ref : "dimension",
+      expr : "'2014-02-20 00:00'"
+    }, {
       ref : "count",
       expr : "count"
     }, {

@@ -188,6 +188,7 @@ public class LogicalPlanUtil {
     } else {
       eventFilter.append("*");
     }
+    eventFilter.append(".");
     return eventFilter.toString();
   }
 
