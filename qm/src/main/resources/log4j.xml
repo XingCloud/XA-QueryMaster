@@ -20,8 +20,8 @@
         </layout>
     </appender>
 
-    <appender name="Drill" class="org.apache.log4j.DailyRollingFileAppender">
-        <param name="File" value="/data/catalina/qm/drill.log" />
+    <appender name="DrillClient" class="org.apache.log4j.DailyRollingFileAppender">
+        <param name="File" value="/data/catalina/qm/drillclient.log" />
         <param name="Append" value="true" />
         <param name="Threshold" value="debug" />
         <param name="DatePattern" value="'.'yyyy-MM-dd" />
@@ -30,9 +30,9 @@
         </layout>
     </appender>
 
-    <logger name="org.apache.drill">
+    <logger name="org.apache.drill.exec.client">
         <level value="debug" />
-        <appender-ref ref="Drill" />
+        <appender-ref ref="DrillClient" />
     </logger>
 
   <logger name="com.xingcloud.qm">
