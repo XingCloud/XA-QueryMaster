@@ -41,7 +41,9 @@ import static org.apache.drill.common.util.Selections.*;
  */
 public class LogicalPlanUtil {
   private static final Logger logger = Logger.getLogger(LogicalPlanUtil.class);
-
+  public  static String eventGenericTail=".*";
+  public static String eventSeperator=".";
+  public static String genericEventPattern="*.";
   public static String getTableName(Scan scan) {
     JsonNode jsonNode = scan.getSelection().getRoot();
     if (jsonNode instanceof ArrayNode) {
@@ -352,12 +354,16 @@ public class LogicalPlanUtil {
     JsonNode fitlerExpr = scan.getSelection().getRoot().get(0).get(SELECTION_KEY_WORD_FILTER).get(SELECTION_KEY_WORD_FILTER_EXPRESSION);
     Map<String, UnitFunc> filterFuncMap = parseFilterExpr(fitlerExpr, config);
     String eventFilter = getEventFilter(filterFuncMap);
-    if(eventFilter.endsWith("."))
+    //process eventFileter remove "." at end and ".*" at end.
+    if(eventFilter.endsWith(eventSeperator))
       eventFilter=eventFilter.substring(0,eventFilter.length()-1);
-    while(eventFilter.endsWith(".*"))
+    while(eventFilter.endsWith(eventGenericTail))
       eventFilter=eventFilter.substring(0,eventFilter.length()-2);
-    if(!eventFilter.contains(".*."))
+    //if eventFilter does not contain "*." then it contains all kv in the rk range
+    //so it does not need filter.
+    if(!eventFilter.contains(genericEventPattern))
         return null;
+    //filter is composed of event. such as *.protection.conduit.*" to produce filter with event1=protection event2=conduit
     Map<String, UnitFunc> baseFilterFields = getCommonFields(baseFilterExpr, config);
     if (baseFilterFields.size() >= filterFuncMap.size()) return null;
     List<LogicalExpression> exprs = new ArrayList<>();
