@@ -335,7 +335,7 @@ public class PlanExecutor {
       DrillClient client = node.getDrillClient();
 
       //todo: why reconnect?
-      if (client.reconnect()) {
+//      if (client.reconnect()) {
         long t1 = System.currentTimeMillis();
 
         try {
@@ -350,9 +350,9 @@ public class PlanExecutor {
           "] submit query at " + TimeUtil.getTime(t1) +
           ", receive result at " + TimeUtil.getTime(t2) +
           ", cost " + (t2 - t1));
-      } else {
-        logger.error("Cannot connect to drillbit.");
-      }
+//      } else {
+//        logger.error("Cannot connect to drillbit.");
+//      }
       return result;
     }
   }
