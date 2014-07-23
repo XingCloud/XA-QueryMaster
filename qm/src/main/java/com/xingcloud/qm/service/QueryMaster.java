@@ -132,7 +132,9 @@ public class QueryMaster implements QueryListener {
         submissions.add(submission);
           if("COMMON,webssearches,2014-06-22,2014-07-22,visit.*,TOTAL_USER,VF-ALL-0-0,PERIOD".equals(cacheKey)){
               try {
-                  String planString = submission.plan.toJsonString(QueryNode.LOCAL_DEFAULT_DRILL_CONFIG);
+
+                  String planString = QueryNode.LOCAL_DEFAULT_DRILL_CONFIG.getMapper().writeValueAsString(plan);
+//                  String planString = submission.plan.toJsonString(QueryNode.LOCAL_DEFAULT_DRILL_CONFIG);
                   logger.info("MAU: " + planString);
                   System.out.println("ss MAU: " + planString);
               } catch (JsonProcessingException e) {
