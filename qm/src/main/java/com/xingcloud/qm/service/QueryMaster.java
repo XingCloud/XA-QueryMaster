@@ -134,8 +134,8 @@ public class QueryMaster implements QueryListener {
               try {
 
 //                  plan.
-                  String planString = QueryNode.LOCAL_DEFAULT_DRILL_CONFIG.getMapper().writeValueAsString(plan).replaceAll("\n","");
-//                  String planString = submission.plan.toJsonString(QueryNode.LOCAL_DEFAULT_DRILL_CONFIG);
+//                  String planString = QueryNode.LOCAL_DEFAULT_DRILL_CONFIG.getMapper().writeValueAsString(plan).replaceAll("\n","");
+                  String planString = submission.plan.toJsonString(QueryNode.LOCAL_DEFAULT_DRILL_CONFIG).replaceAll("\n","");
                   logger.info("MAU: " + planString);
                   System.out.println("ss MAU: " + planString);
               } catch (JsonProcessingException e) {
