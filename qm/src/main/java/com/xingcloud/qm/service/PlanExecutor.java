@@ -254,11 +254,6 @@ public class PlanExecutor {
         throw new XQueryMasterException(e.getMessage(), e);
       }
 
-        if(planString.contains("webssearches")){
-                logger.info("MAUxx: " + planString.replaceAll("\n",""));
-                System.out.println("ss MAUxx: " + planString);
-        }
-
       for (QueryNode node : nodes) {
         futures.add(drillBitExecutor.submit(new DrillbitCallable(planString, node, submission.id)));
       }
