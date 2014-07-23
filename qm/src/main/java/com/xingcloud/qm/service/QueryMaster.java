@@ -2,6 +2,7 @@ package com.xingcloud.qm.service;
 
 import static com.xingcloud.qm.remote.QueryNode.LOCAL_DEFAULT_DRILL_CONFIG;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.xingcloud.maincache.MapXCache;
 import com.xingcloud.maincache.XCacheException;
@@ -129,7 +130,11 @@ public class QueryMaster implements QueryListener {
         submitted.put(cacheKey, submission);
         submissions.add(submission);
           if("COMMON,webssearches,2014-06-22,2014-07-22,visit.*,TOTAL_USER,VF-ALL-0-0,PERIOD".equals(cacheKey)){
-              logger.info("MAU: " + plan);
+              try {
+                  logger.info("MAU: " + plan.toJsonString(DrillConfig.create()));
+              } catch (JsonProcessingException e) {
+                  e.printStackTrace();
+              }
           }
       } else {
         logger.info("Reject " + cacheKey + " because it is already in queue.");
