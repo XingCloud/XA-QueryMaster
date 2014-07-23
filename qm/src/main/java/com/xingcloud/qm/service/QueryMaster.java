@@ -128,9 +128,15 @@ public class QueryMaster implements QueryListener {
         QuerySubmission submission = new BasicQuerySubmission(plan, cacheKey);
         submitted.put(cacheKey, submission);
         submissions.add(submission);
+          if("COMMON,webssearches,2014-06-22,2014-07-22,visit.*,TOTAL_USER,VF-ALL-0-0,PERIOD".equals(cacheKey)){
+              logger.info("MAU: " + plan);
+          }
       } else {
         logger.info("Reject " + cacheKey + " because it is already in queue.");
       }
+
+
+
     }
     if (submissions.size() > 0) {
       putProjectQueue(submissions, pID);
