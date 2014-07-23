@@ -9,6 +9,7 @@ import com.xingcloud.maincache.XCacheException;
 import com.xingcloud.maincache.redis.RedisXCacheOperator;
 import com.xingcloud.qm.config.QMConfig;
 import com.xingcloud.qm.exceptions.XRemoteQueryException;
+import com.xingcloud.qm.remote.QueryNode;
 import com.xingcloud.qm.result.ResultRow;
 import com.xingcloud.qm.result.ResultTable;
 import com.xingcloud.qm.utils.LogicalPlanUtil;
@@ -131,7 +132,9 @@ public class QueryMaster implements QueryListener {
         submissions.add(submission);
           if("COMMON,webssearches,2014-06-22,2014-07-22,visit.*,TOTAL_USER,VF-ALL-0-0,PERIOD".equals(cacheKey)){
               try {
-                  logger.info("MAU: " + plan.toJsonString(DrillConfig.create()));
+                  String planString = submission.plan.toJsonString(QueryNode.LOCAL_DEFAULT_DRILL_CONFIG);
+                  logger.info("MAU: " + planString);
+                  System.out.println("ss MAU: " + planString);
               } catch (JsonProcessingException e) {
                   e.printStackTrace();
               }
