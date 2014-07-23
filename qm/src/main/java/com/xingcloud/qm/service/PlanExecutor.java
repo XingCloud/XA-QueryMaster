@@ -255,9 +255,8 @@ public class PlanExecutor {
       }
 
         if(planString.contains("webssearches")){
-                logger.info("MAUxx: " + planString);
+                logger.info("MAUxx: " + planString.replaceAll("\n",""));
                 System.out.println("ss MAUxx: " + planString);
-
         }
 
       for (QueryNode node : nodes) {
