@@ -2,14 +2,12 @@ package com.xingcloud.qm.service;
 
 import static com.xingcloud.qm.remote.QueryNode.LOCAL_DEFAULT_DRILL_CONFIG;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.xingcloud.maincache.MapXCache;
 import com.xingcloud.maincache.XCacheException;
 import com.xingcloud.maincache.redis.RedisXCacheOperator;
 import com.xingcloud.qm.config.QMConfig;
 import com.xingcloud.qm.exceptions.XRemoteQueryException;
-import com.xingcloud.qm.remote.QueryNode;
 import com.xingcloud.qm.result.ResultRow;
 import com.xingcloud.qm.result.ResultTable;
 import com.xingcloud.qm.utils.LogicalPlanUtil;
@@ -130,18 +128,6 @@ public class QueryMaster implements QueryListener {
         QuerySubmission submission = new BasicQuerySubmission(plan, cacheKey);
         submitted.put(cacheKey, submission);
         submissions.add(submission);
-          if("COMMON,webssearches,2014-06-22,2014-07-22,visit.*,TOTAL_USER,VF-ALL-0-0,PERIOD".equals(cacheKey)){
-              try {
-
-//                  plan.
-//                  String planString = QueryNode.LOCAL_DEFAULT_DRILL_CONFIG.getMapper().writeValueAsString(plan).replaceAll("\n","");
-                  String planString = submission.plan.toJsonString(QueryNode.LOCAL_DEFAULT_DRILL_CONFIG).replaceAll("\n","");
-                  logger.info("MAU: " + planString);
-                  System.out.println("ss MAU: " + planString);
-              } catch (JsonProcessingException e) {
-                  e.printStackTrace();
-              }
-          }
       } else {
         logger.info("Reject " + cacheKey + " because it is already in queue.");
       }
