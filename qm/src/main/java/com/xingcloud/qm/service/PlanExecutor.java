@@ -246,6 +246,12 @@ public class PlanExecutor {
           pw = new PlanWriter(System.currentTimeMillis(), DrillConfig.create());
           pw.writeUidRangePlan(planString);
         }
+
+          if("GROUP,gamebox,2014-09-22,2014-09-22,visit.*,TOTAL_USER,VF-ALL-0-0,USER_PROPERTIES,337uid".equals(submission.projectID)){
+              pw = new PlanWriter(System.currentTimeMillis(), DrillConfig.create());
+              pw.writeUidRangePlan(planString);
+          }
+
       } catch (JsonProcessingException e) {
         logger.error(e.getMessage(), e);
         throw new XQueryMasterException(e.getMessage(), e);
