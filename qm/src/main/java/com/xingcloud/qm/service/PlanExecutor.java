@@ -33,7 +33,7 @@ public class PlanExecutor {
       64,
       30,
       TimeUnit.MINUTES,
-      new ArrayBlockingQueue<Runnable>(256),
+      new ArrayBlockingQueue<Runnable>(512),
       new DaemonlizedFactory("PlanExec")
     );
 
@@ -44,7 +44,7 @@ public class PlanExecutor {
       128,
       30,
       TimeUnit.MINUTES,
-      new ArrayBlockingQueue<Runnable>(256),
+      new ArrayBlockingQueue<Runnable>(512),
       new DaemonlizedFactory("DrillbitExec")
     );
 
