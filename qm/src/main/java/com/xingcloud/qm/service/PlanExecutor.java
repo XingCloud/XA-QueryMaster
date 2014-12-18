@@ -29,8 +29,8 @@ public class PlanExecutor {
   //for PlanRunner. 
   private static final ExecutorService planExecutor =
     new ThreadPoolExecutor(
-      64,
-      64,
+      128,
+      128,
       30,
       TimeUnit.MINUTES,
       new ArrayBlockingQueue<Runnable>(2028),
@@ -40,8 +40,8 @@ public class PlanExecutor {
   //for drillbitRunner.
   private static final ExecutorService drillBitExecutor =
     new ThreadPoolExecutor(
-      128,
-      128,
+      256,
+      256,
       30,
       TimeUnit.MINUTES,
       new ArrayBlockingQueue<Runnable>(2048),
