@@ -29,22 +29,22 @@ public class PlanExecutor {
   //for PlanRunner. 
   private static final ExecutorService planExecutor =
     new ThreadPoolExecutor(
-      48,
-      48,
+      64,
+      64,
       30,
       TimeUnit.MINUTES,
-      new ArrayBlockingQueue<Runnable>(512),
+      new ArrayBlockingQueue<Runnable>(2028),
       new DaemonlizedFactory("PlanExec")
     );
 
   //for drillbitRunner.
   private static final ExecutorService drillBitExecutor =
     new ThreadPoolExecutor(
-      64,
-      64,
+      128,
+      128,
       30,
       TimeUnit.MINUTES,
-      new ArrayBlockingQueue<Runnable>(512),
+      new ArrayBlockingQueue<Runnable>(2048),
       new DaemonlizedFactory("DrillbitExec")
     );
 
