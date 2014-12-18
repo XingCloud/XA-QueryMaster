@@ -41,15 +41,15 @@ public class QueryMaster implements QueryListener {
 
   //同时最多允许多少个plan执行
 //  public static int MAX_PLAN_EXECUTING = 8;
-  public static int MAX_PLAN_EXECUTING = 12;
+  public static int MAX_PLAN_EXECUTING = 16;
 
   //每个project，同时最多允许多少个plan执行
 //  public static int MAX_PLAN_PER_PROJECT = 1;
-  public static int MAX_PLAN_PER_PROJECT = 2;
+  public static int MAX_PLAN_PER_PROJECT = 3;
 
   //最多允许多少个plan一起合并
 //  public static int MAX_BATCHMERGE = Integer.MAX_VALUE;
-  public static int MAX_BATCHMERGE = 20;
+  public static int MAX_BATCHMERGE = 50;
 
   //最多允许的合并后的plan的cost。目前，单个原始查询的cost为1。
   public static int MAX_BATCHCOST = 256;
@@ -96,13 +96,18 @@ public class QueryMaster implements QueryListener {
     startup();
   }
 
-  private void initConfig() {
-    MAX_PLAN_PER_PROJECT = QMConfig.conf().getInt(QMConfig.MAX_PLAN_PER_PROJECT, MAX_PLAN_PER_PROJECT);
-    MAX_PLAN_EXECUTING = QMConfig.conf().getInt(QMConfig.MAX_PLAN_EXECUTING, MAX_PLAN_EXECUTING);
-    MAX_BATCHCOST = QMConfig.conf().getInt(QMConfig.MAX_BATCHCOST, MAX_BATCHCOST);
-    MAX_BATCHMERGE = QMConfig.conf().getInt(QMConfig.MAX_BATCHMERGE, MAX_BATCHMERGE);
-    USING_CACHE = QMConfig.conf().getBoolean(QMConfig.USING_CACHE, USING_CACHE);
-  }
+    private void initConfig() {
+        MAX_PLAN_PER_PROJECT = QMConfig.conf().getInt(QMConfig.MAX_PLAN_PER_PROJECT, MAX_PLAN_PER_PROJECT);
+        logger.info("init " + QMConfig.MAX_PLAN_PER_PROJECT + " " + MAX_PLAN_PER_PROJECT);
+        MAX_PLAN_EXECUTING = QMConfig.conf().getInt(QMConfig.MAX_PLAN_EXECUTING, MAX_PLAN_EXECUTING);
+        logger.info("init " + QMConfig.MAX_PLAN_EXECUTING + " " + MAX_PLAN_EXECUTING);
+        MAX_BATCHCOST = QMConfig.conf().getInt(QMConfig.MAX_BATCHCOST, MAX_BATCHCOST);
+        logger.info("init " + QMConfig.MAX_BATCHCOST + " " + MAX_BATCHCOST);
+        MAX_BATCHMERGE = QMConfig.conf().getInt(QMConfig.MAX_BATCHMERGE, MAX_BATCHMERGE);
+        logger.info("init " + QMConfig.MAX_BATCHMERGE + " " + MAX_BATCHMERGE);
+        USING_CACHE = QMConfig.conf().getBoolean(QMConfig.USING_CACHE, USING_CACHE);
+        logger.info("init " + QMConfig.USING_CACHE + " " + USING_CACHE);
+    }
 
   private void startup() {
     this.scheduler.start();
