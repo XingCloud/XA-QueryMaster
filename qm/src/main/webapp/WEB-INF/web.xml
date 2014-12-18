@@ -26,4 +26,13 @@
     <url-pattern>/q</url-pattern>
   </servlet-mapping>
 
+    <servlet>
+        <servlet-name>ToolServlet</servlet-name>
+        <servlet-class>com.xingcloud.qm.web.servlet.ToolServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ToolServlet</servlet-name>
+        <url-pattern>/tool</url-pattern>
+    </servlet-mapping>
+
 </web-app>
