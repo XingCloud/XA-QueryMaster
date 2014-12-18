@@ -96,6 +96,21 @@ public class QueryMaster implements QueryListener {
     startup();
   }
 
+    public String getStatus(){
+        //正在执行的项目
+        //每个项目，正在执行的数量，队列数量
+        StringBuilder sb = new StringBuilder("");
+        sb.append("executing project: ").append(executing.get()).append("\n");
+        sb.append("project info: \n");
+        for(Map.Entry<String, Deque<QuerySubmission>> p : perProjectSubmitted.entrySet()){
+            sb.append(p.getKey()).append(", queue: ")
+                    .append(p.getValue().size()).append(", executing: ")
+                    .append(perProjectExecuting.get(p.getKey()) == null ? 0 : perProjectExecuting.get(p.getKey()).get())
+                    .append("\n");
+        }
+        return sb.toString();
+    }
+
     private void initConfig() {
         MAX_PLAN_PER_PROJECT = QMConfig.conf().getInt(QMConfig.MAX_PLAN_PER_PROJECT, MAX_PLAN_PER_PROJECT);
         logger.info("init " + QMConfig.MAX_PLAN_PER_PROJECT + " " + MAX_PLAN_PER_PROJECT);
