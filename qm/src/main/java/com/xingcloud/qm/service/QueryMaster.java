@@ -41,7 +41,7 @@ public class QueryMaster implements QueryListener {
 
   //同时最多允许多少个plan执行
 //  public static int MAX_PLAN_EXECUTING = 8;
-  public static int MAX_PLAN_EXECUTING = 20;
+  public static int MAX_PLAN_EXECUTING = 32;
 
   //每个project，同时最多允许多少个plan执行
 //  public static int MAX_PLAN_PER_PROJECT = 1;
@@ -301,7 +301,6 @@ public class QueryMaster implements QueryListener {
             continue;
           }
         }
-
         for (Map.Entry<String, Deque<QuerySubmission>> entry : perProjectSubmitted.entrySet()) {
           //to control total executing plans
           if (executing.intValue() >= MAX_PLAN_EXECUTING) { //到达最大执行上限
