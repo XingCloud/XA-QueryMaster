@@ -45,11 +45,11 @@ public class QueryMaster implements QueryListener {
 
   //每个project，同时最多允许多少个plan执行
 //  public static int MAX_PLAN_PER_PROJECT = 1;
-  public static int MAX_PLAN_PER_PROJECT = 1;
+  public static int MAX_PLAN_PER_PROJECT = 2;
 
   //最多允许多少个plan一起合并
 //  public static int MAX_BATCHMERGE = Integer.MAX_VALUE;
-  public static int MAX_BATCHMERGE = 50;
+  public static int MAX_BATCHMERGE = 20;
 
   //最多允许的合并后的plan的cost。目前，单个原始查询的cost为1。
   public static int MAX_BATCHCOST = 256;
