@@ -41,7 +41,7 @@ public class QueryMaster implements QueryListener {
 
   //同时最多允许多少个plan执行
 //  public static int MAX_PLAN_EXECUTING = 8;
-  public static int MAX_PLAN_EXECUTING = 6;
+  public static int MAX_PLAN_EXECUTING = 10;
 
   //每个project，同时最多允许多少个plan执行
 //  public static int MAX_PLAN_PER_PROJECT = 1;
