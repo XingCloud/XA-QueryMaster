@@ -250,7 +250,7 @@ public class PlanExecutor {
       } catch (JsonProcessingException e) {
         logger.error(e.getMessage(), e);
         throw new XQueryMasterException(e.getMessage(), e);
-      } catch (IOException e) {
+      } catch (Exception e) {
         logger.error(e.getMessage(), e);
         throw new XQueryMasterException(e.getMessage(), e);
       }
