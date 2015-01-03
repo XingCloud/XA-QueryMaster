@@ -311,7 +311,7 @@
     <dependency>
       <groupId>com.xingcloud.xa</groupId>
       <artifactId>dbutil</artifactId>
-      <version>1.3</version>
+      <version>1.4.2</version>
     </dependency>
     <dependency>
       <groupId>com.xingcloud.xa</groupId>
