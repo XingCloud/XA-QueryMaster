@@ -47,7 +47,7 @@ public class QueryMasterConstant {
   public static final byte[] XFF_BYTES = {-1};
 
   public static enum STORAGE_ENGINE {
-    mysql, hbase
+    mysql, hbase, user
   };
   //public static final int[] SAMPLING_ARRAY = {1, 2, 4, 8, 16, 32, 64, 64, 65};
   public static final int[] SAMPLING_ARRAY = {256};
