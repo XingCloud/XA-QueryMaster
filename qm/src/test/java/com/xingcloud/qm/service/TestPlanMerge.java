@@ -115,7 +115,7 @@ public class TestPlanMerge {
   }
 
   @Test
-  public void testAddUidInfo() {
+  public void testAddUidInfo() throws Exception {
     int startBucketPos = 0;
     for (int i = 0; i < 1; i++) {
       int offset = QueryMasterConstant.SAMPLING_ARRAY[i];
