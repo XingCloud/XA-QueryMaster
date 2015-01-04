@@ -690,24 +690,27 @@ public class LogicalPlanUtil {
             ((ObjectNode)selection).put(SELECTION_KEY_ROWKEY_TAIL_RANGE, tailRange);
           }
         } else if (((Scan) leaf).getStorageEngine().equals(QueryMasterConstant.STORAGE_ENGINE.mysql.name())) {
+            for (JsonNode selection : selectionNodes) {
+                //Mysql把uid range信息加入到filter里（expression符合drill的logical expression规则）
+                JsonNode filter = selection.get(SELECTION_KEY_WORD_FILTER);
+                String uidRangeStr = "( (uid) >= (" + uidRange.getFirst() +
+                        ") ) && ( (uid) < (" + uidRange.getSecond() + ") )";
+                if (filter != null) {
+                  String expr = filter.get(SELECTION_KEY_WORD_FILTER_EXPRESSION).textValue();
+                  expr = expr + " && " + uidRangeStr;
+                  ((ObjectNode)filter).put(SELECTION_KEY_WORD_FILTER_EXPRESSION, expr);
+                } else {
+                  filter = new ObjectNode(JsonNodeFactory.instance);
+                  ((ObjectNode)filter).put(SELECTION_KEY_WORD_FILTER_EXPRESSION, uidRangeStr);
+                  ((ObjectNode)selection).put(SELECTION_KEY_WORD_FILTER, filter);
+                }
+            }
+         }else if (((Scan) leaf).getStorageEngine().equals(QueryMasterConstant.STORAGE_ENGINE.user.name())) {
           for (JsonNode selection : selectionNodes) { //重新设置表名为相应的字典名字
             String tableName = selection.get(SELECTION_KEY_WORD_TABLE).asText();
             String[] dbTable = tableName.split("\\.");
             String newDBTable = tableName + "." + dict.getPidDict(dbTable[0]) + "." + dict.getAttributeDict(dbTable[1]);
             ((ObjectNode)selection).put(SELECTION_KEY_WORD_TABLE, newDBTable);
-            //Mysql把uid range信息加入到filter里（expression符合drill的logical expression规则）
-/*            JsonNode filter = selection.get(SELECTION_KEY_WORD_FILTER);
-            String uidRangeStr = "( (uid) >= (" + uidRange.getFirst() +
-                    ") ) && ( (uid) < (" + uidRange.getSecond() + ") )";
-            if (filter != null) {
-              String expr = filter.get(SELECTION_KEY_WORD_FILTER_EXPRESSION).textValue();
-              expr = expr + " && " + uidRangeStr;
-              ((ObjectNode)filter).put(SELECTION_KEY_WORD_FILTER_EXPRESSION, expr);
-            } else {
-              filter = new ObjectNode(JsonNodeFactory.instance);
-              ((ObjectNode)filter).put(SELECTION_KEY_WORD_FILTER_EXPRESSION, uidRangeStr);
-              ((ObjectNode)selection).put(SELECTION_KEY_WORD_FILTER, filter);
-            }*/
           }
         }
       }
