@@ -688,12 +688,7 @@ public class LogicalPlanUtil {
         } else if (((Scan) leaf).getStorageEngine().equals(QueryMasterConstant.STORAGE_ENGINE.mysql.name())) {
           for (JsonNode selection : selectionNodes) {
             //Mysql把uid range信息加入到filter里（expression符合drill的logical expression规则）
-
-              if(uidRange.getFirst() == 0 && uidRange.getSecond() == 1099511627775l){
-                  continue;
-              }
-
-              JsonNode filter = selection.get(SELECTION_KEY_WORD_FILTER);
+            JsonNode filter = selection.get(SELECTION_KEY_WORD_FILTER);
             String uidRangeStr = "( (uid) >= (" + uidRange.getFirst() +
                     ") ) && ( (uid) < (" + uidRange.getSecond() + ") )";
             if (filter != null) {
