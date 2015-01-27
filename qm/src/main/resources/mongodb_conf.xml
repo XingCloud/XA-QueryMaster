@@ -9,7 +9,7 @@
     <dbname>user_info</dbname>
     <max_wait>5000</max_wait>
     <socket_timeout>0</socket_timeout>
-    <connection_timeout>15000</connection_timeout>
+    <connection_timeout>30000</connection_timeout>
     <threads_allowed_to_block_for_connection_multiplier>5000</threads_allowed_to_block_for_connection_multiplier>
     <dbname>user_info</dbname>
     <collname>user_hash</collname>
